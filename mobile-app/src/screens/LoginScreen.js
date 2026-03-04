@@ -34,29 +34,32 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount }) {
 
     setLoading(true);
     try {
-      // Note: In your Final Year Project, ensure this IP matches your machine's local IP
       const response = await fetch('http://192.168.8.104:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.toLowerCase().trim(), password }),
       });
 
       const data = await response.json();
+      console.log("Login Response Data:", data); // DEBUG: Look at your terminal!
 
-      if (response.ok) {
-        // Passing data to Index.tsx for state management
+      if (response.ok && data.user) {
+        // We now pass the 'role' as well so your app can redirect 
+        // authorities to a different screen if needed later.
         onLoginSuccess(
           data.user.fullName, 
           data.user.email, 
           data.user.phone, 
           data.user.district, 
-          data.user.division
+          data.user.division,
+          data.user.role // Added role
         ); 
       } else {
         setErrors({ server: data.message || "Invalid email or password." });
       }
     } catch (error) {
-      setErrors({ server: "Connection error. Ensure your Node.js server is running." });
+      console.error("Login Fetch Error:", error);
+      setErrors({ server: "Connection error. Check your Server IP and ensure Node.js is running." });
     } finally {
       setLoading(false);
     }

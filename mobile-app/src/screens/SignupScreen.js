@@ -51,28 +51,34 @@ export default function SignupScreen({ onBackToLogin, onNavigateToTerms, onNavig
       const response = await fetch('http://192.168.8.104:5000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData), // This works because your state keys match backend keys
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        Alert.alert("Success", "Account created successfully!");
-        
-        // --- THE GOAL FIX ---
-        // Instead of just going back to login, we pass the inserted data back to index.tsx
-        // This makes sure the "Edit Profile" screen isn't empty after signup.
-        onSignupSuccess(
-          formData.fullName,
-          formData.email,
-          formData.phone,
-          formData.district,
-          formData.division
+        Alert.alert(
+          "Success", 
+          "Account created successfully!",
+          [{ 
+            text: "OK", 
+            onPress: () => {
+              // Passing data back to Index.tsx so the profile is pre-filled
+              onSignupSuccess(
+                formData.fullName,
+                formData.email,
+                formData.phone,
+                formData.district,
+                formData.division
+              );
+            } 
+          }]
         );
       } else {
-        const data = await response.json();
         setErrors({ server: data.message || "Registration failed." });
       }
     } catch (err) {
-      setErrors({ server: "Server Error: Could not connect to backend." });
+      setErrors({ server: "Network Error: Please check your server connection." });
     } finally {
       setLoading(false);
     }
