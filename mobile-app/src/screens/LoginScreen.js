@@ -34,6 +34,7 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount }) {
 
     setLoading(true);
     try {
+      // Note: In your Final Year Project, ensure this IP matches your machine's local IP
       const response = await fetch('http://192.168.8.104:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -43,8 +44,7 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount }) {
       const data = await response.json();
 
       if (response.ok) {
-        // UPDATED: Now passing ALL database fields back to Index.tsx
-        // This ensures Edit Profile has the 'default' data ready to go.
+        // Passing data to Index.tsx for state management
         onLoginSuccess(
           data.user.fullName, 
           data.user.email, 
@@ -124,10 +124,8 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount }) {
           </View>
           {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
-          <TouchableOpacity style={styles.rememberRow}>
-            <View style={styles.checkbox} />
-            <Text style={styles.rememberText}>Keep me logged in</Text>
-          </TouchableOpacity>
+          {/* Spacer View: Replaced "Keep me logged in" to maintain spacing */}
+          <View style={styles.spacer} />
 
           <TouchableOpacity onPress={handleLogin} disabled={loading}>
             <LinearGradient 
@@ -171,7 +169,6 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount }) {
   );
 }
 
-// ... styles remain the same
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   content: { flex: 1, paddingHorizontal: 25, justifyContent: 'center' },
@@ -189,9 +186,8 @@ const styles = StyleSheet.create({
   serverErrorText: { color: '#EF4444', fontSize: 13, textAlign: 'center', marginBottom: 15, fontWeight: '700' },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, fontSize: 16, color: '#1E293B' },
-  rememberRow: { flexDirection: 'row', alignItems: 'center', marginTop: 15, marginBottom: 25 },
-  checkbox: { width: 18, height: 18, borderRadius: 4, borderWidth: 1, borderColor: '#3ACBE8', marginRight: 10 },
-  rememberText: { fontSize: 14, color: '#64748B' },
+  // Added spacer style to preserve the gap before the Login button
+  spacer: { marginTop: 15, marginBottom: 25 },
   button: { height: 55, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', elevation: 4 },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginRight: 10 },
   footer: { alignItems: 'center', marginTop: 30 },

@@ -15,7 +15,7 @@ export default function WelcomeScreen({ onGetStarted }) {
             <View style={styles.iconCircle}>
               <MaterialIcons name="account-balance" size={60} color="#fff" />
             </View>
-            <Text style={styles.title}>CitizenConnect</Text>
+            <Text style={styles.title}>SmartNagara</Text>
             <Text style={styles.description}>
               Report Public Issues Easily and Transparently
             </Text>
@@ -29,7 +29,7 @@ export default function WelcomeScreen({ onGetStarted }) {
               {/* Icon updated to True Blue */}
               <Ionicons name="shield-checkmark-outline" size={22} color="#0160C9" style={styles.infoIcon} />
               <Text style={styles.infoText}>
-                Your feedback helps build a better Sri Lanka. Direct connection to urban authorities.
+                Your feedback helps build a better Sri Lanka. Direct connection to government authorities.
               </Text>
             </View>
 
