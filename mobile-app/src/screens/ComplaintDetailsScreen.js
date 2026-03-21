@@ -8,7 +8,7 @@ export default function ComplaintDetailsScreen({ onBack, onNavigateToChat, compl
   const [loading, setLoading] = useState(true);
   const [isImageModalVisible, setImageModalVisible] = useState(false);
 
-  const SERVER_URL = "http://192.168.8.105:5000";
+  const SERVER_URL = "http://192.168.8.103:5000";
 
   useEffect(() => {
     if (complaintId) fetchComplaintDetails();

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; // Added useState here!
+import React, { useState } from 'react'; 
 import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,12 +14,10 @@ export default function ProfileScreen({
   onNavigateToPrivacy, 
   onLogout 
 }) {
-  const SERVER_URL = "http://192.168.8.105:5000";
+  const SERVER_URL = "http://192.168.8.103:5000";
 
-  // --- NEW STATE: Tracks if the image is broken ---
   const [imageFailed, setImageFailed] = useState(false);
 
-  // --- Helper: Initials Generator ---
   const getInitials = (fullName) => {
     if (!fullName || fullName === 'Citizen') return "??";
     const names = fullName.trim().split(/\s+/);
@@ -29,16 +27,19 @@ export default function ProfileScreen({
     return names[0][0].toUpperCase();
   };
 
-  // --- THE SHIELD: Safe URI Generator ---
+  // --- THE SHIELD: Safe URI Generator WITH CACHE BUSTING ---
   const getProfileImage = () => {
-    // Hard-check for ghost data like the string "null"
     if (!initialData || !initialData.profilePicture || initialData.profilePicture === '' || initialData.profilePicture === 'null') {
       return null; 
     }
+    
+    // 👉 THE FIX: This forces React Native to fetch the NEW image instead of the cached one!
+    const cacheBuster = `?t=${new Date().getTime()}`;
+
     if (Platform.OS === 'ios') {
-      return `${SERVER_URL}/${initialData.profilePicture.replace(/\\/g, '/').replace(/^\//, '')}`;
+      return `${SERVER_URL}/${initialData.profilePicture.replace(/\\/g, '/').replace(/^\//, '')}${cacheBuster}`;
     }
-    return `${SERVER_URL}${initialData.profilePicture}`;
+    return `${SERVER_URL}${initialData.profilePicture}${cacheBuster}`;
   };
 
   const finalImageUri = getProfileImage();
@@ -54,12 +55,10 @@ export default function ProfileScreen({
         <View style={styles.profileHeader}>
           
           <View style={styles.avatarWrapper}>
-            {/* THE BULLETPROOF FIX: Check if we have a URI AND it hasn't failed */}
             {finalImageUri && !imageFailed ? (
               <Image 
                 source={{ uri: finalImageUri }} 
                 style={styles.avatarImage} 
-                // If iOS throws a fit and can't load the image, flip the state to show initials!
                 onError={() => setImageFailed(true)}
               />
             ) : (
@@ -113,36 +112,10 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#0041C7' },
   scrollContent: { padding: 20 },
   profileHeader: { alignItems: 'center', marginBottom: 30 },
-  
-  avatarWrapper: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 15,
-    overflow: 'hidden', 
-    borderWidth: 2,
-    borderColor: '#3ACBE8',
-    backgroundColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-  initialsContainer: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#3ACBE820',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  initialsText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#0160C9',
-  },
-
+  avatarWrapper: { width: 100, height: 100, borderRadius: 50, marginBottom: 15, overflow: 'hidden', borderWidth: 2, borderColor: '#3ACBE8', backgroundColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center' },
+  avatarImage: { width: '100%', height: '100%' },
+  initialsContainer: { width: '100%', height: '100%', backgroundColor: '#3ACBE820', justifyContent: 'center', alignItems: 'center' },
+  initialsText: { fontSize: 32, fontWeight: 'bold', color: '#0160C9' },
   userName: { fontSize: 22, fontWeight: 'bold', color: '#000000' },
   userDetails: { fontSize: 14, color: '#1CA3DE' },
   sectionLabel: { fontSize: 11, fontWeight: 'bold', color: '#0D85D8', letterSpacing: 1, marginBottom: 15, marginTop: 20 },

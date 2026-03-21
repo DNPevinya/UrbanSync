@@ -22,7 +22,7 @@ export default function EditProfileScreen({ onBack, initialData = {}, onUpdateSu
   // --- NEW STATE: Tracks if the image is broken ---
   const [imageFailed, setImageFailed] = useState(false);
 
-  const SERVER_URL = "http://192.168.8.105:5000";
+  const SERVER_URL = "http://192.168.8.103:5000";
 
   // --- Data Bridge ---
   useEffect(() => {

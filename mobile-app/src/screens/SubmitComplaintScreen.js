@@ -17,7 +17,7 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
   const [markerCoord, setMarkerCoord] = useState({ latitude: 6.9271, longitude: 79.8612 });
   const [locationName, setLocationName] = useState('Locating...');
 
-  const SERVER_URL = "http://192.168.8.105:5000";
+  const SERVER_URL = "http://192.168.8.103:5000";
 
   const complaintData = {
     'Urban Infrastructure & Municipal Services': ['Garbage Collection Delay', 'Illegal Waste Dumping', 'Street Cleaning Issue', 'Drainage Blockage / Flooding', 'Broken Road / Pothole', 'Damaged Footpath', 'Traffic Signal Malfunction', 'Public Park Maintenance Issue', 'Public Space Maintenance Issue'],

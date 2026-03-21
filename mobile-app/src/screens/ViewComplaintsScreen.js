@@ -11,7 +11,7 @@ export default function ViewComplaintsScreen({ onNavigateToDetails, userId }) {
   // 👉 Search state is now always active
   const [searchQuery, setSearchQuery] = useState(''); 
 
-  const SERVER_URL = "http://192.168.8.105:5000";
+  const SERVER_URL = "http://192.168.8.103:5000";
 
   useEffect(() => {
     fetchMyComplaints();

@@ -10,6 +10,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // --- THE FIX ---
 // Since server.js is inside 'src', we use '..' to go UP one level 
 // to find the 'uploads' folder in the root directory.

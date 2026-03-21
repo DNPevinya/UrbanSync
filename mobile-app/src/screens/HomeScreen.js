@@ -16,7 +16,7 @@ export default function HomeScreen({
   const [stats, setStats] = useState({ total: 0, pending: 0, resolved: 0 });
   const [loadingStats, setLoadingStats] = useState(true);
 
-  const SERVER_URL = "http://192.168.8.105:5000";
+  const SERVER_URL = "http://192.168.8.103:5000";
 
   useEffect(() => {
     fetchStats();

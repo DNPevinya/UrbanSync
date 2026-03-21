@@ -24,7 +24,7 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount }) {
     if (!validateForm()) return;
     setLoading(true);
     try {
-      const response = await fetch('http://192.168.8.105:5000/api/auth/login', {
+      const response = await fetch('http://192.168.8.103:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.toLowerCase().trim(), password }),
@@ -32,7 +32,6 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount }) {
       const data = await response.json();
       
       if (response.ok && data.user) {
-        // EXACTLY 7 ITEMS: ID is first!
         onLoginSuccess(
           data.user.id,          
           data.user.fullName,    
@@ -40,9 +39,24 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount }) {
           data.user.phone,       
           data.user.district,    
           data.user.division,    
-          data.user.profilePic || null 
+          // 👉 THE BUG WAS HERE! Changed data.user.profilePic to data.user.profilePicture
+          data.user.profilePicture || null 
         ); 
-      } else {
+      } else if (response.ok && data.user) {
+        
+        // 👉 ADD THIS EXACT LINE: It will pop up and tell us the truth!
+        Alert.alert("Server Check", `User ID: ${data.user.id}\nPic: ${data.user.profilePicture || "None"}`);
+
+        onLoginSuccess(
+          data.user.id,          
+          data.user.fullName,    
+          data.user.email,       
+          data.user.phone,       
+          data.user.district,    
+          data.user.division,    
+          data.user.profilePicture || null 
+        ); 
+      } {
         setErrors({ server: data.message || "Invalid email or password." });
       }
     } catch (error) {
