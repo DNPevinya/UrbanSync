@@ -14,9 +14,9 @@ export default function Login() {
   return (
     <div className="h-screen bg-[#F4F6F8] flex flex-col font-sans overflow-hidden">
       <div className="absolute top-6 left-8 flex items-center space-x-3">
-        <img src="/smartlogo.png" alt="SmartNagara Logo" className="w-14 h-14 object-contain" />
+        <img src="/smartlogo.png" alt="UrbanSync Logo" className="w-14 h-14 object-contain" />
         <div>
-          <h1 className="text-[#0F172A] font-extrabold text-xl tracking-wide leading-tight">SMARTNAGARA</h1>
+          <h1 className="text-[#0F172A] font-extrabold text-xl tracking-wide leading-tight">UrbanSync</h1>
           <p className="text-[#64748B] text-[10px] font-bold tracking-widest uppercase mt-0.5">Official Portal</p>
         </div>
       </div>

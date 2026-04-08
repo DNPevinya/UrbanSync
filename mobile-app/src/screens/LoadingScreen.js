@@ -48,7 +48,7 @@ export default function LoadingScreen({ onFinish }) {
           />
         </View>
         
-        <Text style={styles.logoText}>SmartNagara</Text>
+        <Text style={styles.logoText}>UrbanSync</Text>
       </Animated.View>
       
       <Animated.View style={{ opacity: fadeAnim, alignItems: 'center' }}>

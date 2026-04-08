@@ -49,7 +49,7 @@ export default function PrivacyScreen({ onBack }) {
 
         <View style={styles.footer}>
           <Ionicons name="shield-half-outline" size={32} color="#CBD5E1" style={{ marginBottom: 10 }} />
-          <Text style={styles.footerText}>By using SmartNagara, you agree to these terms.</Text>
+          <Text style={styles.footerText}>By using UrbanSync, you agree to these terms.</Text>
         </View>
 
       </ScrollView>

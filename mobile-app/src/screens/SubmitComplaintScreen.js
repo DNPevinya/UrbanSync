@@ -88,7 +88,7 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
       const query = searchQuery.toLowerCase().includes('sri lanka') ? searchQuery : `${searchQuery}, Sri Lanka`;
       const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
       
-      const response = await fetch(url, { headers: { 'User-Agent': 'SmartNagaraApp/1.0' } });
+      const response = await fetch(url, { headers: { 'User-Agent': 'UrbanSyncApp/1.0' } });
       const data = await response.json();
 
       if (data && data.length > 0) {

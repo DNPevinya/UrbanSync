@@ -103,7 +103,7 @@ export default function SignupScreen({
               />
             </View>
             <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join SmartNagara to help improve our city.</Text>
+            <Text style={styles.subtitle}>Join UrbanSync to help improve our city.</Text>
           </View>
 
           <View style={styles.form}>

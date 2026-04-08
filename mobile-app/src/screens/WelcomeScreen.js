@@ -22,7 +22,7 @@ export default function WelcomeScreen({ onGetStarted }) {
                 resizeMode="cover" 
               />
             </View>
-            <Text style={styles.title}>SmartNagara</Text>
+            <Text style={styles.title}>UrbanSync</Text>
             <Text style={styles.description}>
               Report Public Issues Easily and Transparently
             </Text>

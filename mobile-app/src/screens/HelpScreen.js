@@ -44,7 +44,7 @@ export default function HelpScreen({ onBack, onNavigateToFAQ }) {
             </View>
           </View>
           <Text style={styles.stepDesc}>
-            SmartNagara uses your device's GPS to automatically pinpoint the exact location of the issue. This ensures your report is instantly routed to the correct department.
+            UrbanSync uses your device's GPS to automatically pinpoint the exact location of the issue. This ensures your report is instantly routed to the correct department.
           </Text>
         </View>
 

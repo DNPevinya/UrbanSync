@@ -77,7 +77,7 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
               />
             </View>
             <Text style={styles.welcomeText}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Log in to report a complaint or provide feedback to SmartNagara.</Text>
+            <Text style={styles.subtitle}>Log in to report a complaint or provide feedback to UrbanSync.</Text>
           </View>
 
           <View style={styles.form}>
@@ -143,7 +143,7 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
 
           <View style={styles.footer}>
             <View style={styles.signupRow}>
-              <Text style={styles.noAccountText}>New to SmartNagara? </Text>
+              <Text style={styles.noAccountText}>New to UrbanSync? </Text>
               <TouchableOpacity onPress={onCreateAccount}>
                 <Text style={styles.signupLink}>Create an Account</Text>
               </TouchableOpacity>

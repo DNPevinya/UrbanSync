@@ -13,7 +13,7 @@ export default function ForgotPasswordScreen({ onBack, onResetSuccess }) {
   const handleSendOTP = async () => {
     if (!email) return alert("Please enter your email.");
     try {
-      await fetch('http://192.168.1.4:5000/api/auth/forgot-password', {
+      await fetch('http://192.168.8.103:5000/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.toLowerCase().trim() }),

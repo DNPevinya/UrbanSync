@@ -60,7 +60,7 @@ export default function Sidebar({ role = 'admin' }) {
         <div className="w-8 h-8 bg-[#0041C7] rounded text-white flex items-center justify-center mr-3">
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.35 1.155 1 1 0 01-.15.3l-2 3.5a1 1 0 001.272 1.48L5.75 14.24a.999.999 0 011.155.3 1 1 0 01.3.15l3.5 2a1 1 0 001.48-1.272l-.723-1.277a.999.999 0 01.3-1.155 1 1 0 01.15-.3l3.5-2a1 1 0 00-.272-1.742l-3.5-2a.999.999 0 01-1.155-.3 1 1 0 01-.3-.15l-3.5-2zM4 9a1 1 0 00-1 1v3a1 1 0 102 0V10a1 1 0 00-1-1zm3 1a1 1 0 112 0v3a1 1 0 11-2 0v-3zm5-1a1 1 0 00-1 1v3a1 1 0 102 0V10a1 1 0 00-1-1z" /></svg>
         </div>
-        <h1 className="text-xl font-bold tracking-wide">CitizenConnect</h1>
+        <h1 className="text-xl font-bold tracking-wide">UrbanSync</h1>
       </div>
 
       {/* Navigation */}

@@ -54,7 +54,7 @@ export default function Settings({ role = 'admin' }) {
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg className="h-4 w-4 text-[#94A3B8]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                       </div>
-                      <input type="email" defaultValue="admin@smartnagara.gov.lk" className="block w-full pl-10 pr-3 py-2.5 border border-[#E2E8F0] rounded-lg text-[13px] font-bold text-[#94A3B8] bg-[#F8FAFC] outline-none cursor-not-allowed" readOnly />
+                      <input type="email" defaultValue="admin@UrbanSync.gov.lk" className="block w-full pl-10 pr-3 py-2.5 border border-[#E2E8F0] rounded-lg text-[13px] font-bold text-[#94A3B8] bg-[#F8FAFC] outline-none cursor-not-allowed" readOnly />
                     </div>
                   </div>
                 </div>

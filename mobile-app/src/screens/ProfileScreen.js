@@ -104,7 +104,7 @@ export default function ProfileScreen({
         </TouchableOpacity>
 
         <View style={styles.footerInfo}>
-          <Text style={styles.footerText}>SmartNagara Urban Services</Text>
+          <Text style={styles.footerText}>UrbanSync Urban Services</Text>
           <Text style={styles.versionText}>VERSION 1.0</Text>
         </View>
         

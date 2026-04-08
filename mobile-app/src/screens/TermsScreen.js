@@ -25,7 +25,7 @@ export default function TermsScreen({ onBack }) {
         <TermSection 
           icon="checkmark-circle-outline"
           title="1. Acceptance of Terms" 
-          body="By creating an account or using SmartNagara, you agree to be bound by these terms. This platform is intended for legitimate public service feedback only." 
+          body="By creating an account or using UrbanSync, you agree to be bound by these terms. This platform is intended for legitimate public service feedback only." 
         />
 
         <TermSection 
@@ -54,7 +54,7 @@ export default function TermsScreen({ onBack }) {
 
         <View style={styles.footer}>
           <Ionicons name="business-outline" size={32} color="#CBD5E1" style={{ marginBottom: 10 }} />
-          <Text style={styles.footerText}>© 2026 SmartNagara Urban Services Sri Lanka</Text>
+          <Text style={styles.footerText}>© 2026 UrbanSync Urban Services Sri Lanka</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -47,7 +47,7 @@ export default function HomeScreen({
       <View style={styles.topNavBar}>
         <View>
           <Text style={styles.greetingText}>Ayubowan, {userFirstName || 'Citizen'}</Text>
-          <Text style={styles.navTitle}>SmartNagara</Text>
+          <Text style={styles.navTitle}>UrbanSync</Text>
         </View>
         <TouchableOpacity style={styles.notificationBtn} onPress={onNavigateToNotifications} activeOpacity={0.7}>
           <Ionicons name="notifications-outline" size={24} color="#1E293B" />
