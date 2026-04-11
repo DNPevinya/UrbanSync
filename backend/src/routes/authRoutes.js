@@ -80,10 +80,20 @@ router.post('/login', async (req, res) => {
             }
         } 
         else if (user.role === 'officer') {
-            const [officers] = await db.query(`SELECT * FROM officers WHERE user_id = ?`, [user.user_id]);
+            // UPDATED: Use a JOIN to grab the Authority Name alongside the Officer data
+            const officerQuery = `
+                SELECT o.full_name, o.authority_id, a.name as authority_name, a.department as dept_type
+                FROM officers o
+                JOIN authorities a ON o.authority_id = a.authority_id
+                WHERE o.user_id = ?
+            `;
+            const [officers] = await db.query(officerQuery, [user.user_id]);
+            
             if (officers.length > 0) {
                 userProfile.fullName = officers[0].full_name;
                 userProfile.authority_id = officers[0].authority_id;
+                userProfile.authorityName = officers[0].authority_name; // The department name!
+                userProfile.deptType = officers[0].dept_type; 
             }
         }
 

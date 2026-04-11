@@ -9,31 +9,33 @@ export default function OfficerDashboard() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // 1. New State to hold the logged-in user's details
-  const [officerInfo, setOfficerInfo] = useState({ fullName: '', authority_id: null });
+  // State to hold the logged-in user's details
+  const [officerInfo, setOfficerInfo] = useState({ 
+    fullName: '', 
+    authority_id: null,
+    authorityName: ''
+  });
 
   useEffect(() => {
-    // 2. SECURITY CHECK: Grab the user from browser memory
+    // SECURITY CHECK: Grab the user from browser memory
     const savedUser = localStorage.getItem('urbanSyncUser');
     
     if (!savedUser) {
-      // If no one is logged in, kick them out to the login page
       navigate('/login');
       return; 
     }
 
     const parsedUser = JSON.parse(savedUser);
     
-    // Extra security: Make sure a citizen didn't somehow get here
     if (parsedUser.role !== 'officer') {
       navigate('/login');
       return;
     }
 
-    // 3. Save their real info to state so we can display their name
+    // Save their real info to state so we can display it
     setOfficerInfo(parsedUser);
 
-    // 4. Fetch the real data using their REAL authority_id
+    // Fetch the real data using their REAL authority_id
     const fetchComplaints = async () => {
       try {
         const response = await fetch(`http://localhost:5000/api/complaints/authority/${parsedUser.authority_id}`);
@@ -57,8 +59,8 @@ export default function OfficerDashboard() {
       <Sidebar role="officer" />
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        {/* Make the header dynamically show their name! */}
-        <Header title={`Welcome, Officer ${officerInfo.fullName || ''}`} />
+        {/* Dynamic Header pulling name and department from the database */}
+        <Header title={`Welcome, Officer ${officerInfo.fullName || ''} | ${officerInfo.authorityName || ''}`} />
 
         <main className="flex-1 overflow-y-auto p-8 flex flex-col">
           
