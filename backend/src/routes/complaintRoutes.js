@@ -175,3 +175,18 @@ router.patch('/update-status/:id', async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to update status." });
   }
 });
+
+// GET all complaints assigned to a specific authority
+router.get('/authority/:authorityId', async (req, res) => {
+  try {
+    const { authorityId } = req.params;
+    const [rows] = await db.query(
+      "SELECT * FROM complaints WHERE authority_id = ? AND status != 'CANCELLED' ORDER BY created_at DESC", 
+      [authorityId]
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error fetching complaints" });
+  }
+});
