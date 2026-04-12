@@ -3,8 +3,6 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView, RefreshControl, A
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// IMPORT YOUR BASE_URL SO IT CONNECTS TO THE RIGHT PLACE!
 import { BASE_URL } from '../../src/config'; 
 
 const getNotificationStyle = (message) => {
@@ -30,12 +28,8 @@ export default function NotificationScreen({ onBack }) {
 
   const fetchNotifications = async () => {
     try {
-      // 1. Get the logged-in citizen's ID
       const userData = await AsyncStorage.getItem('user');
-      console.log("Notification Screen - Raw User Data from Storage:", userData);
-
       if (!userData) {
-        console.log("No user found in storage.");
         setLoading(false);
         return;
       }
@@ -43,18 +37,11 @@ export default function NotificationScreen({ onBack }) {
       const parsedUser = JSON.parse(userData);
       const userId = parsedUser.id; 
       
-      console.log(`Fetching notifications for User ID: ${userId}`);
-      console.log(`Using URL: ${BASE_URL}/api/auth/notifications/${userId}`);
-
-      // 2. Fetch using your BASE_URL
       const response = await fetch(`${BASE_URL}/api/auth/notifications/${userId}`);
       const result = await response.json();
 
       if (result.success) {
-        console.log(`Found ${result.data.length} notifications!`);
         setNotifications(result.data);
-      } else {
-        console.log("Backend returned success: false");
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -73,6 +60,26 @@ export default function NotificationScreen({ onBack }) {
     fetchNotifications();
   }, []);
 
+  // FIXED MARK ALL AS READ LOGIC
+  const markAllAsRead = async () => {
+    // 1. Instantly update the UI so the blue dots disappear immediately
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: 1 })));
+
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      if (!userData) return;
+      const userId = JSON.parse(userData).id;
+
+      // 2. Ping the backend in the background
+      await fetch(`${BASE_URL}/api/auth/notifications/read-all/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      console.error("Error marking all as read:", error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       
@@ -86,7 +93,7 @@ export default function NotificationScreen({ onBack }) {
             <Text style={styles.navTitle}>Notifications</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.markReadBtn} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.markReadBtn} onPress={markAllAsRead} activeOpacity={0.7}>
           <Ionicons name="checkmark-done-outline" size={22} color="#0041C7" />
         </TouchableOpacity>
       </View>
@@ -111,15 +118,23 @@ export default function NotificationScreen({ onBack }) {
           ) : (
             notifications.map((item) => {
               const { type, icon, title } = getNotificationStyle(item.message);
+              // FIXED CHECK: Safely parse to number
+              const isUnread = Number(item.is_read) === 0;
               
               return (
-                <TouchableOpacity key={item.notification_id} style={styles.notificationCard} activeOpacity={0.7}>
+                <TouchableOpacity 
+                  key={item.notification_id} 
+                  style={[styles.notificationCard, isUnread && styles.unreadCard]} 
+                  activeOpacity={0.7}
+                >
                   <View style={[styles.iconContainer, styles[type + 'Icon']]}>
                     <MaterialCommunityIcons name={icon} size={26} color={styles[type + 'Color'].color} />
                   </View>
                   <View style={styles.textContainer}>
                     <View style={styles.titleRow}>
                       <Text style={styles.notifTitle}>{title}</Text>
+                      {/* UNREAD BLUE DOT INDICATOR */}
+                      {isUnread && <View style={styles.unreadIndicator} />}
                       <Text style={styles.notifTime}>{formatTime(item.created_at)}</Text>
                     </View>
                     <Text style={styles.notifMessage} numberOfLines={2}>
@@ -167,6 +182,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F1F5F9',
   },
+  
+  // NEW STYLES FOR UNREAD HIGHLIGHTS
+  unreadCard: {
+    backgroundColor: '#F0F7FF', 
+    borderColor: '#D0E6FF',
+    borderWidth: 1,
+  },
+  unreadIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#0041C7',
+    marginRight: 'auto',
+    marginLeft: 10,
+  },
+
   iconContainer: { width: 52, height: 52, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   textContainer: { flex: 1, justifyContent: 'center' },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
@@ -174,7 +205,6 @@ const styles = StyleSheet.create({
   notifTime: { fontSize: 11, color: '#94A3B8', fontWeight: '600' },
   notifMessage: { fontSize: 13, color: '#64748B', lineHeight: 20, fontWeight: '500' },
   
-  // Theme Colors
   successIcon: { backgroundColor: 'rgba(40, 199, 111, 0.12)' },
   successColor: { color: '#28C76F' },
   infoIcon: { backgroundColor: 'rgba(1, 96, 201, 0.12)' }, 

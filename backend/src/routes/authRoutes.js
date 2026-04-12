@@ -173,3 +173,13 @@ router.get('/notifications/:userId', async (req, res) => {
     res.status(500).json({ success: false, message: "Error fetching notifications" });
   }
 });
+
+router.patch('/notifications/read-all/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await db.query('UPDATE notifications SET is_read = 1 WHERE user_id = ?', [userId]);
+    res.json({ success: true, message: "All notifications marked as read" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
