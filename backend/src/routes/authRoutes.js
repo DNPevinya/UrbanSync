@@ -159,7 +159,6 @@ router.put('/update-profile', upload.single('profileImage'), async (req, res) =>
     }
 });
 
-module.exports = router;
 
 // GET ALL NOTIFICATIONS FOR A SPECIFIC CITIZEN
 router.get('/notifications/:userId', async (req, res) => {
@@ -183,3 +182,40 @@ router.patch('/notifications/read-all/:userId', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// =========================================================================
+// 4. UPDATE PASSWORD (OFFICERS & ADMINS)
+// =========================================================================
+router.post('/update-password', async (req, res) => {
+    const { email, currentPassword, newPassword } = req.body;
+
+    try {
+        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        if (users.length === 0) return res.status(404).json({ message: "User not found" });
+
+        const user = users[0];
+
+        // 🎯 THE HYBRID CHECK
+        const isBcryptMatch = await bcrypt.compare(currentPassword, user.password);
+        const isPlainTextMatch = currentPassword === user.password; // For your seeded data
+        
+        if (!isBcryptMatch && !isPlainTextMatch) {
+            return res.status(401).json({ 
+                success: false, 
+                message: "Authentication Failed: The current password you entered does not match our records." 
+            });
+        }
+
+        // Hash the new one so it's secure from now on
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        await db.query('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, email]);
+        res.json({ success: true, message: "Security credentials updated successfully!" });
+
+    } catch (error) {
+        res.status(500).json({ message: "Internal Server error" });
+    }
+});
+
+module.exports = router;
