@@ -4,6 +4,7 @@ const db = require('./../db');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
+const crypto = require('crypto'); // Used for generating secure temporary passwords
 
 // --- MULTER CONFIGURATION ---
 const storage = multer.diskStorage({
@@ -80,19 +81,24 @@ router.post('/login', async (req, res) => {
             }
         } 
         else if (user.role === 'officer') {
-            // UPDATED: Use a JOIN to grab the Authority Name alongside the Officer data
+            // UPDATED: Grabs the Status to check for lockout!
             const officerQuery = `
-                SELECT o.full_name, o.authority_id, a.name as authority_name, a.department as dept_type
+                SELECT o.full_name, o.authority_id, o.status, a.name as authority_name, a.department as dept_type
                 FROM officers o
-                JOIN authorities a ON o.authority_id = a.authority_id
+                LEFT JOIN authorities a ON o.authority_id = a.authority_id
                 WHERE o.user_id = ?
             `;
             const [officers] = await db.query(officerQuery, [user.user_id]);
             
             if (officers.length > 0) {
+                // 🚨 LOCKOUT LOGIC: If Inactive, kick them out immediately! 🚨
+                if (officers[0].status === 'Inactive') {
+                    return res.status(403).json({ message: "Your account has been deactivated. Please contact the Super Admin." });
+                }
+
                 userProfile.fullName = officers[0].full_name;
                 userProfile.authority_id = officers[0].authority_id;
-                userProfile.authorityName = officers[0].authority_name; // The department name!
+                userProfile.authorityName = officers[0].authority_name; 
                 userProfile.deptType = officers[0].dept_type; 
             }
         }
@@ -106,7 +112,7 @@ router.post('/login', async (req, res) => {
 });
 
 // =========================================================================
-// 3. UPDATE PROFILE (CITIZENS ONLY)
+// 3. UPDATE PROFILE & NOTIFICATIONS (CITIZENS ONLY)
 // =========================================================================
 router.put('/update-profile', upload.single('profileImage'), async (req, res) => {
     const { email, fullName, phone, district, division, currentPassword, newPassword, deleteImage } = req.body;
@@ -159,14 +165,9 @@ router.put('/update-profile', upload.single('profileImage'), async (req, res) =>
     }
 });
 
-
-// GET ALL NOTIFICATIONS FOR A SPECIFIC CITIZEN
 router.get('/notifications/:userId', async (req, res) => {
   try {
-    const [rows] = await db.query(
-      "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC", 
-      [req.params.userId]
-    );
+    const [rows] = await db.query("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC", [req.params.userId]);
     res.status(200).json({ success: true, data: rows });
   } catch (error) {
     res.status(500).json({ success: false, message: "Error fetching notifications" });
@@ -195,9 +196,8 @@ router.post('/update-password', async (req, res) => {
 
         const user = users[0];
 
-        // 🎯 THE HYBRID CHECK
         const isBcryptMatch = await bcrypt.compare(currentPassword, user.password);
-        const isPlainTextMatch = currentPassword === user.password; // For your seeded data
+        const isPlainTextMatch = currentPassword === user.password; 
         
         if (!isBcryptMatch && !isPlainTextMatch) {
             return res.status(401).json({ 
@@ -206,7 +206,6 @@ router.post('/update-password', async (req, res) => {
             });
         }
 
-        // Hash the new one so it's secure from now on
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
@@ -216,6 +215,119 @@ router.post('/update-password', async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Internal Server error" });
     }
+});
+
+// ==========================================================
+// 🛡️ 5. ADMIN: OFFICER MANAGEMENT ROUTES
+// ==========================================================
+
+function generatePrefix(departmentName) {
+  if (!departmentName) return "GEN";
+  const words = departmentName.toUpperCase().split(' ');
+  if (words.length === 1) return words[0].substring(0, 3);
+  return words.map(w => w[0]).join('').substring(0, 3);
+}
+
+// GET ALL OFFICERS (Includes Status)
+router.get('/admin/officers-list', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        u.user_id, u.email, u.created_at,
+        o.officer_id, o.full_name, o.employee_id_code, o.status,
+        a.name AS authority_name, a.authority_id
+      FROM users u
+      JOIN officers o ON u.user_id = o.user_id
+      LEFT JOIN authorities a ON o.authority_id = a.authority_id
+      WHERE u.role = 'officer'
+      ORDER BY u.created_at DESC
+    `;
+    const [rows] = await db.query(query);
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error("Fetch Officers Error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to fetch officers." });
+  }
+});
+
+// AUTO-GENERATE EMPLOYEE ID
+router.get('/admin/next-employee-id/:authorityId', async (req, res) => {
+  try {
+    const [authRows] = await db.query('SELECT department FROM authorities WHERE authority_id = ?', [req.params.authorityId]);
+    if (authRows.length === 0) return res.json({ employee_id: 'EMP-001' });
+    
+    const prefix = generatePrefix(authRows[0].department);
+
+    const [countRows] = await db.query('SELECT COUNT(*) as count FROM officers WHERE authority_id = ?', [req.params.authorityId]);
+    const nextNum = countRows[0].count + 1;
+    const paddedNum = nextNum.toString().padStart(3, '0');
+
+    res.json({ success: true, employee_id: `EMP-${prefix}-${paddedNum}` });
+  } catch (err) {
+    console.error("ID Gen Error:", err.message);
+    res.status(500).json({ success: false });
+  }
+});
+
+// ADD NEW OFFICER
+router.post('/admin/add-officer', async (req, res) => {
+  const { full_name, email, authority_id, employee_id_code } = req.body;
+  
+  const tempPassword = crypto.randomBytes(4).toString('hex'); 
+
+  try {
+    const [existing] = await db.query('SELECT email FROM users WHERE email = ?', [email]);
+    if (existing.length > 0) return res.status(400).json({ success: false, message: "Email already exists." });
+
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+    const [userResult] = await db.query(
+      `INSERT INTO users (email, password, role) VALUES (?, ?, 'officer')`, 
+      [email, hashedPassword]
+    );
+    const newUserId = userResult.insertId;
+
+    await db.query(
+      `INSERT INTO officers (user_id, authority_id, full_name, employee_id_code, status) VALUES (?, ?, ?, ?, 'Active')`,
+      [newUserId, authority_id, full_name, employee_id_code]
+    );
+
+    res.status(201).json({ success: true, message: "Officer added!", tempPassword: tempPassword });
+  } catch (err) {
+    console.error("Add Officer Error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to create officer." });
+  }
+});
+
+// UPDATE OFFICER (Status added, Employee ID removed to prevent editing)
+router.put('/admin/update-officer/:userId', async (req, res) => {
+  const { full_name, email, authority_id, status } = req.body;
+  const userId = req.params.userId;
+
+  try {
+    await db.query(`UPDATE users SET email = ? WHERE user_id = ?`, [email, userId]);
+    await db.query(
+      `UPDATE officers SET full_name = ?, authority_id = ?, status = ? WHERE user_id = ?`,
+      [full_name, authority_id, status, userId]
+    );
+    res.json({ success: true, message: "Officer updated successfully!" });
+  } catch (err) {
+    console.error("Update Officer Error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to update officer." });
+  }
+});
+
+// DELETE OFFICER
+router.delete('/admin/delete-officer/:userId', async (req, res) => {
+  const userId = req.params.userId;
+  try {
+    await db.query(`DELETE FROM officers WHERE user_id = ?`, [userId]);
+    await db.query(`DELETE FROM users WHERE user_id = ?`, [userId]);
+    res.json({ success: true, message: "Officer deleted." });
+  } catch (err) {
+    console.error("Delete Officer Error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to delete officer." });
+  }
 });
 
 module.exports = router;

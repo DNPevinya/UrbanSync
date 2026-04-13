@@ -8,7 +8,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminComplaints from './pages/AdminComplaints';
 import AdminAuthorities from './pages/AdminAuthorities';
-import AdminUserManagement from './pages/AdminUserManagement';
+import AdminOfficerManagement from './pages/AdminOfficerManagement';
 import AdminAnalytics from './pages/AdminAnalytics';
 
 // Officer Pages
@@ -31,7 +31,7 @@ export default function App() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/complaints" element={<AdminComplaints />} />
         <Route path="/authorities" element={<AdminAuthorities />} />
-        <Route path="/users" element={<AdminUserManagement />} />
+        <Route path="admin/officers" element={<AdminOfficerManagement />} />
         <Route path="/analytics" element={<AdminAnalytics />} />
         <Route path="/settings" element={<Settings role="admin" />} />
 
