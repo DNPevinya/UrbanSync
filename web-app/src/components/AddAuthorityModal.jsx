@@ -1,7 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-export default function AddAuthorityModal({ isOpen, onClose }) {
+export default function AddAuthorityModal({ isOpen, onClose, refreshData, departments, regions }) {
+  const [name, setName] = useState('');
+  const [department, setDepartment] = useState('');
+  const [region, setRegion] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   if (!isOpen) return null;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/complaints/admin/add-authority', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, department, region })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setName(''); setDepartment(''); setRegion('');
+        onClose();
+        if (refreshData) refreshData();
+      } else {
+        alert("Failed to add: " + result.message);
+      }
+    } catch (error) {
+      console.error("Error adding authority:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
@@ -10,51 +41,72 @@ export default function AddAuthorityModal({ isOpen, onClose }) {
         <div className="bg-[#0041C7] px-6 py-5 flex justify-between items-center">
           <div className="flex items-center text-white">
             <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" /></svg>
-            <h3 className="text-lg font-bold">Add New Department</h3>
+            <h3 className="text-lg font-bold">Add New Authority</h3>
           </div>
           <button onClick={onClose} className="text-blue-200 hover:text-white transition-colors">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <div>
+            <label className="block text-[11px] font-bold text-[#1E293B] mb-1.5">Official Authority Name <span className="text-[#EF4444]">*</span></label>
+            <input 
+              type="text" 
+              required
+              placeholder="e.g. NWSDB Regional Office - Kandy"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] focus:ring-2 focus:ring-[#0041C7] outline-none" 
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[11px] font-bold text-[#1E293B] mb-1.5">Authority Name <span className="text-[#EF4444]">*</span></label>
-              <input type="text" className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] focus:ring-2 focus:ring-[#0041C7] outline-none" />
+              <label className="block text-[11px] font-bold text-[#1E293B] mb-1.5">Department Category <span className="text-[#EF4444]">*</span></label>
+              <select 
+                required
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] focus:ring-2 focus:ring-[#0041C7] outline-none bg-white"
+              >
+                <option value="" disabled>Select Department</option>
+                {departments && departments.map((dept, index) => (
+                  <option key={index} value={dept}>{dept}</option>
+                ))}
+              </select>
             </div>
+            
             <div>
-              <label className="block text-[11px] font-bold text-[#1E293B] mb-1.5">Authority Code <span className="text-[#EF4444]">*</span></label>
-              <input type="text" placeholder="e.g. PW-2024" className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] focus:ring-2 focus:ring-[#0041C7] outline-none" />
+              <label className="block text-[11px] font-bold text-[#1E293B] mb-1.5">Jurisdiction Region <span className="text-[#EF4444]">*</span></label>
+              <select 
+                required
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+                className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] focus:ring-2 focus:ring-[#0041C7] outline-none bg-white"
+              >
+                <option value="" disabled>Select Region</option>
+                {regions && regions.map((reg, index) => (
+                  <option key={index} value={reg}>{reg}</option>
+                ))}
+              </select>
             </div>
           </div>
-          
-          <div>
-            <label className="block text-[11px] font-bold text-[#1E293B] mb-1.5">Assign Initial Officers</label>
-            <div className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] flex items-center flex-wrap gap-2">
-              <span className="flex items-center px-2 py-1 bg-[#F0F5FF] text-[#0041C7] rounded text-[11px] font-bold border border-[#DCE7F9]">Chamara Silva <button className="ml-1 text-[#0041C7] hover:text-[#1E293B]">×</button></span>
-              <span className="flex items-center px-2 py-1 bg-[#F0F5FF] text-[#0041C7] rounded text-[11px] font-bold border border-[#DCE7F9]">Ishara Jayasinghe <button className="ml-1 text-[#0041C7] hover:text-[#1E293B]">×</button></span>
-              <input type="text" placeholder="Search and add officers..." className="flex-1 min-w-[150px] outline-none text-[13px]" />
-            </div>
-            <p className="text-[10px] text-[#64748B] mt-1.5">Officers assigned will receive an email notification.</p>
+
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mt-4">
+             <p className="text-[11px] text-[#0041C7] font-semibold">
+               <span className="font-extrabold block mb-1">Note on Staffing:</span>
+               To assign officers to this new authority, please navigate to the User Management tab after creation.
+             </p>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-bold text-[#1E293B] mb-1.5">Department Description <span className="text-[#64748B] font-normal">(Optional)</span></label>
-            <textarea rows="3" placeholder="Describe the authority's responsibilities..." className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] focus:ring-2 focus:ring-[#0041C7] outline-none resize-none"></textarea>
-          </div>
-        </div>
-
-        <div className="bg-[#F8FAFC] px-6 py-4 border-t border-[#E2E8F0] flex justify-between items-center">
-          <span className="text-[9px] font-bold text-[#94A3B8] uppercase tracking-widest">Secure Admin Portal</span>
-          <div className="flex space-x-3">
-            <button onClick={onClose} className="px-4 py-2.5 text-[13px] font-bold text-[#64748B] hover:text-[#1E293B]">Cancel</button>
-            <button className="px-5 py-2.5 bg-[#0041C7] hover:bg-[#0033A0] text-white text-[13px] font-bold rounded-lg flex items-center">
-              <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
-              Add Authority
+          <div className="bg-[#F8FAFC] -mx-6 -mb-6 px-6 py-4 border-t border-[#E2E8F0] flex justify-end items-center space-x-3 mt-6">
+            <button type="button" onClick={onClose} className="px-4 py-2.5 text-[13px] font-bold text-[#64748B] hover:text-[#1E293B]">Cancel</button>
+            <button type="submit" disabled={isSubmitting} className="px-5 py-2.5 bg-[#0041C7] hover:bg-[#0033A0] text-white text-[13px] font-bold rounded-lg flex items-center disabled:opacity-50">
+              {isSubmitting ? "Saving..." : "Add Authority"}
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

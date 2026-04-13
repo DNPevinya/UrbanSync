@@ -152,6 +152,102 @@ router.patch('/reassign/:id', async (req, res) => {
   }
 });
 
+// 8. GET ALL AUTHORITIES WITH OFFICER COUNTS (For Authorities Page)
+router.get('/admin/authorities-list', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        a.authority_id, a.name, a.department, a.region, 
+        COUNT(o.officer_id) as officer_count
+      FROM authorities a
+      LEFT JOIN officers o ON a.authority_id = o.authority_id
+      GROUP BY a.authority_id
+      ORDER BY a.authority_id DESC
+    `;
+    const [rows] = await db.query(query);
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error("Fetch Authorities Error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to fetch authorities." });
+  }
+});
+
+// 9. ADD NEW AUTHORITY
+router.post('/admin/add-authority', async (req, res) => {
+  const { name, department, region } = req.body;
+  try {
+    const query = `INSERT INTO authorities (name, department, region) VALUES (?, ?, ?)`;
+    await db.query(query, [name, department, region]);
+    res.status(201).json({ success: true, message: "Authority created successfully!" });
+  } catch (err) {
+    console.error("Add Authority Error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to create authority." });
+  }
+});
+
+// 10. UPDATE AUTHORITY
+router.put('/admin/update-authority/:id', async (req, res) => {
+  const { name, department, region } = req.body;
+  try {
+    const query = `UPDATE authorities SET name = ?, department = ?, region = ? WHERE authority_id = ?`;
+    await db.query(query, [name, department, region, req.params.id]);
+    res.json({ success: true, message: "Authority updated!" });
+  } catch (err) {
+    console.error("Update Auth Error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to update." });
+  }
+});
+
+// 11. DELETE AUTHORITY & REASSIGN COMPLAINTS
+router.delete('/admin/delete-authority/:id', async (req, res) => {
+  const { fallback_authority_id } = req.body;
+  const authIdToDelete = req.params.id;
+
+  try {
+    // 1. Reassign all complaints to the new fallback department
+    if (fallback_authority_id) {
+      await db.query(`UPDATE complaints SET authority_id = ? WHERE authority_id = ?`, [fallback_authority_id, authIdToDelete]);
+    }
+    // 2. Delete the old authority
+    await db.query(`DELETE FROM authorities WHERE authority_id = ?`, [authIdToDelete]);
+    
+    res.json({ success: true, message: "Authority deleted and complaints reassigned!" });
+  } catch (err) {
+    console.error("Delete Auth Error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to delete." });
+  }
+});
+
+// 12. GET UNIQUE DEPARTMENTS (For Dropdowns)
+router.get('/admin/departments-list', async (req, res) => {
+  try {
+    // Grabs every unique department name alphabetically, ignoring null/empty ones
+    const query = `SELECT DISTINCT department FROM authorities WHERE department IS NOT NULL AND department != '' ORDER BY department ASC`;
+    const [rows] = await db.query(query);
+    
+    // Convert the array of objects [{department: 'Police'}, ...] into a simple array of strings ['Police', ...]
+    const departments = rows.map(row => row.department);
+    
+    res.json({ success: true, data: departments });
+  } catch (err) {
+    console.error("Fetch Departments Error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to fetch departments." });
+  }
+});
+
+// 13. GET UNIQUE REGIONS (For Dropdowns)
+router.get('/admin/regions-list', async (req, res) => {
+  try {
+    const query = `SELECT DISTINCT region FROM authorities WHERE region IS NOT NULL AND region != '' ORDER BY region ASC`;
+    const [rows] = await db.query(query);
+    const regions = rows.map(row => row.region);
+    res.json({ success: true, data: regions });
+  } catch (err) {
+    console.error("Fetch Regions Error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to fetch regions." });
+  }
+});
+
 
 // ==========================================================
 // 🏢 GENERAL & OFFICER ROUTES
