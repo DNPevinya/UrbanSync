@@ -146,18 +146,18 @@ export default function AdminDashboard() {
                         </p>
                       </td>
 
-                      {/* Column 4: Authority */}
+                      {/* Column 4: Authority (Minimalist Text) */}
                       <td className="px-6 py-4">
-                        <span className={`text-[10px] px-2 py-1 rounded font-bold uppercase tracking-tight ${c.authority_name ? 'bg-[#0F172A] text-white' : 'bg-[#E2E8F0] text-[#64748B]'}`}>
-                          {c.authority_name || 'PENDING ASSIGNMENT'}
+                        <span className={`text-[12px] font-bold ${c.authority_name ? 'text-[#1E293B]' : 'text-[#94A3B8] italic'}`}>
+                          {c.authority_name || 'Pending Assignment'}
                         </span>
                       </td>
 
-                      {/* Column 5: Status */}
+                      {/* Column 5: Status (Softer Pill) */}
                       <td className="px-6 py-4 text-center">
-                         <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full uppercase tracking-wider ${
-                           c.status === 'PENDING' ? 'bg-red-50 text-red-600' : 
-                           c.status === 'RESOLVED' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'
+                         <span className={`px-2.5 py-1 text-[10px] font-extrabold rounded-md uppercase tracking-wider ${
+                           c.status?.trim().toUpperCase() === 'PENDING' ? 'bg-red-50 text-red-600 border border-red-100' : 
+                           c.status?.trim().toUpperCase() === 'RESOLVED' ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-amber-50 text-amber-600 border border-amber-100'
                          }`}>
                            {c.status}
                          </span>
