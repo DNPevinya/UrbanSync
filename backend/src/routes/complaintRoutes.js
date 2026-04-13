@@ -248,6 +248,23 @@ router.get('/admin/regions-list', async (req, res) => {
   }
 });
 
+
+// ==========================================================
+// 🚨 SUPER ADMIN: DELETE COMPLAINT
+// ==========================================================
+router.delete('/admin/delete-complaint/:id', async (req, res) => {
+  const complaintId = req.params.id;
+  try {
+    // This permanently removes the complaint from the database
+    await db.query(`DELETE FROM complaints WHERE complaint_id = ?`, [complaintId]);
+    res.json({ success: true, message: "Complaint permanently deleted." });
+  } catch (err) {
+    console.error("Delete Complaint Error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to delete complaint." });
+  }
+});
+
+
 // ==========================================================
 // 📊 ADMIN: ANALYTICS & REPORTS
 // ==========================================================
@@ -410,6 +427,33 @@ router.get('/authority/:authorityId', async (req, res) => {
     res.json({ success: true, data: rows });
   } catch (err) {
     res.status(500).json({ success: false, message: "Error fetching joined data" });
+  }
+});
+
+// REJECT / ESCALATE COMPLAINT
+router.patch('/officer/reject-complaint/:id', async (req, res) => {
+  const complaintId = req.params.id;
+  const { reason, officerName } = req.body; 
+
+  try {
+    // We format a nice note so the Admin knows exactly who rejected it and why
+    const rejectionNote = `\n[ESCALATED BY ${officerName || 'OFFICER'}]: ${reason}`;
+
+    // Update the status to REJECTED, and append the note to existing admin_notes (or replace if null)
+    const query = `
+      UPDATE complaints 
+      SET 
+        status = 'REJECTED',
+        admin_notes = CONCAT(IFNULL(admin_notes, ''), ?)
+      WHERE complaint_id = ?
+    `;
+    
+    await db.query(query, [rejectionNote, complaintId]);
+    
+    res.json({ success: true, message: "Complaint escalated to Super Admin." });
+  } catch (err) {
+    console.error("Rejection Error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to reject complaint." });
   }
 });
 

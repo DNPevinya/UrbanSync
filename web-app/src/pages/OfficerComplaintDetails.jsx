@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import RejectComplaintModal from '../components/RejectComplaintModal'; // ADDED IMPORT
 
 export default function OfficerComplaintDetails() {
   const [searchParams] = useSearchParams();
@@ -14,24 +15,28 @@ export default function OfficerComplaintDetails() {
   const [updating, setUpdating] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   
-  // Get logged in officer info for the header
+  // MODAL STATE
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+
+  // Get logged in officer info for the header and escalation
   const savedUser = JSON.parse(localStorage.getItem('urbanSyncUser') || '{}');
 
-  useEffect(() => {
-    const fetchDetails = async () => {
-      try {
-        const response = await fetch(`http://localhost:5000/api/complaints/${complaintId}`);
-        const result = await response.json();
-        if (result.success) {
-          setComplaint(result.data);
-          setNewStatus(result.data.status); // Set the dropdown to current status
-        }
-      } catch (error) {
-        console.error("Error fetching details:", error);
-      } finally {
-        setLoading(false);
+  const fetchDetails = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/complaints/${complaintId}`);
+      const result = await response.json();
+      if (result.success) {
+        setComplaint(result.data);
+        setNewStatus(result.data.status); 
       }
-    };
+    } catch (error) {
+      console.error("Error fetching details:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (complaintId) fetchDetails();
   }, [complaintId]);
 
@@ -58,17 +63,16 @@ export default function OfficerComplaintDetails() {
   if (loading) return <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-bold text-[#64748B]">Loading Complaint Details...</div>;
   if (!complaint) return <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-bold text-red-500">Complaint not found.</div>;
 
-  // Format the date nicely
   const submitDate = new Date(complaint.created_at).toLocaleDateString('en-US', {
     year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'
   });
 
-  // Get status color
   const getStatusColor = (status) => {
     const s = status.toUpperCase();
     if (s === 'PENDING') return 'bg-amber-100 text-amber-700';
     if (s === 'IN PROGRESS') return 'bg-blue-100 text-blue-700';
     if (s === 'RESOLVED') return 'bg-green-100 text-green-700';
+    if (s === 'REJECTED') return 'bg-red-100 text-red-700 animate-pulse'; // Added for rejected state
     return 'bg-[#F0F5FF] text-[#0041C7]';
   };
 
@@ -78,7 +82,6 @@ export default function OfficerComplaintDetails() {
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         
-        {/* Top Navigation Bar */}
         <div className="bg-white border-b border-[#E2E8F0] px-8 py-4 z-10 flex justify-between items-center shadow-sm flex-shrink-0">
           <div className="flex items-center">
             <button 
@@ -99,14 +102,22 @@ export default function OfficerComplaintDetails() {
           </div>
         </div>
 
-        {/* Main Content Grid */}
         <main className="flex-1 overflow-y-auto p-8">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* LEFT COLUMN: Data & Evidence */}
             <div className="lg:col-span-2 space-y-6">
               
-              {/* Description Card */}
+              {/* Admin Notes Section (Crucial if the admin sends it back or if it's rejected) */}
+              {complaint.admin_notes && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 shadow-sm">
+                  <h4 className="text-[11px] font-bold text-amber-800 uppercase tracking-wider flex items-center mb-2">
+                    <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    System / Admin Notes
+                  </h4>
+                  <p className="text-[13px] text-amber-900 whitespace-pre-wrap font-medium">{complaint.admin_notes}</p>
+                </div>
+              )}
+
               <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-[#E2E8F0] bg-[#F8FAFC]">
                   <h3 className="text-[13px] font-bold text-[#1E293B]">Description & Details</h3>
@@ -117,7 +128,6 @@ export default function OfficerComplaintDetails() {
                     {complaint.description || "No detailed description provided by the citizen."}
                   </p>
                   
-                  {/* Removed Priority, adjusted grid to 2 columns */}
                   <div className="grid grid-cols-2 gap-4 bg-[#F8FAFC] p-4 rounded-lg border border-[#E2E8F0]">
                     <div>
                       <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1">Category</p>
@@ -131,7 +141,6 @@ export default function OfficerComplaintDetails() {
                 </div>
               </div>
 
-              {/* Location Card */}
               <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-[#E2E8F0] bg-[#F8FAFC] flex justify-between items-center">
                   <h3 className="text-[13px] font-bold text-[#1E293B]">Location Information</h3>
@@ -154,7 +163,6 @@ export default function OfficerComplaintDetails() {
                     </div>
                   </div>
                   
-                  {/* LIVE OpenStreetMap Integration */}
                   <div className="md:w-1/2 bg-slate-200 relative min-h-[200px] border-l border-[#E2E8F0]">
                     {complaint.latitude && complaint.longitude ? (
                       <iframe
@@ -177,7 +185,6 @@ export default function OfficerComplaintDetails() {
                 </div>
               </div>
 
-              {/* Evidence & Attachments */}
               <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-[#E2E8F0] bg-[#F8FAFC]">
                   <h3 className="text-[13px] font-bold text-[#1E293B]">Evidence & Attachments</h3>
@@ -198,10 +205,8 @@ export default function OfficerComplaintDetails() {
               </div>
             </div>
 
-            {/* RIGHT COLUMN: Actions & Timeline */}
             <div className="lg:col-span-1 space-y-6">
               
-              {/* LIVE Status Update Box */}
               <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-6">
                 <h3 className="text-[12px] font-bold text-[#1E293B] uppercase tracking-wider mb-4">Update Case Status</h3>
                 <label className="block text-[11px] font-bold text-[#64748B] mb-2">Workflow Stage</label>
@@ -210,30 +215,42 @@ export default function OfficerComplaintDetails() {
                   onChange={(e) => setNewStatus(e.target.value)}
                   className="w-full border border-[#E2E8F0] rounded-lg px-4 py-2.5 text-[13px] font-bold text-[#1E293B] focus:outline-none focus:ring-2 focus:ring-[#0041C7] mb-4"
                 >
-                  <option value="Pending">Pending</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Resolved">Resolved</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="IN PROGRESS">In Progress</option>
+                  <option value="RESOLVED">Resolved</option>
                 </select>
                 <button 
                   onClick={handleStatusChange}
                   disabled={updating || newStatus === complaint.status}
-                  className="w-full py-2.5 bg-[#0041C7] hover:bg-[#0033A0] text-white text-[13px] font-bold rounded-lg transition-colors disabled:opacity-50 disabled:bg-slate-400"
+                  className="w-full py-2.5 bg-[#0041C7] hover:bg-[#0033A0] text-white text-[13px] font-bold rounded-lg transition-colors disabled:opacity-50 disabled:bg-slate-400 mb-4"
                 >
                   {updating ? 'Applying...' : 'Apply Transition'}
                 </button>
+
+                {/* ESCALATION BUTTON: Only show if the complaint isn't already resolved/rejected */}
+                {complaint.status !== 'RESOLVED' && complaint.status !== 'REJECTED' && (
+                  <div className="pt-4 border-t border-slate-100">
+                    <button 
+                      onClick={() => setIsRejectModalOpen(true)}
+                      className="w-full py-2 border-2 border-red-200 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white font-bold rounded-lg text-[12px] transition-all flex items-center justify-center shadow-sm"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                      Reject & Escalate
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Case Timeline Box */}
               <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-6">
                 <h3 className="text-[12px] font-bold text-[#1E293B] uppercase tracking-wider mb-6">Case Timeline</h3>
                 
                 <div className="relative border-l-2 border-[#E2E8F0] ml-3 space-y-6">
                   
-                  {/* Current Status Node */}
                   <div className="relative pl-6">
                     <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-4 border-white shadow-sm ${
-                        complaint.status === 'Resolved' ? 'bg-green-500' : 
-                        complaint.status === 'In Progress' ? 'bg-[#0041C7]' : 'bg-amber-500'
+                        complaint.status === 'RESOLVED' ? 'bg-green-500' : 
+                        complaint.status === 'REJECTED' ? 'bg-red-500' : 
+                        complaint.status === 'IN PROGRESS' ? 'bg-[#0041C7]' : 'bg-amber-500'
                     }`}></div>
                     <div className="flex justify-between items-start mb-1">
                       <h4 className="text-[12px] font-bold text-[#1E293B]">Current Status</h4>
@@ -244,7 +261,6 @@ export default function OfficerComplaintDetails() {
                     </p>
                   </div>
 
-                  {/* System Origin Node */}
                   <div className="relative pl-6">
                     <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-[#E2E8F0] border-4 border-white shadow-sm"></div>
                     <div className="flex justify-between items-start mb-1">
@@ -264,6 +280,16 @@ export default function OfficerComplaintDetails() {
           <Footer />
         </main>
       </div>
+
+      {/* RENDER THE REJECT MODAL */}
+      <RejectComplaintModal 
+        isOpen={isRejectModalOpen} 
+        onClose={() => setIsRejectModalOpen(false)} 
+        complaint={complaint} 
+        refreshData={fetchDetails} 
+        officerName={savedUser.fullName}
+      />
+
     </div>
   );
 }

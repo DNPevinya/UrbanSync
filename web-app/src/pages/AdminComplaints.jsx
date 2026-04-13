@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import Header from '../components/Header';
 import ReassignModal from '../components/ReassignModal';
 import DetailsModal from '../components/DetailsModal';
+import DeleteComplaintModal from '../components/DeleteComplaintModal'; // NEW IMPORT
 
 export default function AdminComplaints() {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ export default function AdminComplaints() {
   const [filterStatus, setFilterStatus] = useState('All Statuses');
   const [filterDate, setFilterDate] = useState('');
 
-  // --- 3. PAGINATION STATE (NEW) ---
+  // --- 3. PAGINATION STATE ---
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -29,8 +30,31 @@ export default function AdminComplaints() {
   const [reassignId, setReassignId] = useState('');
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [detailsId, setDetailsId] = useState('');
+  
+  // NEW: DELETE MODAL STATE
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState('');
 
-  // Fetch Data
+  // Extracted fetch function so we can call it after a deletion!
+  const fetchMasterData = async () => {
+    try {
+      setLoading(true);
+      const [statsRes, complaintsRes] = await Promise.all([
+        fetch('http://localhost:5000/api/complaints/admin/stats'),
+        fetch('http://localhost:5000/api/complaints/admin/all')
+      ]);
+      const statsData = await statsRes.json();
+      const complaintsData = await complaintsRes.json();
+      if (statsData.success) setStats(statsData.data);
+      if (complaintsData.success) setComplaints(complaintsData.data);
+    } catch (error) {
+      console.error("Master Workbox Sync Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch Data on Load
   useEffect(() => {
     const savedUser = localStorage.getItem('urbanSyncUser');
     if (!savedUser) { navigate('/login'); return; }
@@ -38,23 +62,6 @@ export default function AdminComplaints() {
     const user = JSON.parse(savedUser);
     if (user.role !== 'super_admin') { navigate('/officer/dashboard'); return; }
 
-    const fetchMasterData = async () => {
-      try {
-        setLoading(true);
-        const [statsRes, complaintsRes] = await Promise.all([
-          fetch('http://localhost:5000/api/complaints/admin/stats'),
-          fetch('http://localhost:5000/api/complaints/admin/all')
-        ]);
-        const statsData = await statsRes.json();
-        const complaintsData = await complaintsRes.json();
-        if (statsData.success) setStats(statsData.data);
-        if (complaintsData.success) setComplaints(complaintsData.data);
-      } catch (error) {
-        console.error("Master Workbox Sync Error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchMasterData();
   }, [navigate]);
 
@@ -72,7 +79,6 @@ export default function AdminComplaints() {
     const matchesSearch = safeTitle.toLowerCase().includes(searchTerm.toLowerCase()) || c.complaint_id.toString().includes(searchTerm);
     const matchesCategory = filterCategory === 'All Categories' || safeCategory === filterCategory;
     
-    // FIX: Using .trim() to handle hidden spaces from the database
     const matchesStatus = filterStatus === 'All Statuses' || safeStatus.trim().toUpperCase() === filterStatus.trim().toUpperCase();
 
     let matchesDate = true;
@@ -84,10 +90,9 @@ export default function AdminComplaints() {
     return matchesSearch && matchesCategory && matchesStatus && matchesDate;
   });
 
-  // --- PAGINATION MATH (NEW) ---
+  // --- PAGINATION MATH ---
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-  // This physically slices the array to only show the current 10 (or 25/50) rows
   const currentRows = filteredComplaints.slice(indexOfFirstRow, indexOfLastRow);
   const totalPages = Math.ceil(filteredComplaints.length / rowsPerPage);
 
@@ -106,8 +111,6 @@ export default function AdminComplaints() {
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         <Header breadcrumbs={['Admin', 'System-Wide Workbox']} />
         <main className="flex-1 overflow-y-auto p-8 flex flex-col">
-          
-          {/* STATS (Hidden for brevity, keep your existing 4 stat cards here) */}
           
           {/* FILTER BAR */}
           <div className="flex flex-col md:flex-row gap-4 mb-6 mt-4">
@@ -134,6 +137,7 @@ export default function AdminComplaints() {
               <option value="PENDING">Pending</option>
               <option value="IN PROGRESS">In Progress</option>
               <option value="RESOLVED">Resolved</option>
+              <option value="REJECTED">Rejected (Action Required)</option>
             </select>
 
             <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="border border-[#E2E8F0] rounded-lg px-4 py-2.5 text-[13px] text-[#64748B] bg-[#FFFFFF] focus:outline-none focus:ring-2 focus:ring-[#0041C7]" />
@@ -176,24 +180,23 @@ export default function AdminComplaints() {
                           <p className="text-[11px] font-medium text-[#64748B] truncate">{c.category}</p>
                         </td>
 
-                        {/* UI FIX: Removed the dark box. Made it clean, bold text. */}
                         <td className="px-6 py-4">
                           <span className={`text-[12px] font-bold ${c.authority_name ? 'text-[#1E293B]' : 'text-[#94A3B8] italic'}`}>
                             {c.authority_name || 'Pending Assignment'}
                           </span>
                         </td>
 
-                        {/* STATUS PILL: Softened colors so it doesn't scream */}
                         <td className="px-6 py-4 text-center">
-                          <span className={`px-2.5 py-1 text-[10px] font-extrabold rounded-md uppercase tracking-wider ${
-                            c.status?.trim().toUpperCase() === 'PENDING' ? 'bg-red-50 text-red-600 border border-red-100' : 
-                            c.status?.trim().toUpperCase() === 'RESOLVED' ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-amber-50 text-amber-600 border border-amber-100'
+                          <span className={`px-2.5 py-1 text-[10px] font-extrabold rounded-md uppercase tracking-wider border ${
+                            c.status?.trim().toUpperCase() === 'PENDING' ? 'bg-orange-50 text-orange-600 border-orange-200' : 
+                            c.status?.trim().toUpperCase() === 'RESOLVED' ? 'bg-green-50 text-green-600 border-green-200' : 
+                            c.status?.trim().toUpperCase() === 'REJECTED' ? 'bg-red-100 text-red-700 border-red-300 animate-pulse' : 
+                            'bg-blue-50 text-blue-600 border-blue-200' 
                           }`}>
                             {c.status}
                           </span>
                         </td>
 
-                        {/* UI FIX: Actions are clear, but not visually heavy */}
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end space-x-4 opacity-80 group-hover:opacity-100 transition-opacity">
                             <button 
@@ -207,6 +210,16 @@ export default function AdminComplaints() {
                               className="text-[12px] font-bold text-[#0041C7] hover:bg-blue-50 px-2 py-1 rounded transition-colors"
                             >
                               Reassign
+                            </button>
+                            {/* NEW: DELETE BUTTON */}
+                            <button 
+                              onClick={() => setDeleteId(c.complaint_id) || setIsDeleteOpen(true)} 
+                              className="text-[#64748B] hover:text-[#EF4444] transition-colors"
+                              title="Delete Complaint"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
                             </button>
                           </div>
                         </td>
@@ -259,8 +272,16 @@ export default function AdminComplaints() {
           </div>
           
           <Footer />
-          <ReassignModal isOpen={isReassignOpen} onClose={() => setIsReassignOpen(false)} complaintId={reassignId} />
+          <ReassignModal isOpen={isReassignOpen} onClose={() => setIsReassignOpen(false)} complaintId={reassignId} refreshData={fetchMasterData} />
           <DetailsModal isOpen={isDetailsOpen} onClose={() => setIsDetailsOpen(false)} complaintId={detailsId} />
+          
+          {/* NEW: DELETE MODAL INJECTED HERE */}
+          <DeleteComplaintModal 
+            isOpen={isDeleteOpen} 
+            onClose={() => setIsDeleteOpen(false)} 
+            complaintId={deleteId} 
+            refreshData={fetchMasterData} 
+          />
         </main>
       </div>
     </div>
