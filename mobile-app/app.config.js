@@ -1,4 +1,4 @@
-{
+export default {
   "expo": {
     "name": "mobile-app",
     "slug": "mobile-app",
@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "config": {
-        "googleMapsApiKey": "AIzaSyAttl1IRPjcaHUuBYYFeSnBRH1Gk5cBDvg"
+        "googleMapsApiKey": process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
       }
     },
     "android": {
@@ -25,7 +25,7 @@
       "predictiveBackGestureEnabled": false,
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyAttl1IRPjcaHUuBYYFeSnBRH1Gk5cBDvg"
+          "apiKey": process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
         }
       }
     },
@@ -53,4 +53,4 @@
       "reactCompiler": true
     }
   }
-}
+};

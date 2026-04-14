@@ -12,8 +12,7 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
   const SERVER_URL = BASE_URL;
   const mapRef = useRef(null);
   
-  // 🚨 PASTE YOUR GOOGLE MAPS API KEY HERE 🚨
-  const GOOGLE_API_KEY = 'AIzaSyAttl1IRPjcaHUuBYYFeSnBRH1Gk5cBDvg'; 
+  const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   const complaintData = {
     'Urban Infrastructure & Municipal Services': ['Garbage Collection Delay', 'Illegal Waste Dumping', 'Street Cleaning Issue', 'Drainage Blockage / Flooding', 'Broken Road / Pothole', 'Damaged Footpath', 'Traffic Signal Malfunction', 'Public Park Maintenance Issue', 'Public Space Maintenance Issue'],
