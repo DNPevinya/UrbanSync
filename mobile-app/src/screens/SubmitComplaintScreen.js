@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Image,
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'; // ADDED PROVIDER_GOOGLE
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { BASE_URL } from '../../src/config';
@@ -11,6 +11,9 @@ import { BASE_URL } from '../../src/config';
 export default function SubmitComplaintScreen({ onBack, userId }) {
   const SERVER_URL = BASE_URL;
   const mapRef = useRef(null);
+  
+  // 🚨 PASTE YOUR GOOGLE MAPS API KEY HERE 🚨
+  const GOOGLE_API_KEY = 'AIzaSyAttl1IRPjcaHUuBYYFeSnBRH1Gk5cBDvg'; 
 
   const complaintData = {
     'Urban Infrastructure & Municipal Services': ['Garbage Collection Delay', 'Illegal Waste Dumping', 'Street Cleaning Issue', 'Drainage Blockage / Flooding', 'Broken Road / Pothole', 'Damaged Footpath', 'Traffic Signal Malfunction', 'Public Park Maintenance Issue', 'Public Space Maintenance Issue'],
@@ -57,12 +60,25 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
 
   const fetchAddress = async (coords) => {
     try {
-      let address = await Location.reverseGeocodeAsync(coords);
-      if (address.length > 0) {
-        const addr = address[0];
-        const district = addr.subregion || addr.city || addr.region || 'Unknown District';
-        const street = addr.street || addr.name || 'Unknown Location';
-        setLocationName(`${street}, ${district}`);
+      if (GOOGLE_API_KEY === 'PASTE_YOUR_API_KEY_HERE') {
+        let address = await Location.reverseGeocodeAsync(coords);
+        if (address.length > 0) {
+          const addr = address[0];
+          const district = addr.subregion || addr.city || addr.region || 'Unknown District';
+          const street = addr.street || addr.name || 'Unknown Location';
+          setLocationName(`${street}, ${district}`);
+        }
+        return;
+      }
+
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.latitude},${coords.longitude}&key=${GOOGLE_API_KEY}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.status === 'OK' && data.results.length > 0) {
+        setLocationName(data.results[0].formatted_address);
+      } else {
+        setLocationName('Address Unavailable');
       }
     } catch (error) { setLocationName('Address Unavailable'); }
   };
@@ -83,27 +99,36 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
 
   const handleLocationSearch = async () => {
     if (!searchQuery.trim()) return;
+    
+    if (GOOGLE_API_KEY === 'PASTE_YOUR_API_KEY_HERE') {
+      Alert.alert("API Key Missing", "Please add your Google Maps API Key to search for specific shops or temples.");
+      return;
+    }
+
     setSearchingLocation(true);
     try {
       const query = searchQuery.toLowerCase().includes('sri lanka') ? searchQuery : `${searchQuery}, Sri Lanka`;
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${GOOGLE_API_KEY}`;
       
-      const response = await fetch(url, { headers: { 'User-Agent': 'UrbanSyncApp/1.0' } });
+      const response = await fetch(url);
       const data = await response.json();
 
-      if (data && data.length > 0) {
-        const newCoords = { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) };
+      if (data.status === 'OK' && data.results.length > 0) {
+        const { lat, lng } = data.results[0].geometry.location;
+        const newCoords = { latitude: lat, longitude: lng };
+        
         setMarkerCoord(newCoords);
-        
-        const zoomRegion = { ...newCoords, latitudeDelta: 0.02, longitudeDelta: 0.02 };
+        const zoomRegion = { ...newCoords, latitudeDelta: 0.005, longitudeDelta: 0.005 };
         mapRef.current?.animateToRegion(zoomRegion, 1000);
-        
-        await fetchAddress(newCoords);
+        setLocationName(data.results[0].formatted_address);
       } else {
         Alert.alert("Not Found", "Location could not be found. Try being more specific.");
       }
-    } catch (e) { Alert.alert("Error", "Location search failed. Check your internet."); }
-    finally { setSearchingLocation(false); }
+    } catch (e) { 
+      Alert.alert("Error", "Location search failed. Check your internet connection."); 
+    } finally { 
+      setSearchingLocation(false); 
+    }
   };
 
   const takePhoto = async () => {
@@ -224,11 +249,11 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
                    onSubmitEditing={handleLocationSearch} 
                  />
                  <TouchableOpacity onPress={handleLocationSearch}>
-                    {searchingLocation ? <ActivityIndicator size="small" /> : <Text style={styles.sBtn}>Find</Text>}
+                    {searchingLocation ? <ActivityIndicator size="small" color="#0041C7" /> : <Text style={styles.sBtn}>Find</Text>}
                  </TouchableOpacity>
               </View>
               <View style={styles.mapWrap}>
-                 <MapView ref={mapRef} style={styles.map} initialRegion={region}>
+                 <MapView ref={mapRef} style={styles.map} initialRegion={region} provider={PROVIDER_GOOGLE}>
                    <Marker 
                      draggable 
                      coordinate={markerCoord} 
@@ -257,51 +282,15 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
               <TouchableOpacity onPress={() => setShowCategoryGuide(false)}><Ionicons name="close-circle" size={28} color="#94A3B8" /></TouchableOpacity>
             </View>
             <ScrollView contentContainerStyle={{ paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
-              <GuideItem 
-                icon="office-building" 
-                title="Urban Infrastructure & Municipal Services" 
-                desc="Garbage Collection Delay, Illegal Waste Dumping, Street Cleaning Issue, Drainage Blockage / Flooding, Broken Road / Pothole, Damaged Footpath, Traffic Signal Malfunction, Public Park Maintenance Issue, Public Space Maintenance Issue" 
-              />
-              <GuideItem 
-                icon="hospital-marker" 
-                title="Public Health & Sanitation" 
-                desc="Dengue Mosquito Breeding Site, Food Hygiene Complaint, Unsanitary Business Premises, Public Sanitation Issue, Waste Causing Health Hazard" 
-              />
-              <GuideItem 
-                icon="shield-check" 
-                title="Public Safety & Law Enforcement" 
-                desc="Noise Complaint, Parking Violation, Vandalism, Suspicious Activity, Public Disorder" 
-              />
-              <GuideItem 
-                icon="water" 
-                title="Water Supply Services" 
-                desc="Water Supply Interruption, Low Water Pressure, Pipe Leak, Water Contamination, Sewer Line Blockage" 
-              />
-              <GuideItem 
-                icon="tree" 
-                title="Environmental Protection" 
-                desc="Illegal Tree Cutting, Air Pollution, Water Body Pollution (River/Canal), Industrial Waste Disposal, Environmental Damage Complaint" 
-              />
-              <GuideItem 
-                icon="home-city" 
-                title="Urban Planning & Development" 
-                desc="Unauthorized Construction, Building Code Violation, Land Use Violation, Unsafe Construction Site" 
-              />
-              <GuideItem 
-                icon="flash" 
-                title="Electricity Services" 
-                desc="Power Outage, Streetlight Breakdown, Fallen Electrical Line, Unsafe Electrical Connection, Transformer Issue" 
-              />
-              <GuideItem 
-                icon="bus" 
-                title="Public Transport Infrastructure" 
-                desc="Bus Stop Maintenance Issue, Unsafe Bus Operation, Route Mismanagement, Public Transport Safety Concern" 
-              />
-              <GuideItem 
-                icon="account-group" 
-                title="Local Administrative Issues" 
-                desc="Resident Verification Issue, Local Documentation Concern, Community-Level Dispute (Non-Criminal)" 
-              />
+              <GuideItem icon="office-building" title="Urban Infrastructure & Municipal Services" desc="Garbage Collection Delay, Illegal Waste Dumping, Street Cleaning Issue, Drainage Blockage / Flooding, Broken Road / Pothole, Damaged Footpath, Traffic Signal Malfunction, Public Park Maintenance Issue, Public Space Maintenance Issue" />
+              <GuideItem icon="hospital-marker" title="Public Health & Sanitation" desc="Dengue Mosquito Breeding Site, Food Hygiene Complaint, Unsanitary Business Premises, Public Sanitation Issue, Waste Causing Health Hazard" />
+              <GuideItem icon="shield-check" title="Public Safety & Law Enforcement" desc="Noise Complaint, Parking Violation, Vandalism, Suspicious Activity, Public Disorder" />
+              <GuideItem icon="water" title="Water Supply Services" desc="Water Supply Interruption, Low Water Pressure, Pipe Leak, Water Contamination, Sewer Line Blockage" />
+              <GuideItem icon="tree" title="Environmental Protection" desc="Illegal Tree Cutting, Air Pollution, Water Body Pollution (River/Canal), Industrial Waste Disposal, Environmental Damage Complaint" />
+              <GuideItem icon="home-city" title="Urban Planning & Development" desc="Unauthorized Construction, Building Code Violation, Land Use Violation, Unsafe Construction Site" />
+              <GuideItem icon="flash" title="Electricity Services" desc="Power Outage, Streetlight Breakdown, Fallen Electrical Line, Unsafe Electrical Connection, Transformer Issue" />
+              <GuideItem icon="bus" title="Public Transport Infrastructure" desc="Bus Stop Maintenance Issue, Unsafe Bus Operation, Route Mismanagement, Public Transport Safety Concern" />
+              <GuideItem icon="account-group" title="Local Administrative Issues" desc="Resident Verification Issue, Local Documentation Concern, Community-Level Dispute (Non-Criminal)" />
             </ScrollView>
           </View>
         </View>
