@@ -5,14 +5,13 @@ exports.submitComplaint = async (req, res) => {
         const { 
             user_id, 
             category, 
-            title, // This will be the "Complaint Type" from your list
+            title, 
             description, 
             location_text, 
             latitude, 
             longitude 
         } = req.body;
 
-        // Image handling (Multer will populate req.file)
         const image_url = req.file ? `/uploads/complaints/${req.file.filename}` : null;
 
         const query = `

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Modal, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'; // --- ADDED MaterialCommunityIcons HERE ---
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BASE_URL } from '../../src/config';
 
@@ -18,13 +18,11 @@ export default function ChatbotModal({ visible, onClose }) {
     const userMsg = inputText.trim();
     const newUserMessage = { id: Date.now().toString(), text: userMsg, sender: 'user' };
     
-    // Add user message to UI immediately
     setMessages(prev => [...prev, newUserMessage]);
     setInputText('');
     setIsTyping(true);
 
     try {
-      // Send to your Node.js Backend
       const response = await fetch(`${BASE_URL}/api/chat/ask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -54,11 +52,9 @@ export default function ChatbotModal({ visible, onClose }) {
         <SafeAreaView style={styles.modalContainer}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
             
-            {/* Header */}
             <View style={styles.header}>
               <View style={styles.headerTitleWrap}>
                 <View style={styles.botIconWrap}>
-                  {/* --- CHANGED ICON HERE --- */}
                   <MaterialCommunityIcons name="robot-outline" size={24} color="#0041C7" />
                 </View>
                 <View>
@@ -71,7 +67,6 @@ export default function ChatbotModal({ visible, onClose }) {
               </TouchableOpacity>
             </View>
 
-            {/* Chat Area */}
             <ScrollView 
               ref={scrollViewRef}
               onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
@@ -101,7 +96,6 @@ export default function ChatbotModal({ visible, onClose }) {
               )}
             </ScrollView>
 
-            {/* Input Area */}
             <View style={styles.inputArea}>
               <TextInput 
                 style={styles.input}

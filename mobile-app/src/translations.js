@@ -1,6 +1,5 @@
 export const translations = {
   en: {
-    // Login
     welcome: "Welcome Back",
     subtitle: "Log in to report a complaint or provide feedback to UrbanSync.",
     email_label: "Email Address",
@@ -13,7 +12,6 @@ export const translations = {
     otp_sub: "We sent a secure code to your registered mobile number to verify your identity.",
     verify_btn: "Verify & Login",
     cancel: "Cancel & Go Back",
-    // Signup
     full_name: "Full Name",
     phone_label: "Phone Number",
     district: "District",
@@ -22,7 +20,6 @@ export const translations = {
     select_division: "Select your division",
     agree_text: "I agree to the User Terms and Privacy Policy",
     have_account: "Already have an account? ",
-    // Home
     greeting: "Ayubowan,",
     summary: "My Activity Summary",
     total: "TOTAL REPORTS",
@@ -38,7 +35,6 @@ export const translations = {
     recent: "Recent Updates",
     see_all: "See all",
     no_activity: "No recent activity found.",
-    // Profile
     settings: "SETTINGS",
     my_profile: "My Profile",
     account_mgmt: "ACCOUNT MANAGEMENT",
@@ -50,7 +46,6 @@ export const translations = {
     privacy: "Privacy Policy",
     signout: "Sign Out",
     change_lang: "App Language",
-    // Submit Complaint
     new_report: "New Report",
     back: "Back",
     cat_label: "1. Category",
@@ -128,7 +123,6 @@ export const translations = {
     }
   },
   si: {
-    // Login
     welcome: "නැවතත් සාදරයෙන් පිළිගනිමු",
     subtitle: "පැමිණිල්ලක් ඉදිරිපත් කිරීමට හෝ UrbanSync වෙත ප්‍රතිපෝෂණ ලබා දීමට ලොග් වන්න.",
     email_label: "විද්‍යුත් තැපෑල",
@@ -141,7 +135,6 @@ export const translations = {
     otp_sub: "ඔබේ අනන්‍යතාවය තහවුරු කිරීමට අපි ඔබේ ලියාපදිංචි ජංගම දුරකථන අංකයට ආරක්ෂිත කේතයක් එවා ඇත.",
     verify_btn: "තහවුරු කර ඇතුල් වන්න",
     cancel: "අවලංගු කර ආපසු යන්න",
-    // Signup
     full_name: "සම්පූර්ණ නම",
     phone_label: "දුරකථන අංකය",
     district: "දිස්ත්‍රික්කය",
@@ -150,7 +143,6 @@ export const translations = {
     select_division: "කොට්ඨාසය තෝරන්න",
     agree_text: "මම සේවා කොන්දේසි සහ රහස්‍යතා ප්‍රතිපත්තියට එකඟ වෙමි",
     have_account: "දැනටමත් ගිණුමක් තිබේද? ",
-    // Home
     greeting: "ආයුබෝවන්,",
     summary: "මගේ ක්‍රියාකාරකම් සාරාංශය",
     total: "මුළු පැමිණිලි",
@@ -166,7 +158,6 @@ export const translations = {
     recent: "අලුත්ම පුවත්",
     see_all: "සියල්ල බලන්න",
     no_activity: "මෑත ක්‍රියාකාරකම් කිසිවක් හමු නොවීය.",
-    // Profile
     settings: "සැකසුම්",
     my_profile: "මගේ පැතිකඩ",
     account_mgmt: "ගිණුම් කළමනාකරණය",
@@ -178,7 +169,6 @@ export const translations = {
     privacy: "රහස්‍යතා ප්‍රතිපත්තිය",
     signout: "නික්ම යන්න",
     change_lang: "යෙදුම් භාෂාව",
-    // Submit Complaint
     new_report: "නව වාර්තාව",
     back: "ආපසු",
     cat_label: "1. කාණ්ඩය",
@@ -256,7 +246,6 @@ export const translations = {
     }
   },
   ta: {
-    // Login
     welcome: "மீண்டும் வருக",
     subtitle: "புகாரைப் பதிவுசெய்ய அல்லது UrbanSync-க்கு கருத்து தெரிவிக்க உள்நுழையவும்.",
     email_label: "மின்னஞ்சல் முகவரி",
@@ -269,7 +258,6 @@ export const translations = {
     otp_sub: "உங்கள் அடையாளத்தைச் சரிபார்க்க உங்கள் பதிவுசெய்யப்பட்ட மொபைல் எண்ணுக்கு பாதுகாப்பான குறியீட்டை அனுப்பியுள்ளோம்.",
     verify_btn: "சரிபார்த்து உள்நுழைக",
     cancel: "ரத்து செய்து பின்செல்லவும்",
-    // Signup
     full_name: "முழு பெயர்",
     phone_label: "தொலைபேசி எண்",
     district: "மாவட்டம்",
@@ -278,7 +266,6 @@ export const translations = {
     select_division: "பிரிவைத் தேர்ந்தெடுக்கவும்",
     agree_text: "பயனர் விதிமுறைகள் மற்றும் தனியுரிமைக் கொள்கையை நான் ஒப்புக்கொள்கிறேன்",
     have_account: "ஏற்கனவே கணக்கு உள்ளதா? ",
-    // Home
     greeting: "ஆயுபோவன்,",
     summary: "எனது செயல்பாட்டு சுருக்கம்",
     total: "மொத்த புகார்கள்",
@@ -294,7 +281,6 @@ export const translations = {
     recent: "சமீபத்திய அறிவிப்புகள்",
     see_all: "அனைத்தையும் காண்க",
     no_activity: "சமீபத்திய செயல்பாடுகள் எதுவும் கண்டறியப்படவில்லை.",
-    // Profile
     settings: "அமைப்புகள்",
     my_profile: "எனது சுயவிவரம்",
     account_mgmt: "கணக்கு மேலாண்மை",
@@ -306,7 +292,6 @@ export const translations = {
     privacy: "தனியுரிமை கொள்கை",
     signout: "வெளியேறு",
     change_lang: "பயன்பாட்டு மொழி",
-    // Submit Complaint
     new_report: "புதிய அறிக்கை",
     back: "பின்செல்",
     cat_label: "1. வகை",

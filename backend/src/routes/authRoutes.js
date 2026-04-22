@@ -4,9 +4,8 @@ const db = require('./../db');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
-const crypto = require('crypto'); // Used for generating secure temporary passwords
+const crypto = require('crypto');
 
-// --- MULTER CONFIGURATION ---
 const storage = multer.diskStorage({
     destination: path.join(__dirname, '..', '..', 'uploads'), 
     filename: (req, file, cb) => {
@@ -15,9 +14,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// =========================================================================
-// 1. REGISTRATION (CITIZENS ONLY)
-// =========================================================================
 router.post('/register', async (req, res) => {
     const { fullName, phone, email, district, division, password } = req.body;
 
@@ -46,9 +42,6 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// =========================================================================
-// 2. SMART LOGIN (CITIZENS, OFFICERS, ADMINS)
-// =========================================================================
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -70,37 +63,28 @@ router.post('/login', async (req, res) => {
 
         let userProfile = { id: user.user_id, email: user.email, role: user.role };
 
-        // ---------------------------------------------------------
-        // CITIZEN LOGIN BLOCK (NOW WITH 2FA INTERCEPT AND FULL PROFILE)
-        // ---------------------------------------------------------
         if (user.role === 'citizen') {
             const [citizens] = await db.query(`SELECT * FROM citizens WHERE user_id = ?`, [user.user_id]);
             if (citizens.length > 0) {
-                // 🚨 RESTORED: Pack their full profile data! 🚨
                 userProfile.fullName = citizens[0].fullName;
                 userProfile.phone = citizens[0].phone;
                 userProfile.district = citizens[0].district;
                 userProfile.division = citizens[0].division;
                 userProfile.profilePicture = citizens[0].profilePicture || null;
 
-                const citizenPhone = citizens[0].phone;
-
-                // Format the phone number for Firebase (+94)
-                let cleanPhone = citizenPhone.toString().replace(/\s+/g, '').replace(/^0+/, '');
+                // Format the phone number for Firebase Recaptcha flow (+94 format required)
+                let cleanPhone = citizens[0].phone.toString().replace(/\s+/g, '').replace(/^0+/, '');
                 let formattedPhone = `+94${cleanPhone}`;
 
-                // STOP THE LOGIN! Send the required 2FA data AND the full profile back to the app
+                // Intercept standard login for citizens to require 2FA
                 return res.status(200).json({
                     status: "2FA_REQUIRED",
                     message: "Password verified. Proceed to OTP.",
-                    phone: formattedPhone, // Sending +9477... to the app
-                    userProfile: userProfile // NOW THIS CONTAINS THEIR NAME & PICTURE!
+                    phone: formattedPhone,
+                    userProfile: userProfile
                 });
             }
         }
-        // ---------------------------------------------------------
-        // OFFICER LOGIN BLOCK (UNCHANGED)
-        // ---------------------------------------------------------
         else if (user.role === 'officer') {
             const officerQuery = `
                 SELECT o.full_name, o.authority_id, o.status, a.name as authority_name, a.department as dept_type
@@ -122,9 +106,6 @@ router.post('/login', async (req, res) => {
             }
         }
 
-        // ---------------------------------------------------------
-        // FINAL SUCCESS (Only Officers and Admins reach this point now)
-        // ---------------------------------------------------------
         res.status(200).json({ message: "Login successful!", user: userProfile });
 
     } catch (error) {
@@ -133,9 +114,6 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// =========================================================================
-// 3. UPDATE PROFILE & NOTIFICATIONS (CITIZENS ONLY)
-// =========================================================================
 router.put('/update-profile', upload.single('profileImage'), async (req, res) => {
     const { email, fullName, phone, district, division, currentPassword, newPassword, deleteImage } = req.body;
 
@@ -206,9 +184,6 @@ router.patch('/notifications/read-all/:userId', async (req, res) => {
   }
 });
 
-// =========================================================================
-// 4. UPDATE PASSWORD (OFFICERS & ADMINS)
-// =========================================================================
 router.post('/update-password', async (req, res) => {
     const { email, currentPassword, newPassword } = req.body;
 
@@ -239,10 +214,6 @@ router.post('/update-password', async (req, res) => {
     }
 });
 
-// ==========================================================
-// 🛡️ 5. ADMIN: OFFICER MANAGEMENT ROUTES
-// ==========================================================
-
 function generatePrefix(departmentName) {
   if (!departmentName) return "GEN";
   const words = departmentName.toUpperCase().split(' ');
@@ -250,7 +221,6 @@ function generatePrefix(departmentName) {
   return words.map(w => w[0]).join('').substring(0, 3);
 }
 
-// GET ALL OFFICERS (Includes Status)
 router.get('/admin/officers-list', async (req, res) => {
   try {
     const query = `
@@ -272,7 +242,6 @@ router.get('/admin/officers-list', async (req, res) => {
   }
 });
 
-// AUTO-GENERATE EMPLOYEE ID
 router.get('/admin/next-employee-id/:authorityId', async (req, res) => {
   try {
     const [authRows] = await db.query('SELECT department FROM authorities WHERE authority_id = ?', [req.params.authorityId]);
@@ -291,10 +260,8 @@ router.get('/admin/next-employee-id/:authorityId', async (req, res) => {
   }
 });
 
-// ADD NEW OFFICER
 router.post('/admin/add-officer', async (req, res) => {
   const { full_name, email, authority_id, employee_id_code } = req.body;
-  
   const tempPassword = crypto.randomBytes(4).toString('hex'); 
 
   try {
@@ -321,7 +288,6 @@ router.post('/admin/add-officer', async (req, res) => {
   }
 });
 
-// UPDATE OFFICER (Status added, Employee ID removed to prevent editing)
 router.put('/admin/update-officer/:userId', async (req, res) => {
   const { full_name, email, authority_id, status } = req.body;
   const userId = req.params.userId;
@@ -339,7 +305,6 @@ router.put('/admin/update-officer/:userId', async (req, res) => {
   }
 });
 
-// DELETE OFFICER
 router.delete('/admin/delete-officer/:userId', async (req, res) => {
   const userId = req.params.userId;
   try {
@@ -352,11 +317,6 @@ router.delete('/admin/delete-officer/:userId', async (req, res) => {
   }
 });
 
-// =========================================================================
-// 6. FORGOT PASSWORD (CITIZENS ONLY)
-// =========================================================================
-
-// Route A: Verify Email and get Phone Number
 router.post('/forgot-password-init', async (req, res) => {
     const { email } = req.body;
 
@@ -373,7 +333,6 @@ router.post('/forgot-password-init', async (req, res) => {
             return res.status(404).json({ message: "Phone number not found for this account." });
         }
 
-        // Format the phone number for Firebase (+94)
         let cleanPhone = citizens[0].phone.toString().replace(/\s+/g, '').replace(/^0+/, '');
         let formattedPhone = `+94${cleanPhone}`;
 
@@ -385,7 +344,6 @@ router.post('/forgot-password-init', async (req, res) => {
     }
 });
 
-// Route B: Save the New Password
 router.post('/reset-password', async (req, res) => {
     const { email, newPassword } = req.body;
 
@@ -402,6 +360,5 @@ router.post('/reset-password', async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 });
-
 
 module.exports = router;

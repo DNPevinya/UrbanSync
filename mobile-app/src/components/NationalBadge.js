@@ -24,7 +24,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
   },
-  // --- BIG FLAG (For Login / Signup) ---
   largeContainer: {
     width: 54,
     height: 54,
@@ -32,9 +31,8 @@ const styles = StyleSheet.create({
   },
   largeFlag: {
     fontSize: 26,
-    marginLeft: 2, // Centers the emoji perfectly
+    marginLeft: 2,
   },
-  // --- TINY FLAG (For Home Screen) ---
   smallContainer: {
     width: 40,
     height: 40,

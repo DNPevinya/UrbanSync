@@ -7,14 +7,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { translations } from '../../src/translations'; 
 import { BASE_URL } from '../../src/config';
 
-// --- IMPORT THE BADGE ---
 import NationalBadge from '../components/NationalBadge';
 
 export default function ProfileScreen({ userName, userEmail, initialData, onNavigateToEdit, onNavigateToHelp, onNavigateToFAQ, onNavigateToTerms, onNavigateToPrivacy, onLogout }) {
   const SERVER_URL = BASE_URL;
   const [imageFailed, setImageFailed] = useState(false);
 
-  // --- LANGUAGE STATE ---
   const [currentLang, setCurrentLang] = useState('en');
 
   useFocusEffect(
@@ -32,7 +30,7 @@ export default function ProfileScreen({ userName, userEmail, initialData, onNavi
     await AsyncStorage.setItem('userLanguage', lang);
   };
 
-  const t = translations[currentLang]; // Translation helper
+  const t = translations[currentLang]; 
 
   const getInitials = (fullName) => {
     if (!fullName || fullName === 'Citizen') return "??";
@@ -67,7 +65,6 @@ export default function ProfileScreen({ userName, userEmail, initialData, onNavi
           <Text style={styles.navTitle}>{t.my_profile}</Text>
         </View>
 
-        {/* --- HEADER RIGHT GROUP --- */}
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <NationalBadge size="small" />
           <TouchableOpacity style={[styles.editBtn, { marginLeft: 12 }]} onPress={onNavigateToEdit} activeOpacity={0.7}>
@@ -100,7 +97,6 @@ export default function ProfileScreen({ userName, userEmail, initialData, onNavi
           </View>
         </View>
 
-        {/* --- APP LANGUAGE TOGGLE --- */}
         <Text style={styles.sectionLabel}>{t.change_lang}</Text>
         <View style={styles.langToggleContainer}>
             {['en', 'si', 'ta'].map((lang) => (

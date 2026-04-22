@@ -46,7 +46,6 @@ export default function OfficerDashboard() {
           </div>
 
           <div className="bg-white border border-[#E2E8F0] rounded-xl flex-1 flex flex-col shadow-sm">
-            {/* UPDATED TABLE HEADER WITH VIEW ALL LINK */}
             <div className="px-6 py-5 border-b border-[#E2E8F0] flex justify-between items-center bg-white rounded-t-xl">
               <h3 className="text-[15px] font-bold text-[#1E293B]">Recent Activity</h3>
               <button 

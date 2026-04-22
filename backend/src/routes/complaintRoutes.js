@@ -5,15 +5,51 @@ const multer = require('multer');
 const path = require('path');
 
 const issueToDepartmentMap = {
-  "Garbage Collection Delay": "Local Council", "Illegal Waste Dumping": "Local Council", "Street Cleaning Issue": "Local Council", "Drainage Blockage / Flooding": "Local Council", "Broken Road / Pothole": "Local Council", "Damaged Footpath": "Local Council", "Traffic Signal Malfunction": "Local Council", "Public Park Maintenance Issue": "Local Council", "Public Space Maintenance Issue": "Local Council",
-  "Dengue Mosquito Breeding Site": "Public Health Inspector", "Food Hygiene Complaint": "Public Health Inspector", "Unsanitary Business Premises": "Public Health Inspector", "Public Sanitation Issue": "Public Health Inspector", "Waste Causing Health Hazard": "Public Health Inspector",
-  "Noise Complaint": "Police", "Parking Violation": "Police", "Vandalism": "Police", "Suspicious Activity": "Police", "Public Disorder": "Police",
-  "Water Supply Interruption": "Water Board", "Low Water Pressure": "Water Board", "Pipe Leak": "Water Board", "Water Contamination": "Water Board", "Sewer Line Blockage": "Water Board",
-  "Illegal Tree Cutting": "Environmental Authority", "Air Pollution": "Environmental Authority", "Water Body Pollution (River/Canal)": "Environmental Authority", "Industrial Waste Disposal": "Environmental Authority", "Environmental Damage Complaint": "Environmental Authority",
-  "Unauthorized Construction": "Urban Development Authority", "Building Code Violation": "Urban Development Authority", "Land Use Violation": "Urban Development Authority", "Unsafe Construction Site": "Urban Development Authority",
-  "Power Outage": "Electricity Board", "Streetlight Breakdown": "Electricity Board", "Fallen Electrical Line": "Electricity Board", "Unsafe Electrical Connection": "Electricity Board", "Transformer Issue": "Electricity Board",
-  "Bus Stop Maintenance Issue": "Transport Authority", "Unsafe Bus Operation": "Transport Authority", "Route Mismanagement": "Transport Authority", "Public Transport Safety Concern": "Transport Authority",
-  "Resident Verification Issue": "Grama Niladhari", "Local Documentation Concern": "Grama Niladhari", "Community-Level Dispute (Non-Criminal)": "Grama Niladhari"
+  "Garbage Collection Delay": "Local Council",
+  "Illegal Waste Dumping": "Local Council",
+  "Street Cleaning Issue": "Local Council",
+  "Drainage Blockage / Flooding": "Local Council",
+  "Broken Road / Pothole": "Local Council",
+  "Damaged Footpath": "Local Council",
+  "Traffic Signal Malfunction": "Local Council",
+  "Public Park Maintenance Issue": "Local Council",
+  "Public Space Maintenance Issue": "Local Council",
+  "Dengue Mosquito Breeding Site": "Public Health Inspector",
+  "Food Hygiene Complaint": "Public Health Inspector",
+  "Unsanitary Business Premises": "Public Health Inspector",
+  "Public Sanitation Issue": "Public Health Inspector",
+  "Waste Causing Health Hazard": "Public Health Inspector",
+  "Noise Complaint": "Police",
+  "Parking Violation": "Police",
+  "Vandalism": "Police",
+  "Suspicious Activity": "Police",
+  "Public Disorder": "Police",
+  "Water Supply Interruption": "Water Board",
+  "Low Water Pressure": "Water Board",
+  "Pipe Leak": "Water Board",
+  "Water Contamination": "Water Board",
+  "Sewer Line Blockage": "Water Board",
+  "Illegal Tree Cutting": "Environmental Authority",
+  "Air Pollution": "Environmental Authority",
+  "Water Body Pollution (River/Canal)": "Environmental Authority",
+  "Industrial Waste Disposal": "Environmental Authority",
+  "Environmental Damage Complaint": "Environmental Authority",
+  "Unauthorized Construction": "Urban Development Authority",
+  "Building Code Violation": "Urban Development Authority",
+  "Land Use Violation": "Urban Development Authority",
+  "Unsafe Construction Site": "Urban Development Authority",
+  "Power Outage": "Electricity Board",
+  "Streetlight Breakdown": "Electricity Board",
+  "Fallen Electrical Line": "Electricity Board",
+  "Unsafe Electrical Connection": "Electricity Board",
+  "Transformer Issue": "Electricity Board",
+  "Bus Stop Maintenance Issue": "Transport Authority",
+  "Unsafe Bus Operation": "Transport Authority",
+  "Route Mismanagement": "Transport Authority",
+  "Public Transport Safety Concern": "Transport Authority",
+  "Resident Verification Issue": "Grama Niladhari",
+  "Local Documentation Concern": "Grama Niladhari",
+  "Community-Level Dispute (Non-Criminal)": "Grama Niladhari"
 };
 
 function extractCity(locationText) {
@@ -33,12 +69,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-
-// ==========================================================
-// 🚨 SUPER ADMIN ROUTES (MUST BE AT THE TOP)
-// ==========================================================
-
-// 1. GLOBAL STATS
 router.get('/admin/stats', async (req, res) => {
   try {
     const [total] = await db.query('SELECT COUNT(*) as count FROM complaints');
@@ -56,7 +86,6 @@ router.get('/admin/stats', async (req, res) => {
   }
 });
 
-// 2. PERFORMANCE BY AUTHORITY
 router.get('/admin/performance', async (req, res) => {
   try {
     const query = `
@@ -75,7 +104,6 @@ router.get('/admin/performance', async (req, res) => {
   }
 });
 
-// 3. MASTER RECENT ACTIVITY (Latest 5 from ALL departments)
 router.get('/admin/all-recent', async (req, res) => {
   try {
     const query = `
@@ -97,7 +125,6 @@ router.get('/admin/all-recent', async (req, res) => {
   }
 });
 
-// 4. GET ALL COMPLAINTS (For the Full Master List Page)
 router.get('/admin/all', async (req, res) => {
   try {
     const sql = `
@@ -109,11 +136,10 @@ router.get('/admin/all', async (req, res) => {
     const [complaints] = await db.query(sql);
     res.status(200).json({ success: true, data: complaints });
   } catch (error) { 
-    res.status(500).json({ success: false, message: "Error." }); 
+    res.status(500).json({ success: false, message: "Error fetching complaints" }); 
   }
 });
 
-// 5. GET ALL AUTHORITIES (For Reassign Dropdown)
 router.get('/admin/authorities', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT authority_id, name FROM authorities ORDER BY name ASC');
@@ -123,27 +149,22 @@ router.get('/admin/authorities', async (req, res) => {
   }
 });
 
-// 6. GET OFFICERS BY AUTHORITY (For Reassign Dropdown)
 router.get('/admin/officers/:authorityId', async (req, res) => {
   try {
-    // We now query the 'officers' table and alias 'full_name' to 'fullName' so React understands it!
     const sql = `SELECT user_id, full_name AS fullName FROM officers WHERE authority_id = ?`;
     const [rows] = await db.query(sql, [req.params.authorityId]);
-    
     res.json({ success: true, data: rows });
   } catch (err) {
-    console.error("OFFICER FETCH CRASH:", err.message);
+    console.error("Officer Fetch Error:", err.message);
     res.status(500).json({ success: false, message: "Error fetching officers" });
   }
 });
 
-// 7. REASSIGN COMPLAINT
 router.patch('/reassign/:id', async (req, res) => {
   const { new_authority_id, reason } = req.body;
   const complaintId = req.params.id;
 
   try {
-    // Move the complaint to the new authority and reset status to PENDING
     await db.query(`UPDATE complaints SET authority_id = ?, status = 'PENDING' WHERE complaint_id = ?`, [new_authority_id, complaintId]);
     res.status(200).json({ success: true, message: "Reassigned successfully!" });
   } catch (error) { 
@@ -152,7 +173,6 @@ router.patch('/reassign/:id', async (req, res) => {
   }
 });
 
-// 8. GET ALL AUTHORITIES WITH OFFICER COUNTS (For Authorities Page)
 router.get('/admin/authorities-list', async (req, res) => {
   try {
     const query = `
@@ -172,7 +192,6 @@ router.get('/admin/authorities-list', async (req, res) => {
   }
 });
 
-// 9. ADD NEW AUTHORITY
 router.post('/admin/add-authority', async (req, res) => {
   const { name, department, region } = req.body;
   try {
@@ -185,7 +204,6 @@ router.post('/admin/add-authority', async (req, res) => {
   }
 });
 
-// 10. UPDATE AUTHORITY
 router.put('/admin/update-authority/:id', async (req, res) => {
   const { name, department, region } = req.body;
   try {
@@ -198,17 +216,14 @@ router.put('/admin/update-authority/:id', async (req, res) => {
   }
 });
 
-// 11. DELETE AUTHORITY & REASSIGN COMPLAINTS
 router.delete('/admin/delete-authority/:id', async (req, res) => {
   const { fallback_authority_id } = req.body;
   const authIdToDelete = req.params.id;
 
   try {
-    // 1. Reassign all complaints to the new fallback department
     if (fallback_authority_id) {
       await db.query(`UPDATE complaints SET authority_id = ? WHERE authority_id = ?`, [fallback_authority_id, authIdToDelete]);
     }
-    // 2. Delete the old authority
     await db.query(`DELETE FROM authorities WHERE authority_id = ?`, [authIdToDelete]);
     
     res.json({ success: true, message: "Authority deleted and complaints reassigned!" });
@@ -218,16 +233,11 @@ router.delete('/admin/delete-authority/:id', async (req, res) => {
   }
 });
 
-// 12. GET UNIQUE DEPARTMENTS (For Dropdowns)
 router.get('/admin/departments-list', async (req, res) => {
   try {
-    // Grabs every unique department name alphabetically, ignoring null/empty ones
     const query = `SELECT DISTINCT department FROM authorities WHERE department IS NOT NULL AND department != '' ORDER BY department ASC`;
     const [rows] = await db.query(query);
-    
-    // Convert the array of objects [{department: 'Police'}, ...] into a simple array of strings ['Police', ...]
     const departments = rows.map(row => row.department);
-    
     res.json({ success: true, data: departments });
   } catch (err) {
     console.error("Fetch Departments Error:", err.message);
@@ -235,7 +245,6 @@ router.get('/admin/departments-list', async (req, res) => {
   }
 });
 
-// 13. GET UNIQUE REGIONS (For Dropdowns)
 router.get('/admin/regions-list', async (req, res) => {
   try {
     const query = `SELECT DISTINCT region FROM authorities WHERE region IS NOT NULL AND region != '' ORDER BY region ASC`;
@@ -248,14 +257,9 @@ router.get('/admin/regions-list', async (req, res) => {
   }
 });
 
-
-// ==========================================================
-// 🚨 SUPER ADMIN: DELETE COMPLAINT
-// ==========================================================
 router.delete('/admin/delete-complaint/:id', async (req, res) => {
   const complaintId = req.params.id;
   try {
-    // This permanently removes the complaint from the database
     await db.query(`DELETE FROM complaints WHERE complaint_id = ?`, [complaintId]);
     res.json({ success: true, message: "Complaint permanently deleted." });
   } catch (err) {
@@ -264,13 +268,8 @@ router.delete('/admin/delete-complaint/:id', async (req, res) => {
   }
 });
 
-
-// ==========================================================
-// 📊 ADMIN: ANALYTICS & REPORTS
-// ==========================================================
 router.get('/admin/analytics', async (req, res) => {
   try {
-    // 1. KPI Data (Made bulletproof with COALESCE and UPPER to avoid case-sensitivity crashes)
     const [kpiRows] = await db.query(`
       SELECT 
         COUNT(*) as total_complaints,
@@ -284,7 +283,6 @@ router.get('/admin/analytics', async (req, res) => {
     const resolved = kpis.resolved_complaints || 0;
     const completionRate = total > 0 ? ((resolved / total) * 100).toFixed(1) : 0;
 
-    // 2. Chart.js Data: Volume Trends (Last 6 Months)
     const [trendRows] = await db.query(`
       SELECT 
         DATE_FORMAT(created_at, '%b') as month_name,
@@ -296,7 +294,6 @@ router.get('/admin/analytics', async (req, res) => {
       ORDER BY YEAR(created_at), MONTH(created_at) ASC
     `);
 
-    // 3. District Breakdown
     const [districtRows] = await db.query(`
       SELECT 
         COALESCE(a.region, 'Unassigned') as district,
@@ -308,7 +305,6 @@ router.get('/admin/analytics', async (req, res) => {
       LIMIT 5
     `);
 
-    // 4. Authority Performance (Milestones Table)
     const [performanceRows] = await db.query(`
       SELECT 
         a.name as authority_name,
@@ -332,9 +328,8 @@ router.get('/admin/analytics', async (req, res) => {
         kpis: {
           active: kpis.active_complaints || 0,
           completionRate: completionRate,
-          // Real average, rounded to 1 decimal place. Fallback to "0" if no resolved complaints exist.
           avgResolution: kpis.avg_resolution_days ? parseFloat(kpis.avg_resolution_days).toFixed(1) : "0.0",
-          satisfaction: "4.7" // Still hardcoded until you build a citizen reviews table!
+          satisfaction: "4.7" 
         },
         trends: trendRows, 
         districts: districtRows,
@@ -343,18 +338,11 @@ router.get('/admin/analytics', async (req, res) => {
     });
 
   } catch (err) {
-    // 👇 IF IT CRASHES AGAIN, THIS LINE WILL TELL YOU EXACTLY WHY IN YOUR TERMINAL
-    console.error("🚨 Analytics Crash Error:", err.message); 
+    console.error("Analytics Error:", err.message); 
     res.status(500).json({ success: false, message: "Failed to load analytics." });
   }
 });
 
-
-// ==========================================================
-// 🏢 GENERAL & OFFICER ROUTES
-// ==========================================================
-
-// SUBMIT COMPLAINT
 router.post('/submit', upload.array('images', 3), async (req, res) => {
   const { user_id, category, title, description, location_text, latitude, longitude } = req.body;
   let image_url = null;
@@ -390,7 +378,6 @@ router.post('/submit', upload.array('images', 3), async (req, res) => {
   }
 });
 
-// GET SINGLE USER COMPLAINTS (Citizen App)
 router.get('/user/:userId', async (req, res) => {
   try {
     const [complaints] = await db.query(`SELECT * FROM complaints WHERE user_id = ? ORDER BY created_at DESC`, [req.params.userId]);
@@ -398,7 +385,6 @@ router.get('/user/:userId', async (req, res) => {
   } catch (error) { res.status(500).json({ success: false, message: "Failed to fetch complaints." }); }
 });
 
-// CITIZEN STATS
 router.get('/stats/:userId', async (req, res) => {
   try {
       const userId = req.params.userId;
@@ -409,7 +395,6 @@ router.get('/stats/:userId', async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-// GET AUTHORITY COMPLAINTS (Officer Dashboard)
 router.get('/authority/:authorityId', async (req, res) => {
   try {
     const { authorityId } = req.params;
@@ -430,16 +415,13 @@ router.get('/authority/:authorityId', async (req, res) => {
   }
 });
 
-// REJECT / ESCALATE COMPLAINT
 router.patch('/officer/reject-complaint/:id', async (req, res) => {
   const complaintId = req.params.id;
   const { reason, officerName } = req.body; 
 
   try {
-    // We format a nice note so the Admin knows exactly who rejected it and why
     const rejectionNote = `\n[ESCALATED BY ${officerName || 'OFFICER'}]: ${reason}`;
 
-    // Update the status to REJECTED, and append the note to existing admin_notes (or replace if null)
     const query = `
       UPDATE complaints 
       SET 
@@ -457,12 +439,6 @@ router.patch('/officer/reject-complaint/:id', async (req, res) => {
   }
 });
 
-
-// ==========================================================
-// ⚠️ DYNAMIC ROUTES (MUST BE AT THE VERY BOTTOM)
-// ==========================================================
-
-// 5. GET SINGLE COMPLAINT DETAILS
 router.get('/:id', async (req, res) => {
   try {
     const sql = `
@@ -486,12 +462,11 @@ router.get('/:id', async (req, res) => {
       res.status(404).json({ success: false, message: "Not found" });
     }
   } catch (error) { 
-    console.error("CRASH IN /:id ROUTE -->", error.message);
-    res.status(500).json({ success: false, message: "Error." }); 
+    console.error("Fetch Complaint Route Error:", error.message);
+    res.status(500).json({ success: false, message: "Error fetching complaint." }); 
   }
 });
 
-// UPDATE STATUS & NOTIFY
 router.patch('/update-status/:id', async (req, res) => {
   const { status } = req.body;
   const complaintId = req.params.id;
@@ -507,7 +482,7 @@ router.patch('/update-status/:id', async (req, res) => {
     await db.query(`INSERT INTO notifications (user_id, complaint_id, message) VALUES (?, ?, ?)`, [user_id, complaintId, notificationMsg]);
 
     res.status(200).json({ success: true, message: "Status updated and citizen notified!" });
-  } catch (error) { res.status(500).json({ success: false, message: "Failed." }); }
+  } catch (error) { res.status(500).json({ success: false, message: "Failed to update status." }); }
 });
 
 module.exports = router;

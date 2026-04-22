@@ -8,7 +8,6 @@ import { BASE_URL } from '../../src/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { translations } from '../../src/translations';
 
-// --- IMPORT THE FLAG ---
 import NationalBadge from '../components/NationalBadge';
 
 const locationData = {
@@ -42,7 +41,6 @@ export default function SignupScreen({
   const [districtItems, setDistrictItems] = useState(Object.keys(locationData).map(dist => ({ label: dist, value: dist })));
   const [divisionItems, setDivisionItems] = useState([]);
 
-  // --- LANGUAGE INITIALIZATION ---
   useEffect(() => {
     const loadLang = async () => {
       const savedLang = await AsyncStorage.getItem('userLanguage');
@@ -116,7 +114,6 @@ export default function SignupScreen({
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           
-          {/* --- NEW HEADER ROW (Badge + Language Toggle) --- */}
           <View style={styles.headerTopRow}>
             <NationalBadge size="large" />
             <View style={styles.langToggleGroup}>
@@ -175,7 +172,6 @@ export default function SignupScreen({
             </View>
             {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
-            {/* --- DISTRICT MODAL DROPDOWN --- */}
             <Text style={styles.label}>{t.district}</Text>
             <View> 
               <DropDownPicker
@@ -198,7 +194,6 @@ export default function SignupScreen({
             </View>
             {errors.district && <Text style={styles.errorText}>{errors.district}</Text>}
 
-            {/* --- DIVISION MODAL DROPDOWN --- */}
             <Text style={styles.label}>{t.division}</Text>
             <View style={{ opacity: districtValue ? 1 : 0.5, zIndex: -1 }}>
               <DropDownPicker
@@ -270,8 +265,6 @@ export default function SignupScreen({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   scrollContent: { paddingHorizontal: 25, paddingVertical: 20 },
-  
-  // --- NEW STYLES FOR TOP ROW ---
   headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   langToggleGroup: { flexDirection: 'row', alignItems: 'center' },
   langBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, marginLeft: 8, backgroundColor: '#E2E8F0', borderWidth: 1, borderColor: '#CBD5E1' },

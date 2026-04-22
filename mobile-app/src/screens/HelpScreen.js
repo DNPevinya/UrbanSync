@@ -18,7 +18,6 @@ export default function HelpScreen({ onBack, onNavigateToFAQ }) {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.intro}>Follow these simple steps to report and track public service issues in your area.</Text>
 
-        {/* Step 1: Reporting */}
         <View style={styles.stepCard}>
           <View style={styles.stepHeader}>
             <View style={[styles.iconCircle, { backgroundColor: 'rgba(1, 96, 201, 0.12)' }]}>
@@ -33,7 +32,6 @@ export default function HelpScreen({ onBack, onNavigateToFAQ }) {
           </Text>
         </View>
 
-        {/* Step 2: Location */}
         <View style={styles.stepCard}>
           <View style={styles.stepHeader}>
             <View style={[styles.iconCircle, { backgroundColor: 'rgba(255, 159, 67, 0.12)' }]}>
@@ -48,7 +46,6 @@ export default function HelpScreen({ onBack, onNavigateToFAQ }) {
           </Text>
         </View>
 
-        {/* Step 3: Tracking */}
         <View style={styles.stepCard}>
           <View style={styles.stepHeader}>
             <View style={[styles.iconCircle, { backgroundColor: 'rgba(40, 199, 111, 0.12)' }]}>
@@ -63,7 +60,6 @@ export default function HelpScreen({ onBack, onNavigateToFAQ }) {
           </Text>
         </View>
 
-        {/* Step 4: Communication */}
         <View style={styles.stepCard}>
           <View style={styles.stepHeader}>
             <View style={[styles.iconCircle, { backgroundColor: 'rgba(28, 163, 222, 0.12)' }]}>

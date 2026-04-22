@@ -60,9 +60,7 @@ export default function NotificationScreen({ onBack }) {
     fetchNotifications();
   }, []);
 
-  // FIXED MARK ALL AS READ LOGIC
   const markAllAsRead = async () => {
-    // 1. Instantly update the UI so the blue dots disappear immediately
     setNotifications(prev => prev.map(n => ({ ...n, is_read: 1 })));
 
     try {
@@ -70,7 +68,6 @@ export default function NotificationScreen({ onBack }) {
       if (!userData) return;
       const userId = JSON.parse(userData).id;
 
-      // 2. Ping the backend in the background
       await fetch(`${BASE_URL}/api/auth/notifications/read-all/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' }
@@ -118,7 +115,6 @@ export default function NotificationScreen({ onBack }) {
           ) : (
             notifications.map((item) => {
               const { type, icon, title } = getNotificationStyle(item.message);
-              // FIXED CHECK: Safely parse to number
               const isUnread = Number(item.is_read) === 0;
               
               return (
@@ -133,7 +129,6 @@ export default function NotificationScreen({ onBack }) {
                   <View style={styles.textContainer}>
                     <View style={styles.titleRow}>
                       <Text style={styles.notifTitle}>{title}</Text>
-                      {/* UNREAD BLUE DOT INDICATOR */}
                       {isUnread && <View style={styles.unreadIndicator} />}
                       <Text style={styles.notifTime}>{formatTime(item.created_at)}</Text>
                     </View>
@@ -183,7 +178,6 @@ const styles = StyleSheet.create({
     borderColor: '#F1F5F9',
   },
   
-  // NEW STYLES FOR UNREAD HIGHLIGHTS
   unreadCard: {
     backgroundColor: '#F0F7FF', 
     borderColor: '#D0E6FF',

@@ -5,37 +5,31 @@ import Footer from '../components/Footer';
 import Header from '../components/Header';
 import ReassignModal from '../components/ReassignModal';
 import DetailsModal from '../components/DetailsModal';
-import DeleteComplaintModal from '../components/DeleteComplaintModal'; // NEW IMPORT
+import DeleteComplaintModal from '../components/DeleteComplaintModal'; 
 
 export default function AdminComplaints() {
   const navigate = useNavigate();
 
-  // --- 1. DATA STATE ---
   const [complaints, setComplaints] = useState([]);
   const [stats, setStats] = useState({ total: 0, pending: 0, active: 0, resolved: 0 });
   const [loading, setLoading] = useState(true);
 
-  // --- 2. FILTER STATE ---
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('All Categories');
   const [filterStatus, setFilterStatus] = useState('All Statuses');
   const [filterDate, setFilterDate] = useState('');
 
-  // --- 3. PAGINATION STATE ---
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // --- 4. MODAL STATE ---
   const [isReassignOpen, setIsReassignOpen] = useState(false);
   const [reassignId, setReassignId] = useState('');
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [detailsId, setDetailsId] = useState('');
   
-  // NEW: DELETE MODAL STATE
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deleteId, setDeleteId] = useState('');
 
-  // Extracted fetch function so we can call it after a deletion!
   const fetchMasterData = async () => {
     try {
       setLoading(true);
@@ -54,7 +48,6 @@ export default function AdminComplaints() {
     }
   };
 
-  // Fetch Data on Load
   useEffect(() => {
     const savedUser = localStorage.getItem('urbanSyncUser');
     if (!savedUser) { navigate('/login'); return; }
@@ -65,12 +58,10 @@ export default function AdminComplaints() {
     fetchMasterData();
   }, [navigate]);
 
-  // Reset to page 1 whenever a filter is changed
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterCategory, filterStatus, filterDate]);
 
-  // --- FILTER LOGIC (ROBUST) ---
   const filteredComplaints = complaints.filter(c => {
     const safeTitle = c.title || "";
     const safeStatus = c.status || "";
@@ -90,7 +81,6 @@ export default function AdminComplaints() {
     return matchesSearch && matchesCategory && matchesStatus && matchesDate;
   });
 
-  // --- PAGINATION MATH ---
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
   const currentRows = filteredComplaints.slice(indexOfFirstRow, indexOfLastRow);
@@ -112,7 +102,6 @@ export default function AdminComplaints() {
         <Header breadcrumbs={['Admin', 'System-Wide Workbox']} />
         <main className="flex-1 overflow-y-auto p-8 flex flex-col">
           
-          {/* FILTER BAR */}
           <div className="flex flex-col md:flex-row gap-4 mb-6 mt-4">
             <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -144,7 +133,6 @@ export default function AdminComplaints() {
             <button onClick={clearFilters} className="text-[13px] font-bold text-[#64748B] hover:text-[#EF4444] px-4 py-2.5 transition-colors">Clear</button>
           </div>
 
-          {/* TABLE SECTION */}
           <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-xl flex-1 flex flex-col shadow-sm">
             <div className="px-6 py-4 border-b border-[#E2E8F0] flex justify-between items-center">
               <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
@@ -211,7 +199,6 @@ export default function AdminComplaints() {
                             >
                               Reassign
                             </button>
-                            {/* NEW: DELETE BUTTON */}
                             <button 
                               onClick={() => setDeleteId(c.complaint_id) || setIsDeleteOpen(true)} 
                               className="text-[#64748B] hover:text-[#EF4444] transition-colors"
@@ -232,7 +219,6 @@ export default function AdminComplaints() {
               </table>
             </div>
 
-            {/* REAL PAGINATION CONTROLS */}
             <div className="px-6 py-4 border-t border-[#E2E8F0] flex items-center justify-between">
               <div className="flex items-center text-[13px] text-[#64748B]">
                 Rows per page: 
@@ -275,7 +261,6 @@ export default function AdminComplaints() {
           <ReassignModal isOpen={isReassignOpen} onClose={() => setIsReassignOpen(false)} complaintId={reassignId} refreshData={fetchMasterData} />
           <DetailsModal isOpen={isDetailsOpen} onClose={() => setIsDetailsOpen(false)} complaintId={detailsId} />
           
-          {/* NEW: DELETE MODAL INJECTED HERE */}
           <DeleteComplaintModal 
             isOpen={isDeleteOpen} 
             onClose={() => setIsDeleteOpen(false)} 

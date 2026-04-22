@@ -32,7 +32,6 @@ export default function OfficerComplaints() {
     fetchComplaints();
   }, [navigate]);
 
-  // UPDATED FILTER: Now searches by Name and Phone too!
   const filteredComplaints = complaints.filter(c => {
     const s = searchQuery.toLowerCase();
     const matchesSearch = 

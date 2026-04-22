@@ -7,7 +7,6 @@ export default function Header({ title, breadcrumbs }) {
   return (
     <header className="h-[72px] bg-[#FFFFFF] border-b border-[#E2E8F0] flex items-center justify-between px-8 flex-shrink-0">
       
-      {/* LEFT SIDE: Breadcrumbs OR Title */}
       <div className="flex items-center text-[13px]">
         {breadcrumbs ? (
           breadcrumbs.map((crumb, index) => (
@@ -23,7 +22,6 @@ export default function Header({ title, breadcrumbs }) {
         )}
       </div>
       
-      {/* RIGHT SIDE: Search and Sign Out (Alerts removed) */}
       <div className="flex items-center space-x-6">
         
 

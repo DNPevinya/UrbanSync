@@ -209,7 +209,6 @@ export default function ComplaintDetailsScreen({ onBack, complaintId }) {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.authorityLabel, { color: assignedAuthority ? '#0041C7' : '#64748B' }]}>ASSIGNED AUTHORITY</Text>
-            {/* Removed numberOfLines={1} so the text can wrap correctly */}
             <Text style={[styles.authorityName, { color: assignedAuthority ? '#1E293B' : '#94A3B8' }]}>
               {assignedAuthority ? assignedAuthority : "Pending Assignment"}
             </Text>
@@ -334,7 +333,6 @@ const styles = StyleSheet.create({
   descCard: { backgroundColor: '#fff', borderRadius: 16, padding: 20, marginBottom: 25, borderWidth: 1.5, borderColor: '#E2E8F0' },
   descText: { fontSize: 15, color: '#334155', lineHeight: 24, fontWeight: '500' },
   
-  // UPDATED AUTHORITY CARD STYLES FOR WRAPPING
   authorityCard: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#fff', padding: 20, borderRadius: 20, marginBottom: 25, borderWidth: 1.5, borderColor: '#E2E8F0', elevation: 2, shadowOpacity: 0.03 },
   authorityIconBox: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   authorityLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5, marginBottom: 2 },

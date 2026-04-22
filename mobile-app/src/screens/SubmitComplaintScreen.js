@@ -6,9 +6,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import { useFocusEffect } from '@react-navigation/native'; // IMPORT FOR LANGUAGE
-import AsyncStorage from '@react-native-async-storage/async-storage'; // IMPORT FOR LANGUAGE
-import { translations } from '../../src/translations'; // IMPORT TRANSLATIONS
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { translations } from '../../src/translations';
 import { BASE_URL } from '../../src/config';
 
 export default function SubmitComplaintScreen({ onBack, userId }) {
@@ -16,7 +16,6 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
   const mapRef = useRef(null);
   const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-  // --- LANGUAGE LOGIC ---
   const [currentLang, setCurrentLang] = useState('en');
 
   useFocusEffect(
@@ -29,19 +28,42 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
     }, [])
   );
 
-  // Default to English if the dictionary fails to load momentarily
   const t = translations[currentLang] || translations['en']; 
 
   const complaintData = {
-    'Urban Infrastructure & Municipal Services': ['Garbage Collection Delay', 'Illegal Waste Dumping', 'Street Cleaning Issue', 'Drainage Blockage / Flooding', 'Broken Road / Pothole', 'Damaged Footpath', 'Traffic Signal Malfunction', 'Public Park Maintenance Issue', 'Public Space Maintenance Issue'],
-    'Public Health & Sanitation': ['Dengue Mosquito Breeding Site', 'Food Hygiene Complaint', 'Unsanitary Business Premises', 'Public Sanitation Issue', 'Waste Causing Health Hazard'],
-    'Public Safety & Law Enforcement': ['Noise Complaint', 'Parking Violation', 'Vandalism', 'Suspicious Activity', 'Public Disorder'],
-    'Water Supply Services': ['Water Supply Interruption', 'Low Water Pressure', 'Pipe Leak', 'Water Contamination', 'Sewer Line Blockage'],
-    'Environmental Protection': ['Illegal Tree Cutting', 'Air Pollution', 'Water Body Pollution (River/Canal)', 'Industrial Waste Disposal', 'Environmental Damage Complaint'],
-    'Urban Planning & Development': ['Unauthorized Construction', 'Building Code Violation', 'Land Use Violation', 'Unsafe Construction Site'],
-    'Electricity Services': ['Power Outage', 'Streetlight Breakdown', 'Fallen Electrical Line', 'Unsafe Electrical Connection', 'Transformer Issue'],
-    'Public Transport Infrastructure': ['Bus Stop Maintenance Issue', 'Unsafe Bus Operation', 'Route Mismanagement', 'Public Transport Safety Concern'],
-    'Local Administrative Issues': ['Resident Verification Issue', 'Local Documentation Concern', 'Community-Level Dispute (Non-Criminal)']
+    'Urban Infrastructure & Municipal Services': [
+      'Garbage Collection Delay', 'Illegal Waste Dumping', 'Street Cleaning Issue', 
+      'Drainage Blockage / Flooding', 'Broken Road / Pothole', 'Damaged Footpath', 
+      'Traffic Signal Malfunction', 'Public Park Maintenance Issue', 'Public Space Maintenance Issue'
+    ],
+    'Public Health & Sanitation': [
+      'Dengue Mosquito Breeding Site', 'Food Hygiene Complaint', 'Unsanitary Business Premises', 
+      'Public Sanitation Issue', 'Waste Causing Health Hazard'
+    ],
+    'Public Safety & Law Enforcement': [
+      'Noise Complaint', 'Parking Violation', 'Vandalism', 'Suspicious Activity', 'Public Disorder'
+    ],
+    'Water Supply Services': [
+      'Water Supply Interruption', 'Low Water Pressure', 'Pipe Leak', 
+      'Water Contamination', 'Sewer Line Blockage'
+    ],
+    'Environmental Protection': [
+      'Illegal Tree Cutting', 'Air Pollution', 'Water Body Pollution (River/Canal)', 
+      'Industrial Waste Disposal', 'Environmental Damage Complaint'
+    ],
+    'Urban Planning & Development': [
+      'Unauthorized Construction', 'Building Code Violation', 'Land Use Violation', 'Unsafe Construction Site'
+    ],
+    'Electricity Services': [
+      'Power Outage', 'Streetlight Breakdown', 'Fallen Electrical Line', 
+      'Unsafe Electrical Connection', 'Transformer Issue'
+    ],
+    'Public Transport Infrastructure': [
+      'Bus Stop Maintenance Issue', 'Unsafe Bus Operation', 'Route Mismanagement', 'Public Transport Safety Concern'
+    ],
+    'Local Administrative Issues': [
+      'Resident Verification Issue', 'Local Documentation Concern', 'Community-Level Dispute (Non-Criminal)'
+    ]
   };
 
   const categories = [
@@ -95,7 +117,9 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
       } else {
         setLocationName('Address Unavailable');
       }
-    } catch (error) { setLocationName('Address Unavailable'); }
+    } catch (error) { 
+      setLocationName('Address Unavailable'); 
+    }
   };
 
   useEffect(() => {
@@ -171,14 +195,13 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
     }
   };
 
-  // --- THE BACKEND SUBMIT REMAINS 100% ENGLISH ---
   const handleSubmit = async () => {
     if (!description || images.length === 0) return Alert.alert("Required", "Please provide description and at least one photo.");
     setLoading(true);
     const formData = new FormData();
     formData.append('user_id', userId || '1');
-    formData.append('category', selectedCategory); // Submits English string
-    formData.append('title', selectedType); // Submits English string
+    formData.append('category', selectedCategory); 
+    formData.append('title', selectedType); 
     formData.append('description', description);
     formData.append('location_text', locationName);
     formData.append('latitude', markerCoord.latitude);
@@ -203,7 +226,10 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
   return (
     <SafeAreaView style={styles.container} edges={Platform.OS === 'android' ? ['top'] : []}>
       <View style={styles.topNavBar}>
-        <TouchableOpacity onPress={onBack} style={styles.backBtn}><Ionicons name="chevron-back" size={24} color="#0041C7" /><Text style={styles.backText}>{t.back}</Text></TouchableOpacity>
+        <TouchableOpacity onPress={onBack} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={24} color="#0041C7" />
+          <Text style={styles.backText}>{t.back}</Text>
+        </TouchableOpacity>
         <Text style={styles.navTitle}>{t.new_report}</Text>
         <View style={{ width: 70 }} />
       </View>
@@ -223,7 +249,6 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
               {categories.map((cat) => (
                 <TouchableOpacity key={cat.id} style={[styles.catCard, selectedCategory === cat.label && styles.catCardActive]} onPress={() => handleCategorySelect(cat.label)}>
                   <MaterialCommunityIcons name={cat.icon} size={28} color={selectedCategory === cat.label ? '#fff' : '#0160C9'} />
-                  {/* DATA MASKING: Translates category on UI only */}
                   <Text style={[styles.catLabel, selectedCategory === cat.label && styles.catLabelActive]}>
                     {t.categories[cat.label] || cat.label}
                   </Text>
@@ -235,7 +260,6 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
           <View style={styles.formSection}>
             <Text style={styles.label}>{t.issue_label}</Text>
             <TouchableOpacity style={styles.dropBtn} onPress={() => setShowTypeModal(true)}>
-              {/* DATA MASKING: Translates selected issue type on UI only */}
               <Text style={styles.dropText}>{t.issues[selectedType] || selectedType}</Text>
               <Ionicons name="chevron-down-circle" size={22} color="#0041C7" />
             </TouchableOpacity>
@@ -256,10 +280,27 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
           <View style={styles.formSection}>
             <Text style={styles.label}>{t.photo_label}</Text>
             <View style={styles.photoActions}>
-              <TouchableOpacity style={styles.pBtn} onPress={takePhoto}><Ionicons name="camera" size={20} color="#0041C7" /><Text style={styles.pText}>{t.camera}</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.pBtn} onPress={pickImages}><Ionicons name="images" size={20} color="#0041C7" /><Text style={styles.pText}>{t.gallery}</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.pBtn} onPress={takePhoto}>
+                <Ionicons name="camera" size={20} color="#0041C7" />
+                <Text style={styles.pText}>{t.camera}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.pBtn} onPress={pickImages}>
+                <Ionicons name="images" size={20} color="#0041C7" />
+                <Text style={styles.pText}>{t.gallery}</Text>
+              </TouchableOpacity>
             </View>
-            {images.length > 0 && <ScrollView horizontal style={styles.imgScroll}>{images.map((uri, i) => (<View key={i} style={styles.imgWrap}><Image source={{ uri }} style={styles.img} /><TouchableOpacity style={styles.rmv} onPress={() => setImages(images.filter((_, idx) => idx !== i))}><Ionicons name="close" size={14} color="#fff" /></TouchableOpacity></View>))}</ScrollView>}
+            {images.length > 0 && (
+              <ScrollView horizontal style={styles.imgScroll}>
+                {images.map((uri, i) => (
+                  <View key={i} style={styles.imgWrap}>
+                    <Image source={{ uri }} style={styles.img} />
+                    <TouchableOpacity style={styles.rmv} onPress={() => setImages(images.filter((_, idx) => idx !== i))}>
+                      <Ionicons name="close" size={14} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
           </View>
 
           <View style={styles.formSection}>
@@ -291,7 +332,10 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
                      pinColor="#0041C7" 
                    />
                  </MapView>
-                 <View style={styles.addr}><Ionicons name="location" size={16} color="#0041C7" /><Text style={styles.addrText} numberOfLines={2}>{locationName}</Text></View>
+                 <View style={styles.addr}>
+                   <Ionicons name="location" size={16} color="#0041C7" />
+                   <Text style={styles.addrText} numberOfLines={2}>{locationName}</Text>
+                 </View>
               </View>
             </View>
           </View>
@@ -304,7 +348,6 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* --- ISSUE TYPE SELECTOR MODAL --- */}
       <Modal visible={showTypeModal} animationType="slide" transparent>
         <View style={styles.mOverlay}>
           <View style={styles.mContent}>
@@ -315,7 +358,6 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
             <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
               {complaintData[selectedCategory].map((type, i) => (
                 <TouchableOpacity key={i} style={styles.mItem} onPress={() => { setSelectedType(type); setShowTypeModal(false); }}>
-                  {/* DATA MASKING: Translates list items */}
                   <Text style={[styles.mItemT, selectedType === type && styles.mActive]}>
                     {t.issues[type] || type}
                   </Text>
@@ -326,7 +368,6 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
         </View>
       </Modal>
 
-      {/* --- CATEGORY GUIDE MODAL --- */}
       <Modal visible={showCategoryGuide} animationType="fade" transparent>
         <View style={styles.mOverlay}>
           <View style={styles.mContent}>
@@ -336,10 +377,7 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
             </View>
             <ScrollView contentContainerStyle={{ paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
               {categories.map((cat, index) => {
-                // Auto-translate the category title
                 const translatedTitle = t.categories[cat.label] || cat.label;
-                
-                // Auto-translate the comma-separated list of issues based on the complaintData array
                 const translatedDesc = complaintData[cat.label]
                   .map(issue => t.issues[issue] || issue)
                   .join(', ');
@@ -364,7 +402,7 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
 const GuideItem = ({ icon, title, desc }) => (
   <View style={styles.gItem}>
     <MaterialCommunityIcons name={icon} size={24} color="#0160C9" />
-    <View style={{marginLeft:15, flex: 1}}>
+    <View style={styles.gItemTextWrap}>
       <Text style={styles.gTitle}>{title}</Text>
       <Text style={styles.gDesc}>{desc}</Text>
     </View>
@@ -416,6 +454,7 @@ const styles = StyleSheet.create({
   mItemT: { fontSize: 16, color: '#64748B' },
   mActive: { color: '#0041C7', fontWeight: '800' },
   gItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  gItemTextWrap: { marginLeft: 15, flex: 1 },
   gTitle: { fontWeight: '800', color: '#1E293B' }, 
   gDesc: { color: '#64748B', fontSize: 13, marginTop: 2, lineHeight: 18 }
 });

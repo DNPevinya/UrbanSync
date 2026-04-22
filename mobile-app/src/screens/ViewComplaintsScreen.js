@@ -33,13 +33,12 @@ export default function ViewComplaintsScreen({ onNavigateToDetails, userId }) {
     }
   };
 
-  // Dynamic Color Logic for Multi-Color Pill Stepper
   const getStepLevelInfo = (status, authorityId) => {
     const s = status?.toUpperCase();
     if (s === 'RESOLVED') return { level: 4, color: '#28C76F', width: '100%' };
-    if (s === 'IN PROGRESS') return { level: 3, color: '#0041C7', width: '72%' }; // Hits "Active"
-    if (authorityId) return { level: 2, color: '#00B5D8', width: '40%' };        // Hits "Processing"
-    return { level: 1, color: '#FFB400', width: '10%' };                         // Hits "Reported"
+    if (s === 'IN PROGRESS') return { level: 3, color: '#0041C7', width: '72%' };
+    if (authorityId) return { level: 2, color: '#00B5D8', width: '40%' };
+    return { level: 1, color: '#FFB400', width: '10%' };
   };
 
   const formatDate = (dateString) => {
@@ -60,7 +59,6 @@ export default function ViewComplaintsScreen({ onNavigateToDetails, userId }) {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       
-      {/* HEADER SECTION */}
       <View style={styles.topNavBar}>
         <View>
           <Text style={styles.greetingText}>OVERVIEW</Text>
@@ -68,7 +66,6 @@ export default function ViewComplaintsScreen({ onNavigateToDetails, userId }) {
         </View>
       </View>
 
-      {/* SEARCH BAR */}
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#64748B" style={styles.searchIcon} />
         <TextInput
@@ -80,7 +77,6 @@ export default function ViewComplaintsScreen({ onNavigateToDetails, userId }) {
         />
       </View>
 
-      {/* FILTER TABS */}
       <View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterBar}>
           {['All', 'Pending', 'In Progress', 'Resolved'].map((tab) => (
@@ -136,7 +132,6 @@ export default function ViewComplaintsScreen({ onNavigateToDetails, userId }) {
                   </View>
                 </View>
 
-                {/* --- PROFESSIONAL MULTI-COLOR PILL TRACKER --- */}
                 {item.status?.toUpperCase() !== 'CANCELLED' && (
                   <View style={styles.trackerWrapper}>
                     <View style={styles.progressBarBackground}>

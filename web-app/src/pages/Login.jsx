@@ -47,14 +47,11 @@ export default function Login() {
   return (
     <div className="flex min-h-screen font-sans bg-white overflow-hidden">
       
-      {/* LEFT SIDE - BRANDING (Hides on mobile, shows on large screens) */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#003399] to-[#0D85D8] relative items-center justify-center">
-        {/* Abstract Background Art matching your reference */}
         <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full border border-white/10"></div>
         <div className="absolute -bottom-20 -left-10 w-80 h-80 rounded-full border border-white/20"></div>
         
         <div className="relative z-10 flex flex-col items-center text-center px-12">
-          {/* Logo with a white soft glow/background */}
           <div className="bg-white p-4 rounded-2xl shadow-2xl mb-8">
             <img src="/smartlogo.png" alt="UrbanSync Logo" className="w-20 h-20 object-contain" />
           </div>
@@ -65,26 +62,21 @@ export default function Login() {
         </div>
       </div>
 
-      {/* RIGHT SIDE - LOGIN FORM */}
       <div className="w-full lg:w-1/2 flex flex-col relative">
         
-        {/* Main Form Container */}
         <div className="flex-1 flex items-center justify-center px-6 sm:px-16 lg:px-24">
           <div className="w-full max-w-md">
             
-            {/* Mobile Logo (Only shows when left side is hidden) */}
             <div className="lg:hidden flex items-center space-x-3 mb-10">
               <img src="/smartlogo.png" alt="UrbanSync Logo" className="w-10 h-10 object-contain" />
               <h1 className="text-[#0F172A] font-extrabold text-2xl tracking-tight">UrbanSync</h1>
             </div>
 
-            {/* Header matches reference image style */}
             <div className="mb-10 text-center lg:text-left">
               <h2 className="text-3xl font-extrabold text-slate-900 mb-2">Hello Again!</h2>
               <p className="text-slate-500 font-medium">Welcome back to the official portal.</p>
             </div>
 
-            {/* Error Message */}
             {error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-semibold flex items-center">
                 <svg className="w-5 h-5 mr-2 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
@@ -93,7 +85,6 @@ export default function Login() {
             )}
 
             <form onSubmit={handleLogin} className="space-y-5">
-              {/* Email Input */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -111,7 +102,6 @@ export default function Login() {
                 />
               </div>
 
-              {/* Password Input */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -142,7 +132,6 @@ export default function Login() {
                 </button>
               </div>
 
-              {/* Submit Button */}
               <button 
                 type="submit" 
                 disabled={isSubmitting}
@@ -150,16 +139,8 @@ export default function Login() {
               >
                 {isSubmitting ? "Authenticating..." : "Login"}
               </button>
-
-              {/* Forgot Password Link centered like the reference */}
-              <div className="text-center pt-2">
-                <a href="/forgot-password" className="text-sm font-bold text-slate-500 hover:text-[#0041C7] transition-colors">
-                  Forgot Password?
-                </a>
-              </div>
             </form>
 
-            {/* Redesigned Authorized Roles Section */}
             <div className="mt-12 pt-8 border-t border-slate-100">
               <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Authorized Access Only</p>
               <div className="flex justify-center space-x-4">
@@ -179,7 +160,6 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Subtle Government Warning */}
             <div className="mt-8 bg-slate-50 rounded-xl p-4 border border-slate-100">
               <p className="text-[10px] text-slate-400 uppercase font-bold leading-relaxed text-center">
                 <span className="text-slate-500">Notice:</span> Unauthorized access to this municipal network is strictly prohibited and subject to administrative monitoring.
@@ -189,7 +169,6 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Minimal Footer */}
         <div className="p-6 text-center">
           <p className="text-xs text-slate-400 font-medium">
             &copy; 2026 National Governance Digital Division.

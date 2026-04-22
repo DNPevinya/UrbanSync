@@ -4,7 +4,6 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 
 export default function Settings() {
-  // --- STATE ---
   const [userInfo, setUserInfo] = useState({ 
     fullName: 'Loading...', 
     email: 'Loading...', 
@@ -23,9 +22,7 @@ export default function Settings() {
   const [status, setStatus] = useState({ type: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- FETCH USER DATA ON LOAD ---
   useEffect(() => {
-    // Look for the user object in localStorage (Saved during Login)
     const savedUser = localStorage.getItem('urbanSyncUser');
     
     if (savedUser) {
@@ -34,25 +31,21 @@ export default function Settings() {
       setUserInfo({
         fullName: parsed.fullName || (parsed.role === 'super_admin' ? 'System Administrator' : 'Official User'),
         email: parsed.email || 'No email found',
-        // If it's a super admin, they don't have a specific authority, they control the whole system
         authorityName: parsed.authorityName || (parsed.role === 'super_admin' ? 'UrbanSync Central System' : 'Unassigned Department'),
         role: parsed.role || 'officer'
       });
     }
   }, []);
 
-  // --- HANDLE PASSWORD SUBMISSION ---
   const handlePasswordUpdate = async (e) => {
     e.preventDefault();
     setStatus({ type: '', message: '' });
 
-    // 1. Validation: Match
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setStatus({ type: 'error', message: 'Mismatch Error: The new password and confirmation do not match.' });
       return; 
     }
 
-    // 2. Validation: Length
     if (passwordData.newPassword.length < 8) {
       setStatus({ type: 'error', message: 'Length Error: Password must be at least 8 characters.' });
       return;
@@ -61,7 +54,6 @@ export default function Settings() {
     setIsSubmitting(true);
     
     try {
-      // 3. Send to our Backend Route
       const response = await fetch('http://localhost:5000/api/auth/update-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -76,7 +68,6 @@ export default function Settings() {
 
       if (response.ok) {
         setStatus({ type: 'success', message: data.message });
-        // Clear the form on success
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
         setStatus({ type: 'error', message: data.message });
@@ -89,7 +80,6 @@ export default function Settings() {
     }
   };
 
-  // --- REUSABLE EYE ICON COMPONENT ---
   const EyeIcon = ({ isVisible, toggle }) => (
     <button type="button" onClick={toggle} className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#94A3B8] hover:text-[#1E293B]">
       {isVisible ? (
@@ -114,7 +104,6 @@ export default function Settings() {
               <p className="text-[13px] text-[#64748B] mt-1">Manage security and view assigned department identity.</p>
             </div>
 
-            {/* PROFILE SECTION (Strictly Read-Only) */}
             <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm mb-8">
               <div className="px-8 py-6 border-b border-[#E2E8F0] flex justify-between items-center">
                 <div>
@@ -151,7 +140,6 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* SECURITY SECTION (Editable) */}
             <form onSubmit={handlePasswordUpdate} className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm mb-8">
               <div className="px-8 py-6 border-b border-[#E2E8F0]">
                   <h3 className="text-lg font-bold text-[#1E293B]">Security Settings</h3>
@@ -160,7 +148,6 @@ export default function Settings() {
               
               <div className="p-8 space-y-6">
                 
-                {/* STATUS NOTIFICATION */}
                 {status.message && (
                   <div className={`p-4 rounded-lg flex items-center border ${status.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
                     <p className="text-[12px] font-bold uppercase tracking-wider">{status.message}</p>

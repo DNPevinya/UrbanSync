@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
 export default function ReassignModal({ isOpen, onClose, complaintId, onReassignSuccess }) {
-  // --- STATE ---
   const [currentData, setCurrentData] = useState(null);
   const [authorities, setAuthorities] = useState([]);
   const [officers, setOfficers] = useState([]);
@@ -11,26 +10,21 @@ export default function ReassignModal({ isOpen, onClose, complaintId, onReassign
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- FETCH INITIAL DATA ---
   useEffect(() => {
     if (isOpen && complaintId) {
-      // 1. Fetch current details
       fetch(`http://localhost:5000/api/complaints/${complaintId}`)
         .then(res => res.json())
         .then(data => { if (data.success) setCurrentData(data.data); });
 
-      // 2. Fetch ALL authorities (UPDATED URL)
       fetch(`http://localhost:5000/api/complaints/admin/authorities`)
         .then(res => res.json())
         .then(data => { if (data.success) setAuthorities(data.data); });
     }
   }, [isOpen, complaintId]);
 
-  // --- FETCH OFFICERS WHEN AUTHORITY CHANGES ---
   useEffect(() => {
     if (targetAuthority) {
       setTargetOfficer(''); 
-      // Fetch officers for this authority (UPDATED URL)
       fetch(`http://localhost:5000/api/complaints/admin/officers/${targetAuthority}`)
         .then(res => res.json())
         .then(data => { if (data.success) setOfficers(data.data); });
@@ -39,25 +33,23 @@ export default function ReassignModal({ isOpen, onClose, complaintId, onReassign
     }
   }, [targetAuthority]);
 
-  // --- SUBMIT REASSIGNMENT ---
   const handleReassign = async () => {
     setIsSubmitting(true);
     try {
-      // We send a PATCH request to update the complaint's authority_id
       const response = await fetch(`http://localhost:5000/api/complaints/reassign/${complaintId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           new_authority_id: targetAuthority,
-          assigned_officer_id: targetOfficer, // Optional: if you want to track which specific officer it went to
+          assigned_officer_id: targetOfficer, 
           reason: reason
         })
       });
 
       const result = await response.json();
       if (result.success) {
-        onClose(); // Close the modal
-        if (onReassignSuccess) onReassignSuccess(); // Refresh the table behind it
+        onClose(); 
+        if (onReassignSuccess) onReassignSuccess(); 
       } else {
         alert("Failed to reassign: " + result.message);
       }
@@ -74,7 +66,6 @@ export default function ReassignModal({ isOpen, onClose, complaintId, onReassign
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
         
-        {/* Header */}
         <div className="bg-[#0041C7] px-6 py-5 flex justify-between items-start">
           <div>
             <h3 className="text-white text-lg font-bold">Reassign Complaint</h3>
@@ -85,10 +76,8 @@ export default function ReassignModal({ isOpen, onClose, complaintId, onReassign
           </button>
         </div>
 
-        {/* Body */}
         <div className="p-6 overflow-y-auto">
           
-          {/* Current Assignment */}
           <div className="mb-6">
             <h4 className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider flex items-center mb-3">
               <svg className="w-3.5 h-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
@@ -112,7 +101,6 @@ export default function ReassignModal({ isOpen, onClose, complaintId, onReassign
 
           <hr className="border-[#E2E8F0] mb-6" />
 
-          {/* New Assignment */}
           <div>
             <h4 className="text-[10px] font-bold text-[#0041C7] uppercase tracking-wider flex items-center mb-4">
               <svg className="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
@@ -120,7 +108,6 @@ export default function ReassignModal({ isOpen, onClose, complaintId, onReassign
             </h4>
 
             <div className="flex gap-4 mb-4">
-              {/* Target Authority Dropdown */}
               <div className="flex-1">
                 <label className="block text-[11px] font-bold text-[#1E293B] mb-1.5">Target Authority <span className="text-[#EF4444]">*</span></label>
                 <select 
@@ -137,7 +124,6 @@ export default function ReassignModal({ isOpen, onClose, complaintId, onReassign
                 </select>
               </div>
 
-              {/* Target Officer Dropdown */}
               <div className="flex-1">
                 <label className="block text-[11px] font-bold text-[#1E293B] mb-1.5">Target Officer <span className="text-[#EF4444]">*</span></label>
                 <select 
@@ -177,7 +163,6 @@ export default function ReassignModal({ isOpen, onClose, complaintId, onReassign
           </div>
         </div>
 
-        {/* Footer Actions */}
         <div className="bg-[#F8FAFC] px-6 py-4 border-t border-[#E2E8F0] flex justify-end items-center gap-3">
           <button onClick={onClose} className="px-5 py-2.5 text-[13px] font-bold text-[#64748B] hover:text-[#1E293B] transition-colors">
             Cancel

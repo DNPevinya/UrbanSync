@@ -7,12 +7,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { translations } from '../../src/translations'; 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// --- 🚨 FIREBASE IMPORTS 🚨 ---
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
 import { auth } from '../../src/firebaseConfig'; 
 
-// --- IMPORT THE BADGE ---
 import NationalBadge from '../components/NationalBadge';
 
 export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigateToForgot }) {
@@ -23,16 +21,13 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
   const [loading, setLoading] = useState(false);
   const [currentLang, setCurrentLang] = useState('en'); 
 
-  // --- 2FA STATE VARIABLES ---
   const [isOtpMode, setIsOtpMode] = useState(false); 
   const [otpCode, setOtpCode] = useState(''); 
   const [pendingUser, setPendingUser] = useState(null); 
   
-  // --- FIREBASE SMS VARIABLES ---
   const recaptchaVerifier = useRef(null);
   const [verificationId, setVerificationId] = useState(null);
 
-  // --- LANGUAGE INITIALIZATION ---
   useEffect(() => {
     const loadLang = async () => {
       const savedLang = await AsyncStorage.getItem('userLanguage');
@@ -46,7 +41,7 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
     await AsyncStorage.setItem('userLanguage', lang);
   };
 
-  const t = translations[currentLang]; // Translation helper
+  const t = translations[currentLang];
 
   const validateForm = () => {
     let newErrors = {};
@@ -158,12 +153,8 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           
-          {/* --- HEADER ROW (Badge + Language Toggle) --- */}
           <View style={styles.headerTopRow}>
-            {/* The Full Sri Lanka Badge on the Left */}
             <NationalBadge size="large" />
-            
-            {/* The Language Buttons on the Right */}
             <View style={styles.langToggleGroup}>
               {['en', 'si', 'ta'].map((lang) => (
                 <TouchableOpacity 
@@ -302,8 +293,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   keyboardAvoid: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingHorizontal: 25, paddingVertical: 30 },
-  
-  // --- UPDATED TOP ROW STYLES ---
   headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
   langToggleGroup: { flexDirection: 'row', alignItems: 'center' },
   langBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, marginLeft: 8, backgroundColor: '#E2E8F0', borderWidth: 1, borderColor: '#CBD5E1' },

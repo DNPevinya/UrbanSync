@@ -110,7 +110,6 @@ const styles = StyleSheet.create({
   },
   answerText: { fontSize: 14, color: '#64748B', lineHeight: 22, fontWeight: '500' },
   
-  // Contact Section
   contactSection: { marginTop: 25, alignItems: 'center', paddingBottom: 50 },
   contactTitle: { fontSize: 15, color: '#64748B', marginBottom: 15, fontWeight: '600' },
   contactBtn: { 

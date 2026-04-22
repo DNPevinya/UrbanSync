@@ -3,13 +3,11 @@ import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
-// CHART.JS IMPORTS
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 
-// Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function AdminAnalytics() {
@@ -33,7 +31,6 @@ export default function AdminAnalytics() {
     fetchAnalytics();
   }, []);
 
-  // --- NATIVE CSV EXPORT FUNCTION ---
   const exportToCSV = () => {
     if (!analytics || analytics.authorities.length === 0) return;
     
@@ -56,7 +53,6 @@ export default function AdminAnalytics() {
     ? Math.max(...analytics.districts.map(d => d.count)) 
     : 1;
 
-  // --- CHART.JS CONFIGURATION ---
   const chartData = {
     labels: analytics?.trends?.map(t => t.month_name) || [],
     datasets: [
@@ -83,7 +79,7 @@ export default function AdminAnalytics() {
       x: { grid: { display: false } }
     },
     plugins: {
-      legend: { display: false } // We use our own custom HTML legend above the chart
+      legend: { display: false }
     }
   };
 
@@ -118,9 +114,7 @@ export default function AdminAnalytics() {
             <div className="flex-1 flex items-center justify-center text-red-500 font-bold">Failed to load data.</div>
           ) : (
             <>
-              {/* TINTED KPI CARDS */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                {/* BLUE CARD */}
                 <div className="bg-blue-50 p-5 rounded-xl border border-blue-100 shadow-sm relative">
                    <div className="w-8 h-8 rounded bg-blue-100 text-[#0041C7] flex items-center justify-center mb-3">
                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -129,7 +123,6 @@ export default function AdminAnalytics() {
                    <h3 className="text-2xl font-extrabold text-blue-900">{analytics.kpis.avgResolution} {analytics.kpis.avgResolution !== "N/A" && "Days"}</h3>
                 </div>
 
-                {/* GREEN CARD */}
                 <div className="bg-green-50 p-5 rounded-xl border border-green-100 shadow-sm relative">
                    <div className="w-8 h-8 rounded bg-green-100 text-green-700 flex items-center justify-center mb-3">
                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -138,7 +131,6 @@ export default function AdminAnalytics() {
                    <h3 className="text-2xl font-extrabold text-green-900">{analytics.kpis.completionRate}%</h3>
                 </div>
 
-                {/* ORANGE CARD */}
                 <div className="bg-orange-50 p-5 rounded-xl border border-orange-100 shadow-sm relative">
                    <div className="w-8 h-8 rounded bg-orange-100 text-[#F59E0B] flex items-center justify-center mb-3">
                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
@@ -147,7 +139,6 @@ export default function AdminAnalytics() {
                    <h3 className="text-2xl font-extrabold text-orange-900">{analytics.kpis.active}</h3>
                 </div>
 
-                {/* PURPLE CARD */}
                 <div className="bg-purple-50 p-5 rounded-xl border border-purple-100 shadow-sm relative">
                    <div className="w-8 h-8 rounded bg-purple-100 text-[#8B5CF6] flex items-center justify-center mb-3">
                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -157,10 +148,8 @@ export default function AdminAnalytics() {
                 </div>
               </div>
 
-              {/* CHARTS ROW */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 
-                {/* CHART.JS: Volume Trends */}
                 <div className="bg-white p-6 rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col">
                   <div className="flex justify-between items-start mb-6">
                     <div>
@@ -181,7 +170,6 @@ export default function AdminAnalytics() {
                   </div>
                 </div>
 
-                {/* LIVE Complaints by District */}
                 <div className="bg-white p-6 rounded-xl border border-[#E2E8F0] shadow-sm">
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="text-[14px] font-bold text-[#1E293B]">Complaints by Region</h3>
@@ -211,7 +199,6 @@ export default function AdminAnalytics() {
                 </div>
               </div>
 
-              {/* LIVE TABLE SECTION (Status Column Removed) */}
               <div className="bg-white border border-[#E2E8F0] rounded-xl flex flex-col shadow-sm mb-8">
                 <div className="px-6 py-5 border-b border-[#E2E8F0] flex justify-between items-center">
                   <h3 className="text-[14px] font-bold text-[#1E293B]">Authority Performance Milestones</h3>

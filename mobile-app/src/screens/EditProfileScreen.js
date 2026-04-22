@@ -136,7 +136,6 @@ export default function EditProfileScreen({ onBack, initialData = {}, onUpdateSu
       if (response.ok) {
         Alert.alert("Success", "Profile updated successfully!");
         
-        // Clear password fields on success so they don't stay in the boxes!
         setOldPassword('');
         setNewPassword('');
         setConfirmPassword('');
@@ -146,7 +145,6 @@ export default function EditProfileScreen({ onBack, initialData = {}, onUpdateSu
         }
         onBack();
       } else {
-        // This will catch a wrong password from the backend
         Alert.alert("Error", data.message || "Failed to update profile.");
       }
     } catch (error) {
@@ -171,7 +169,6 @@ export default function EditProfileScreen({ onBack, initialData = {}, onUpdateSu
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           
-          {/* IMAGE UPLOAD SECTION */}
           <View style={styles.imageSection}>
             <View style={styles.imageWrapper}>
               {finalImageUri && !deleteImageFlag && !imageFailed ? (
@@ -206,7 +203,6 @@ export default function EditProfileScreen({ onBack, initialData = {}, onUpdateSu
             </View>
           </View>
 
-          {/* FORM FIELDS */}
           <View style={styles.formCard}>
             <EditableField label="FULL NAME" icon="person-outline" value={name} onChange={setName} />
             <EditableField label="PHONE NUMBER" icon="call-outline" value={phone} onChange={setPhone} keyboardType="phone-pad" />
@@ -230,7 +226,6 @@ export default function EditProfileScreen({ onBack, initialData = {}, onUpdateSu
             </View>
           </View>
 
-          {/* SECURITY SECTION */}
           <Text style={styles.sectionHeader}>SECURITY & PASSWORD</Text>
           <View style={styles.formCard}>
             <PasswordField 
@@ -260,7 +255,6 @@ export default function EditProfileScreen({ onBack, initialData = {}, onUpdateSu
             />
           </View>
 
-          {/* SAVE BUTTON */}
           <TouchableOpacity onPress={handleUpdate} disabled={loading} activeOpacity={0.8}>
             <LinearGradient colors={['#0041C7', '#0D85D8']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={[styles.updateBtn, loading && { opacity: 0.7 }]}>
               {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.updateBtnText}>Save Changes</Text>}
@@ -313,7 +307,6 @@ const styles = StyleSheet.create({
   
   content: { padding: 25, paddingBottom: 50 },
   
-  // Image Section
   imageSection: { alignItems: 'center', marginBottom: 30 },
   imageWrapper: { width: 110, height: 110, borderRadius: 55, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, backgroundColor: '#fff' },
   avatar: { width: '100%', height: '100%', borderRadius: 55, backgroundColor: '#F1F5F9', borderWidth: 3, borderColor: '#fff' },
@@ -324,22 +317,18 @@ const styles = StyleSheet.create({
   imageActionBtn: { backgroundColor: 'rgba(1, 96, 201, 0.08)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
   imageActionText: { fontSize: 13, color: '#0041C7', fontWeight: '700' },
   
-  // Form Cards
   formCard: { backgroundColor: '#fff', borderRadius: 20, padding: 20, marginBottom: 25, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 5, borderWidth: 1, borderColor: '#F1F5F9' },
   sectionHeader: { fontSize: 13, fontWeight: '800', color: '#94A3B8', letterSpacing: 1, marginLeft: 5, marginBottom: 10 },
   
-  // Inputs
   inputGroup: { marginBottom: 20 },
   label: { fontSize: 11, fontWeight: '800', color: '#64748B', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
   inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', borderRadius: 14, borderWidth: 1.5, borderColor: '#E2E8F0', paddingHorizontal: 15, height: 55 },
   inputIcon: { marginRight: 12 },
   input: { flex: 1, fontSize: 15, fontWeight: '500' },
   
-  // Selector
   selector: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F5F9', borderRadius: 14, borderWidth: 1, borderColor: '#E2E8F0', paddingHorizontal: 15, height: 55 },
   selectorText: { flex: 1, fontSize: 15, color: '#64748B', fontWeight: '500' },
   
-  // Button
   updateBtn: { height: 60, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginTop: 10, elevation: 4, shadowColor: '#0041C7', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 5 },
   updateBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold', letterSpacing: 0.5 }
 });

@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import RejectComplaintModal from '../components/RejectComplaintModal'; // ADDED IMPORT
+import RejectComplaintModal from '../components/RejectComplaintModal'; 
 
 export default function OfficerComplaintDetails() {
   const [searchParams] = useSearchParams();
@@ -15,10 +15,8 @@ export default function OfficerComplaintDetails() {
   const [updating, setUpdating] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   
-  // MODAL STATE
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
 
-  // Get logged in officer info for the header and escalation
   const savedUser = JSON.parse(localStorage.getItem('urbanSyncUser') || '{}');
 
   const fetchDetails = async () => {
@@ -72,7 +70,7 @@ export default function OfficerComplaintDetails() {
     if (s === 'PENDING') return 'bg-amber-100 text-amber-700';
     if (s === 'IN PROGRESS') return 'bg-blue-100 text-blue-700';
     if (s === 'RESOLVED') return 'bg-green-100 text-green-700';
-    if (s === 'REJECTED') return 'bg-red-100 text-red-700 animate-pulse'; // Added for rejected state
+    if (s === 'REJECTED') return 'bg-red-100 text-red-700 animate-pulse'; 
     return 'bg-[#F0F5FF] text-[#0041C7]';
   };
 
@@ -107,7 +105,6 @@ export default function OfficerComplaintDetails() {
             
             <div className="lg:col-span-2 space-y-6">
               
-              {/* Admin Notes Section (Crucial if the admin sends it back or if it's rejected) */}
               {complaint.admin_notes && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 shadow-sm">
                   <h4 className="text-[11px] font-bold text-amber-800 uppercase tracking-wider flex items-center mb-2">
@@ -227,7 +224,6 @@ export default function OfficerComplaintDetails() {
                   {updating ? 'Applying...' : 'Apply Transition'}
                 </button>
 
-                {/* ESCALATION BUTTON: Only show if the complaint isn't already resolved/rejected */}
                 {complaint.status !== 'RESOLVED' && complaint.status !== 'REJECTED' && (
                   <div className="pt-4 border-t border-slate-100">
                     <button 
@@ -281,7 +277,6 @@ export default function OfficerComplaintDetails() {
         </main>
       </div>
 
-      {/* RENDER THE REJECT MODAL */}
       <RejectComplaintModal 
         isOpen={isRejectModalOpen} 
         onClose={() => setIsRejectModalOpen(false)} 

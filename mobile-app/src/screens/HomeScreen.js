@@ -12,8 +12,6 @@ import ChatbotModal from '../components/ChatbotModal';
 import NationalBadge from '../components/NationalBadge';
 
 export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, onNavigateToView, onNavigateToDetails, onNavigateToNotifications }) {
-  
-  // --- STATE MANAGEMENT ---
   const [stats, setStats] = useState({ total: 0, inProgress: 0, resolved: 0 });
   const [recentActivities, setRecentActivities] = useState([]);
   const [hasUnread, setHasUnread] = useState(false);
@@ -24,7 +22,6 @@ export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, 
   const SERVER_URL = BASE_URL;
   const t = translations[currentLang];
 
-  // --- LIFECYCLE HOOKS ---
   useFocusEffect(
     useCallback(() => {
       const loadLang = async () => {
@@ -36,7 +33,6 @@ export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, 
     }, [userId])
   );
 
-  // --- DATA FETCHING LOGIC ---
   const fetchDashboardData = async () => {
     try {
       const complaintsRes = await fetch(`${SERVER_URL}/api/complaints/user/${userId || 1}`);
@@ -95,11 +91,8 @@ export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, 
     }
   };
 
-  // --- RENDER UI ---
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      
-      {/* HEADER: Title on Left, Bell + Flag on Right */}
       <View style={styles.topNavBar}>
         <View>
           <Text style={styles.greetingText}>{t.greeting} {userFirstName || 'Citizen'}</Text>
@@ -107,20 +100,15 @@ export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, 
         </View>
 
         <View style={styles.headerRightActionGroup}>
-          {/* 1. Notification Bell First */}
           <TouchableOpacity style={styles.notificationBtn} onPress={onNavigateToNotifications} activeOpacity={0.7}>
             <Ionicons name="notifications-outline" size={24} color="#1E293B" />
             {hasUnread && <View style={styles.notificationDot} />}
           </TouchableOpacity>
-          
-          {/* 2. Tiny Circular Flag on the Right */}
           <NationalBadge size="small" style={{ marginLeft: 12 }} />
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        {/* STATS SECTION */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{t.summary}</Text>
         </View>
@@ -139,7 +127,6 @@ export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, 
           )}
         </View>
 
-        {/* MAIN SERVICES SECTION */}
         <View style={styles.servicesContainer}>
           <Text style={styles.servicesLabel}>{t.services}</Text>
           <Text style={styles.helpHeading}>{t.help_today}</Text>
@@ -165,7 +152,6 @@ export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, 
           </TouchableOpacity>
         </View>
 
-        {/* RECENT ACTIVITY SECTION */}
         <View style={[styles.sectionHeader, { marginTop: 10 }]}>
             <Text style={styles.sectionTitle}>{t.recent}</Text>
             <TouchableOpacity onPress={onNavigateToView} activeOpacity={0.6}>
@@ -184,10 +170,8 @@ export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, 
             </TouchableOpacity>
           ))
         )}
-
       </ScrollView>
 
-      {/* FLOATING AI CHATBOT BUTTON */}
       <TouchableOpacity 
         style={styles.floatingBtn} 
         onPress={() => setShowChatbot(true)}
@@ -198,14 +182,11 @@ export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, 
         </LinearGradient>
       </TouchableOpacity>
 
-      {/* CHATBOT MODAL OVERLAY */}
       <ChatbotModal visible={showChatbot} onClose={() => setShowChatbot(false)} />
-
     </SafeAreaView>
   );
 }
 
-// --- SUBCOMPONENTS ---
 const StatCard = ({ label, value, color, icon }) => (
   <View style={styles.statCard}>
     <View style={[styles.statIconWrapper, { backgroundColor: color + '15' }]}>
@@ -229,35 +210,24 @@ const ActivityItem = ({ title, desc, time, icon, color }) => (
   </View>
 );
 
-// --- STYLESHEET ---
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   topNavBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 25, paddingTop: 15, paddingBottom: 10, backgroundColor: '#F8FAFC' },
-  
-  // Header Text Styles
   greetingText: { fontSize: 13, color: '#64748B', fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
   navTitle: { fontSize: 26, fontWeight: '800', color: '#0041C7' },
-  
-  // Header Right Group (Badge + Bell)
   headerRightActionGroup: { flexDirection: 'row', alignItems: 'center' },
   notificationBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, borderWidth: 1, borderColor: '#E2E8F0' },
   notificationDot: { position: 'absolute', top: 12, right: 14, width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444', borderWidth: 2, borderColor: '#fff' },
-  
-  // Layout & Sections
   scrollContent: { paddingHorizontal: 25, paddingBottom: 40 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 15 },
   sectionTitle: { fontSize: 20, fontWeight: '800', color: '#1E293B', marginTop: 25, letterSpacing: -0.5 },
   seeAllLink: { color: '#0041C7', fontWeight: '700', fontSize: 14, marginBottom: 2 },
-  
-  // Stats Row
   statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 15 },
   statCard: { width: '31%', backgroundColor: '#fff', paddingVertical: 18, paddingHorizontal: 10, borderRadius: 20, elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 5, alignItems: 'center', borderWidth: 1, borderColor: '#F1F5F9' },
   statIconWrapper: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
   statLabel: { fontSize: 9, fontWeight: '800', color: '#94A3B8', marginTop: 4, letterSpacing: 0.5, textAlign: 'center' },
   statValue: { fontSize: 26, fontWeight: '900', lineHeight: 30 },
   loaderContainer: { flex: 1, padding: 30, justifyContent: 'center', alignItems: 'center' },
-  
-  // Main Services Action Cards
   servicesContainer: { marginTop: 35, marginBottom: 5 },
   servicesLabel: { fontSize: 11, fontWeight: '800', color: '#0041C7', letterSpacing: 1.5, marginBottom: 8, textTransform: 'uppercase' },
   helpHeading: { fontSize: 20, fontWeight: '800', color: '#1E293B', marginBottom: 6 },
@@ -272,16 +242,12 @@ const styles = StyleSheet.create({
   whiteCardTextContainer: { flex: 1, paddingRight: 10 },
   whiteCardTitle: { fontSize: 16, fontWeight: '800', color: '#1E293B', marginBottom: 3 },
   whiteCardDesc: { fontSize: 12, color: '#64748B', fontWeight: '500', lineHeight: 16 },
-  
-  // Recent Activity Items
   activityCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 16, borderRadius: 20, marginTop: 12, elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.03, shadowRadius: 3, borderWidth: 1, borderColor: '#F8FAFC' },
   iconCircle: { width: 50, height: 50, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   actTitle: { fontSize: 16, fontWeight: '800', color: '#1E293B', marginBottom: 3 },
   actDesc: { fontSize: 13, color: '#64748B', fontWeight: '500' },
   actTime: { fontSize: 11, color: '#94A3B8', fontWeight: '800', letterSpacing: 0.5 },
   emptyText: { color: '#94A3B8', marginTop: 20, fontSize: 14, fontWeight: '500', textAlign: 'center' },
-  
-  // Chatbot Floating Button
   floatingBtn: { position: 'absolute', bottom: 30, right: 25, width: 65, height: 65, borderRadius: 32.5, elevation: 8, shadowColor: '#0041C7', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
   floatingGradient: { width: '100%', height: '100%', borderRadius: 32.5, justifyContent: 'center', alignItems: 'center' }
 });

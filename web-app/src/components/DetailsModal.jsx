@@ -42,7 +42,6 @@ export default function DetailsModal({ isOpen, onClose, complaintId }) {
       
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
         
-        {/* HEADER */}
         <div className="px-6 py-5 border-b border-[#E2E8F0] flex justify-between items-center bg-white">
           <div className="flex items-center">
             <svg className="w-5 h-5 text-[#0041C7] mr-2" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>
@@ -62,7 +61,6 @@ export default function DetailsModal({ isOpen, onClose, complaintId }) {
           </button>
         </div>
 
-        {/* BODY */}
         <div className="p-8 overflow-y-auto bg-[#F8FAFC] max-h-[80vh]">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400">
@@ -74,10 +72,8 @@ export default function DetailsModal({ isOpen, onClose, complaintId }) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
               
-              {/* LEFT COLUMN: Citizen & Issue */}
               <div className="md:col-span-3 space-y-6">
                 
-                {/* Citizen Details */}
                 <div>
                   <h4 className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider flex items-center mb-3">
                     <svg className="w-4 h-4 mr-1.5 text-[#0041C7]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
@@ -101,7 +97,6 @@ export default function DetailsModal({ isOpen, onClose, complaintId }) {
                   </div>
                 </div>
 
-                {/* Issue Description */}
                 <div>
                   <h4 className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider flex items-center mb-3">
                     <svg className="w-4 h-4 mr-1.5 text-[#0041C7]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
@@ -112,7 +107,6 @@ export default function DetailsModal({ isOpen, onClose, complaintId }) {
                   </div>
                 </div>
 
-                {/* INTERACTIVE GOOGLE MAP */}
                 {data.latitude && data.longitude && (
                   <div>
                     <h4 className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider flex items-center mb-3">
@@ -134,10 +128,8 @@ export default function DetailsModal({ isOpen, onClose, complaintId }) {
 
               </div>
 
-              {/* RIGHT COLUMN: Metadata & Evidence */}
               <div className="md:col-span-2 space-y-6">
                 
-                {/* Internal Metadata */}
                 <div>
                   <h4 className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider flex items-center mb-3">
                     <svg className="w-4 h-4 mr-1.5 text-[#0041C7]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
@@ -167,7 +159,6 @@ export default function DetailsModal({ isOpen, onClose, complaintId }) {
                   </div>
                 </div>
 
-                {/* Attached Evidence */}
                 <div>
                   <h4 className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider flex items-center mb-3">
                     <svg className="w-4 h-4 mr-1.5 text-[#0041C7]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>

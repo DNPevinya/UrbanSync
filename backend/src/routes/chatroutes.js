@@ -6,7 +6,6 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-// --- THE UPGRADED URBANSYNC KNOWLEDGE BASE ---
 const URBAN_SYNC_KNOWLEDGE = `
 You are the official AI Assistant for 'UrbanSync', a civic management platform in Sri Lanka. 
 Your goal is to help citizens use the app and understand the system.
@@ -58,8 +57,8 @@ router.post('/ask', async (req, res) => {
                 { role: "system", content: URBAN_SYNC_KNOWLEDGE },
                 { role: "user", content: message }
             ],
-            max_tokens: 250, // Increased slightly so it can output a list of steps
-            temperature: 0.4, // Lowered temperature so it strictly follows your steps without making things up
+            max_tokens: 250,
+            temperature: 0.4,
         });
 
         const reply = completion.choices[0].message.content;

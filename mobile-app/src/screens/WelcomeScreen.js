@@ -8,8 +8,6 @@ export default function WelcomeScreen({ onGetStarted }) {
   return (
     <LinearGradient colors={['#0041C7', '#0D85D8']} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        
-        {/* MAGIC WRAPPER: ScrollView with flexGrow */}
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -28,8 +26,6 @@ export default function WelcomeScreen({ onGetStarted }) {
               Report Public Issues Easily and Transparently
             </Text>
           </View>
-
-          {/* I removed the empty flex: 1 spacer that was causing the squishing */}
 
           <View style={styles.bottomSection}>
             <View style={styles.glassInfoBox}>
@@ -62,16 +58,15 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  // Replaced 'content' with 'scrollContent' and added the flexGrow magic
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 30,
     paddingVertical: 40,
-    justifyContent: 'space-between', // This automatically spaces the top and bottom out perfectly
+    justifyContent: 'space-between',
   },
   topSection: {
     alignItems: 'center',
-    marginTop: 20, // Reduced from 50 so it breathes better on small screens
+    marginTop: 20,
   },
   iconCircle: {
     width: 130,
@@ -111,7 +106,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     paddingBottom: 20,
-    marginTop: 40, // Added margin to ensure it never overlaps the top text on super small screens
+    marginTop: 40,
   },
   glassInfoBox: {
     backgroundColor: 'rgba(255, 255, 255, 0.15)', 

@@ -4,8 +4,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 export default function Sidebar({ role = 'admin' }) {
   const location = useLocation();
   const navigate = useNavigate();
-  
-  // 🚨 THE FIX: Normalize the role so 'super_admin' triggers the 'admin' menu items!
   const effectiveRole = role === 'super_admin' ? 'admin' : role;
   
   const [userInfo, setUserInfo] = useState({ fullName: '', authorityName: '' });
@@ -15,7 +13,6 @@ export default function Sidebar({ role = 'admin' }) {
     if (savedUser) {
       const parsed = JSON.parse(savedUser);
       setUserInfo({
-        // Set better defaults if the name isn't found
         fullName: parsed.fullName || (parsed.role === 'super_admin' ? 'System Administrator' : 'Field Officer'),
         authorityName: parsed.authorityName || 'UrbanSync Portal'
       });
@@ -61,7 +58,6 @@ export default function Sidebar({ role = 'admin' }) {
     }
   ];
 
-  // 🚨 Filter using the effectiveRole!
   const visibleMenu = menuItems.filter(item => item.allowedRoles.includes(effectiveRole));
 
   return (
@@ -94,7 +90,6 @@ export default function Sidebar({ role = 'admin' }) {
         })}
       </nav>
 
-      {/* DYNAMIC USER PROFILE FOOTER */}
       <div className="p-4 border-t border-slate-800">
         <div className="flex items-center">
           <div className="w-10 h-10 rounded-full bg-[#F59E0B] flex items-center justify-center text-white font-bold text-[14px] uppercase flex-shrink-0">
@@ -108,7 +103,6 @@ export default function Sidebar({ role = 'admin' }) {
               {userInfo.fullName}
             </p>
             <p className="text-[10px] text-slate-400 truncate" title={userInfo.authorityName}>
-              {/* Force 'System Admin' text if they are a super_admin */}
               {role === 'super_admin' ? 'System Admin' : (effectiveRole === 'officer' ? userInfo.authorityName : 'System Admin')}
             </p>
           </div>

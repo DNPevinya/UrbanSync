@@ -8,7 +8,6 @@ export default function Terms() {
   const navigate = useNavigate();
   const [role, setRole] = useState('officer');
 
-  // Detect who is logged in so we show the correct sidebar
   useEffect(() => {
     const savedUser = localStorage.getItem('urbanSyncUser');
     if (!savedUser) {
