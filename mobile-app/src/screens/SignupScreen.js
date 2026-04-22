@@ -5,6 +5,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import DropDownPicker from 'react-native-dropdown-picker'; 
 import { BASE_URL } from '../../src/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { translations } from '../../src/translations';
+
+// --- IMPORT THE FLAG ---
+import NationalBadge from '../components/NationalBadge';
 
 const locationData = {
   "Colombo": ["Bambalapitiya", "Kollupitiya", "Borella", "Cinnamon Gardens", "Dehiwala"],
@@ -16,7 +21,7 @@ const locationData = {
 export default function SignupScreen({ 
   formData = { fullName: '', phone: '', email: '', district: '', division: '', password: '' }, 
   setFormData = (data) => {},     
-  isAgreed = false,        
+  isAgreed = false,         
   setIsAgreed = (val) => {},     
   onBackToLogin, 
   onNavigateToTerms, 
@@ -26,6 +31,7 @@ export default function SignupScreen({
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false); 
+  const [currentLang, setCurrentLang] = useState('en');
 
   const [districtOpen, setDistrictOpen] = useState(false);
   const [divisionOpen, setDivisionOpen] = useState(false);
@@ -35,6 +41,22 @@ export default function SignupScreen({
 
   const [districtItems, setDistrictItems] = useState(Object.keys(locationData).map(dist => ({ label: dist, value: dist })));
   const [divisionItems, setDivisionItems] = useState([]);
+
+  // --- LANGUAGE INITIALIZATION ---
+  useEffect(() => {
+    const loadLang = async () => {
+      const savedLang = await AsyncStorage.getItem('userLanguage');
+      if (savedLang) setCurrentLang(savedLang);
+    };
+    loadLang();
+  }, []);
+
+  const changeLanguage = async (lang) => {
+    setCurrentLang(lang);
+    await AsyncStorage.setItem('userLanguage', lang);
+  };
+
+  const t = translations[currentLang];
 
   useEffect(() => {
     if (districtValue) {
@@ -92,8 +114,26 @@ export default function SignupScreen({
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           
+          {/* --- NEW HEADER ROW (Badge + Language Toggle) --- */}
+          <View style={styles.headerTopRow}>
+            <NationalBadge size="large" />
+            <View style={styles.langToggleGroup}>
+              {['en', 'si', 'ta'].map((lang) => (
+                <TouchableOpacity 
+                  key={lang} 
+                  onPress={() => changeLanguage(lang)} 
+                  style={[styles.langBtn, currentLang === lang && styles.langBtnActive]}
+                >
+                  <Text style={[styles.langBtnText, currentLang === lang && styles.langBtnTextActive]}>
+                    {lang === 'en' ? 'EN' : lang === 'si' ? 'සිං' : 'த'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
           <View style={styles.header}>
             <View style={styles.logoWrapper}>
               <Image 
@@ -102,8 +142,8 @@ export default function SignupScreen({
                 resizeMode="cover"
               />
             </View>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join UrbanSync to help improve our city.</Text>
+            <Text style={styles.title}>{t.create}</Text>
+            <Text style={styles.subtitle}>{t.help_sub}</Text>
           </View>
 
           <View style={styles.form}>
@@ -114,21 +154,21 @@ export default function SignupScreen({
                </View>
             )}
 
-            <Text style={styles.label}>FULL NAME</Text>
+            <Text style={styles.label}>{t.full_name}</Text>
             <View style={[styles.inputContainer, errors.fullName && styles.inputErrorBorder]}>
               <Ionicons name="person-outline" size={20} color="#0160C9" style={styles.inputIcon} />
               <TextInput style={styles.input} placeholder="Sunil Perera" placeholderTextColor="#94A3B8" value={formData.fullName} onChangeText={(v) => {setFormData({...formData, fullName: v}); setErrors({...errors, fullName: null})}} />
             </View>
             {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
 
-            <Text style={styles.label}>PHONE NUMBER</Text>
+            <Text style={styles.label}>{t.phone_label}</Text>
             <View style={[styles.inputContainer, errors.phone && styles.inputErrorBorder]}>
               <Text style={styles.countryCode}>+94</Text>
               <TextInput style={styles.input} placeholder="77 123 4567" placeholderTextColor="#94A3B8" keyboardType="phone-pad" maxLength={9} value={formData.phone} onChangeText={(v) => {setFormData({...formData, phone: v}); setErrors({...errors, phone: null})}} />
             </View>
             {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
 
-            <Text style={styles.label}>EMAIL ADDRESS</Text>
+            <Text style={styles.label}>{t.email_label}</Text>
             <View style={[styles.inputContainer, errors.email && styles.inputErrorBorder]}>
               <Ionicons name="mail-outline" size={20} color="#0160C9" style={styles.inputIcon} />
               <TextInput style={styles.input} placeholder="citizen@example.com" placeholderTextColor="#94A3B8" keyboardType="email-address" autoCapitalize="none" value={formData.email} onChangeText={(v) => {setFormData({...formData, email: v}); setErrors({...errors, email: null})}} />
@@ -136,7 +176,7 @@ export default function SignupScreen({
             {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
             {/* --- DISTRICT MODAL DROPDOWN --- */}
-            <Text style={styles.label}>DISTRICT</Text>
+            <Text style={styles.label}>{t.district}</Text>
             <View> 
               <DropDownPicker
                 open={districtOpen}
@@ -146,20 +186,20 @@ export default function SignupScreen({
                 setValue={setDistrictValue}
                 setItems={setDistrictItems}
                 onChangeValue={() => { setDivisionValue(null); setErrors({...errors, district: null}); }}
-                placeholder="Select your district"
+                placeholder={t.select_district}
                 style={[styles.dropdownStyle, errors.district && styles.inputErrorBorder]}
                 textStyle={styles.dropdownText}
                 placeholderStyle={styles.dropdownPlaceholder}
                 listMode="MODAL"
                 modalProps={{ animationType: "slide" }}
-                modalTitle="Select Your District"
+                modalTitle={t.select_district}
                 modalTitleStyle={{ fontWeight: 'bold', color: '#0041C7', fontSize: 18 }}
               />
             </View>
             {errors.district && <Text style={styles.errorText}>{errors.district}</Text>}
 
             {/* --- DIVISION MODAL DROPDOWN --- */}
-            <Text style={styles.label}>DIVISION/AREA</Text>
+            <Text style={styles.label}>{t.division}</Text>
             <View style={{ opacity: districtValue ? 1 : 0.5, zIndex: -1 }}>
               <DropDownPicker
                 open={divisionOpen}
@@ -169,20 +209,20 @@ export default function SignupScreen({
                 setValue={setDivisionValue}
                 setItems={setDivisionItems}
                 onChangeValue={() => setErrors({...errors, division: null})}
-                placeholder="Select your division"
+                placeholder={t.select_division}
                 disabled={!districtValue} 
                 style={[styles.dropdownStyle, errors.division && styles.inputErrorBorder]}
                 textStyle={styles.dropdownText}
                 placeholderStyle={styles.dropdownPlaceholder}
                 listMode="MODAL"
                 modalProps={{ animationType: "slide" }}
-                modalTitle="Select Your Division"
+                modalTitle={t.select_division}
                 modalTitleStyle={{ fontWeight: 'bold', color: '#0041C7', fontSize: 18 }}
               />
             </View>
             {errors.division && <Text style={styles.errorText}>{errors.division}</Text>}
 
-            <Text style={styles.label}>PASSWORD</Text>
+            <Text style={styles.label}>{t.pass_label}</Text>
             <View style={[styles.inputContainer, errors.password && styles.inputErrorBorder]}>
               <Ionicons name="lock-closed-outline" size={20} color="#0160C9" style={styles.inputIcon} />
               <TextInput 
@@ -203,23 +243,21 @@ export default function SignupScreen({
               <TouchableOpacity style={[styles.checkbox, isAgreed && styles.checkboxActive, errors.agreement && {borderColor: '#EF4444'}]} onPress={() => {setIsAgreed(!isAgreed); setErrors({...errors, agreement: null})}}>
                 {isAgreed && <Ionicons name="checkmark" size={14} color="#fff" />}
               </TouchableOpacity>
-              <Text style={styles.checkboxText}>
-                I agree to the <Text style={styles.link} onPress={onNavigateToTerms}>User Terms</Text> and <Text style={styles.link} onPress={onNavigateToPrivacy}>Privacy Policy</Text>.
-              </Text>
+              <Text style={styles.checkboxText}>{t.agree_text}</Text>
             </View>
             {errors.agreement && <Text style={styles.errorText}>{errors.agreement}</Text>}
 
             <TouchableOpacity onPress={handleRegister} disabled={loading} activeOpacity={0.8}>
               <LinearGradient colors={['#0041C7', '#0D85D8']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={[styles.button, loading && { opacity: 0.7 }]}>
-                <Text style={styles.buttonText}>{loading ? "Saving..." : "Create Account"}</Text>
+                <Text style={styles.buttonText}>{loading ? "Saving..." : t.create}</Text>
                 <Ionicons name="arrow-forward" size={20} color="#fff" />
               </LinearGradient>
             </TouchableOpacity>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account? </Text>
+              <Text style={styles.footerText}>{t.have_account}</Text>
               <TouchableOpacity onPress={onBackToLogin}>
-                <Text style={styles.loginLink}>Sign In</Text>
+                <Text style={styles.loginLink}>{t.signin}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -231,7 +269,16 @@ export default function SignupScreen({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
-  scrollContent: { padding: 25 },
+  scrollContent: { paddingHorizontal: 25, paddingVertical: 20 },
+  
+  // --- NEW STYLES FOR TOP ROW ---
+  headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  langToggleGroup: { flexDirection: 'row', alignItems: 'center' },
+  langBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, marginLeft: 8, backgroundColor: '#E2E8F0', borderWidth: 1, borderColor: '#CBD5E1' },
+  langBtnActive: { backgroundColor: '#0160C9', borderColor: '#0041C7' },
+  langBtnText: { fontSize: 12, fontWeight: '800', color: '#64748B' },
+  langBtnTextActive: { color: '#fff' },
+
   header: { alignItems: 'center', marginBottom: 25 },
   logoWrapper: { 
     width: 90, 

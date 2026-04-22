@@ -4,12 +4,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 
+// --- IMPORT THE BADGE ---
+import NationalBadge from '../components/NationalBadge';
+
 export default function WelcomeScreen({ onGetStarted }) {
   return (
     <LinearGradient colors={['#0041C7', '#0D85D8']} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         
-        {/* MAGIC WRAPPER: ScrollView with flexGrow */}
+        {/* Flag placed outside the ScrollView to ensure it stays fixed at top right and doesn't push content */}
+        <View style={styles.fixedBadgeContainer}>
+           <NationalBadge size="large" />
+        </View>
+
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -28,8 +35,6 @@ export default function WelcomeScreen({ onGetStarted }) {
               Report Public Issues Easily and Transparently
             </Text>
           </View>
-
-          {/* I removed the empty flex: 1 spacer that was causing the squishing */}
 
           <View style={styles.bottomSection}>
             <View style={styles.glassInfoBox}>
@@ -62,16 +67,22 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  // Replaced 'content' with 'scrollContent' and added the flexGrow magic
+  // Keeps the flag from moving or pushing the "UrbanSync" title down
+  fixedBadgeContainer: {
+    position: 'absolute',
+    top: 60,
+    right: 25,
+    zIndex: 10,
+  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 30,
     paddingVertical: 40,
-    justifyContent: 'space-between', // This automatically spaces the top and bottom out perfectly
+    justifyContent: 'space-between', 
   },
   topSection: {
     alignItems: 'center',
-    marginTop: 20, // Reduced from 50 so it breathes better on small screens
+    marginTop: 20, 
   },
   iconCircle: {
     width: 130,
@@ -111,7 +122,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     paddingBottom: 20,
-    marginTop: 40, // Added margin to ensure it never overlaps the top text on super small screens
+    marginTop: 40, 
   },
   glassInfoBox: {
     backgroundColor: 'rgba(255, 255, 255, 0.15)', 

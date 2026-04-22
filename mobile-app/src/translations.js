@@ -13,6 +13,15 @@ export const translations = {
     otp_sub: "We sent a secure code to your registered mobile number to verify your identity.",
     verify_btn: "Verify & Login",
     cancel: "Cancel & Go Back",
+    // Signup
+    full_name: "Full Name",
+    phone_label: "Phone Number",
+    district: "District",
+    division: "Division / Area",
+    select_district: "Select your district",
+    select_division: "Select your division",
+    agree_text: "I agree to the User Terms and Privacy Policy",
+    have_account: "Already have an account? ",
     // Home
     greeting: "Ayubowan,",
     summary: "My Activity Summary",
@@ -59,7 +68,6 @@ export const translations = {
     select_issue: "Select Issue",
     cat_guide: "Category Guide",
 
-    // --- ENGLISH DATA MASKS ---
     categories: {
       'Urban Infrastructure & Municipal Services': 'Urban Infrastructure & Municipal Services',
       'Public Health & Sanitation': 'Public Health & Sanitation',
@@ -133,6 +141,15 @@ export const translations = {
     otp_sub: "ඔබේ අනන්‍යතාවය තහවුරු කිරීමට අපි ඔබේ ලියාපදිංචි ජංගම දුරකථන අංකයට ආරක්ෂිත කේතයක් එවා ඇත.",
     verify_btn: "තහවුරු කර ඇතුල් වන්න",
     cancel: "අවලංගු කර ආපසු යන්න",
+    // Signup
+    full_name: "සම්පූර්ණ නම",
+    phone_label: "දුරකථන අංකය",
+    district: "දිස්ත්‍රික්කය",
+    division: "ප්‍රාදේශීය ලේකම් කොට්ඨාසය",
+    select_district: "දිස්ත්‍රික්කය තෝරන්න",
+    select_division: "කොට්ඨාසය තෝරන්න",
+    agree_text: "මම සේවා කොන්දේසි සහ රහස්‍යතා ප්‍රතිපත්තියට එකඟ වෙමි",
+    have_account: "දැනටමත් ගිණුමක් තිබේද? ",
     // Home
     greeting: "ආයුබෝවන්,",
     summary: "මගේ ක්‍රියාකාරකම් සාරාංශය",
@@ -179,7 +196,6 @@ export const translations = {
     select_issue: "ගැටලුව තෝරන්න",
     cat_guide: "කාණ්ඩ මාර්ගෝපදේශය",
 
-    // --- SINHALA DATA MASKS ---
     categories: {
       'Urban Infrastructure & Municipal Services': 'නාගරික යටිතල පහසුකම් සහ සේවා',
       'Public Health & Sanitation': 'මහජන සෞඛ්‍ය සහ සනීපාරක්ෂාව',
@@ -253,6 +269,15 @@ export const translations = {
     otp_sub: "உங்கள் அடையாளத்தைச் சரிபார்க்க உங்கள் பதிவுசெய்யப்பட்ட மொபைல் எண்ணுக்கு பாதுகாப்பான குறியீட்டை அனுப்பியுள்ளோம்.",
     verify_btn: "சரிபார்த்து உள்நுழைக",
     cancel: "ரத்து செய்து பின்செல்லவும்",
+    // Signup
+    full_name: "முழு பெயர்",
+    phone_label: "தொலைபேசி எண்",
+    district: "மாவட்டம்",
+    division: "பிரிவு / பகுதி",
+    select_district: "மாவட்டத்தைத் தேர்ந்தெடுக்கவும்",
+    select_division: "பிரிவைத் தேர்ந்தெடுக்கவும்",
+    agree_text: "பயனர் விதிமுறைகள் மற்றும் தனியுரிமைக் கொள்கையை நான் ஒப்புக்கொள்கிறேன்",
+    have_account: "ஏற்கனவே கணக்கு உள்ளதா? ",
     // Home
     greeting: "ஆயுபோவன்,",
     summary: "எனது செயல்பாட்டு சுருக்கம்",
@@ -299,7 +324,6 @@ export const translations = {
     select_issue: "சிக்கலைத் தேர்ந்தெடுக்கவும்",
     cat_guide: "வகை வழிகாட்டி",
 
-    // --- TAMIL DATA MASKS ---
     categories: {
       'Urban Infrastructure & Municipal Services': 'நகர்ப்புற உள்கட்டமைப்பு மற்றும் சேவைகள்',
       'Public Health & Sanitation': 'பொது சுகாதாரம்',
