@@ -3,11 +3,13 @@ import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/re
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import AdminAuthorities from '../src/pages/AdminAuthorities';
 
-// 1. MOCK CHILD COMPONENTS
+// Stub out the standard layout components so the DOM isn't cluttered with sidebars and footers
 vi.mock('../src/components/Sidebar', () => ({ default: () => <div data-testid="sidebar" /> }));
 vi.mock('../src/components/Header', () => ({ default: () => <header data-testid="header" /> }));
 vi.mock('../src/components/Footer', () => ({ default: () => <footer data-testid="footer" /> }));
 
+// Replace the complex modal components with simple dummy divs.
+// We pass through the `isOpen` and `onClose` props so we can still test if the parent opens and closes them correctly.
 vi.mock('../src/components/AddAuthorityModal', () => ({ 
   default: ({ isOpen, onClose }) => isOpen ? (
     <div data-testid="add-modal">
@@ -32,9 +34,10 @@ vi.mock('../src/components/DeleteModal', () => ({
   ) : null 
 }));
 
-// 2. MOCK FETCH & LOCAL STORAGE
+// Intercept network requests
 global.fetch = vi.fn();
 
+// Prepare some dummy data that perfectly matches what the backend would normally return
 const mockAuthorities = [
   { authority_id: 1, name: 'Water Board', department: 'Water Supply Services', region: 'Colombo', officer_count: 5 },
   { authority_id: 2, name: 'Traffic Police', department: 'Public Safety', region: 'Kandy', officer_count: 10 },
@@ -47,16 +50,17 @@ describe('AdminAuthorities Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     
-    // Default successful fetch responses for the 3 Promise.all calls
+    // The component fires three simultaneous fetch requests using Promise.all on mount.
+    // We have to queue up exactly three mock responses in the exact order they are called.
     global.fetch
       .mockResolvedValueOnce({
-        json: () => Promise.resolve({ success: true, data: mockAuthorities }) // authorities-list
+        json: () => Promise.resolve({ success: true, data: mockAuthorities }) // 1. authorities-list
       })
       .mockResolvedValueOnce({
-        json: () => Promise.resolve({ success: true, data: mockDepartments }) // departments-list
+        json: () => Promise.resolve({ success: true, data: mockDepartments }) // 2. departments-list
       })
       .mockResolvedValueOnce({
-        json: () => Promise.resolve({ success: true, data: mockRegions }) // regions-list
+        json: () => Promise.resolve({ success: true, data: mockRegions })     // 3. regions-list
       });
   });
 
@@ -65,21 +69,23 @@ describe('AdminAuthorities Component', () => {
     vi.restoreAllMocks();
   });
 
-  // --- 1. RENDERING & DATA FETCHING ---
   it('shows loading state initially and then renders authorities table and stats', async () => {
     render(<AdminAuthorities />);
     
+    // Verify the loading screen catches the user before data arrives
     expect(screen.getByText('Loading...')).toBeTruthy();
 
     await waitFor(() => {
-      // Check Stats Cards (Total Authorities: 2, Assigned Officers: 15)
+      // Verify the top KPI cards populated correctly
       expect(screen.getByText('Total Authorities')).toBeTruthy();
-      // "2" might be present as the h3 text
+      
+      // Since the numbers 2 and 15 might be simple text nodes without distinct labels, 
+      // we grab all the h3 tags and ensure our stats are in there. (5 + 10 officers = 15 total)
       const h3Elements = screen.getAllByRole('heading', { level: 3 });
       expect(h3Elements.some(el => el.textContent === '2')).toBe(true);
-      expect(h3Elements.some(el => el.textContent === '15')).toBe(true); // 5 + 10 officers
+      expect(h3Elements.some(el => el.textContent === '15')).toBe(true);
 
-      // Check Table Data
+      // Verify the table mapped our dummy data to rows
       expect(screen.getByText('Water Board')).toBeTruthy();
       expect(screen.getByText('Water Supply Services')).toBeTruthy();
       expect(screen.getByText('5 Officers')).toBeTruthy();
@@ -90,36 +96,36 @@ describe('AdminAuthorities Component', () => {
     });
   });
 
-  // --- 2. FILTERING TESTS ---
-  it('filters authorities by search term (Name or Department)', async () => {
+  it('filters authorities by search term dynamically matching Name or Department', async () => {
     render(<AdminAuthorities />);
 
+    // Wait for the table to finish its initial load
     await waitFor(() => {
       expect(screen.getByText('Water Board')).toBeTruthy();
     });
 
     const searchInput = screen.getByPlaceholderText('Search authorities...');
     
-    // Filter by name
+    // Test filtering by name
     fireEvent.change(searchInput, { target: { value: 'Traffic' } });
 
+    // Ensure Water Board vanished and Traffic Police stayed
     expect(screen.queryByText('Water Board')).toBeNull();
     expect(screen.getByText('Traffic Police')).toBeTruthy();
 
-    // Filter by department
+    // Test filtering by department
     fireEvent.change(searchInput, { target: { value: 'Water' } });
     
     expect(screen.getByText('Water Board')).toBeTruthy();
     expect(screen.queryByText('Traffic Police')).toBeNull();
 
-    // No matches
+    // Test typing garbage that matches nothing
     fireEvent.change(searchInput, { target: { value: 'Nonexistent' } });
     expect(screen.queryByText('Water Board')).toBeNull();
     expect(screen.queryByText('Traffic Police')).toBeNull();
     expect(screen.getByText('No authorities match your search.')).toBeTruthy();
   });
 
-  // --- 3. MODALS INTERACTION ---
   it('opens and closes the Add Authority modal', async () => {
     render(<AdminAuthorities />);
 
@@ -127,12 +133,16 @@ describe('AdminAuthorities Component', () => {
       expect(screen.getByText('Water Board')).toBeTruthy();
     });
 
-    // Click Add Authority
+    // Tap the button to open the modal
     fireEvent.click(screen.getByText('Add Authority'));
+    
+    // Verify our dummy modal appeared on screen
     expect(screen.getByTestId('add-modal')).toBeTruthy();
 
-    // Close Modal
+    // Tap the dummy close button inside the modal
     fireEvent.click(screen.getByTestId('close-add'));
+    
+    // Verify it communicated with the parent state to close itself
     expect(screen.queryByTestId('add-modal')).toBeNull();
   });
 
@@ -140,14 +150,14 @@ describe('AdminAuthorities Component', () => {
     render(<AdminAuthorities />);
 
     await waitFor(() => {
+      // There should be one edit button for each authority in our dummy list
       expect(screen.getAllByTitle('Edit Authority').length).toBe(2);
     });
 
-    // Click first Edit
+    // Click the edit button for the first row
     fireEvent.click(screen.getAllByTitle('Edit Authority')[0]);
     expect(screen.getByTestId('edit-modal')).toBeTruthy();
 
-    // Close Modal
     fireEvent.click(screen.getByTestId('close-edit'));
     expect(screen.queryByTestId('edit-modal')).toBeNull();
   });
@@ -159,11 +169,10 @@ describe('AdminAuthorities Component', () => {
       expect(screen.getAllByTitle('Delete Authority').length).toBe(2);
     });
 
-    // Click first Delete
+    // Click the delete button for the first row
     fireEvent.click(screen.getAllByTitle('Delete Authority')[0]);
     expect(screen.getByTestId('delete-modal')).toBeTruthy();
 
-    // Close Modal
     fireEvent.click(screen.getByTestId('close-delete'));
     expect(screen.queryByTestId('delete-modal')).toBeNull();
   });

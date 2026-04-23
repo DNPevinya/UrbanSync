@@ -3,16 +3,19 @@ import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/re
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import AdminComplaints from '../src/pages/AdminComplaints';
 
-// 1. MOCK THE ROUTER
+// Intercept the router so we can test if the component kicks unauthorized users out
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-// 2. MOCK CHILD COMPONENTS
+// Stub out the standard layout components so the DOM isn't cluttered
 vi.mock('../src/components/Sidebar', () => ({ default: () => <div data-testid="sidebar" /> }));
 vi.mock('../src/components/Header', () => ({ default: () => <header data-testid="header" /> }));
 vi.mock('../src/components/Footer', () => ({ default: () => <footer data-testid="footer" /> }));
+
+// Replace the complex modal components with simple dummy divs.
+// We pass through the `isOpen` and `onClose` props to test if the parent controls them correctly.
 vi.mock('../src/components/ReassignModal', () => ({ 
   default: ({ isOpen, onClose }) => isOpen ? (
     <div data-testid="reassign-modal">
@@ -35,9 +38,10 @@ vi.mock('../src/components/DeleteComplaintModal', () => ({
   ) : null 
 }));
 
-// 3. MOCK FETCH & LOCAL STORAGE
+// Intercept network requests
 global.fetch = vi.fn();
 
+// Dummy data matching the shape of the expected backend response
 const mockStats = { total: 100, pending: 10, active: 40, resolved: 50 };
 const mockComplaints = [
   { complaint_id: 101, title: 'Massive Pipe Leak', category: 'Water Supply Services', status: 'PENDING', authority_name: null, created_at: '2023-10-01' },
@@ -50,11 +54,11 @@ describe('AdminComplaints Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     
-    // Mock Super Admin user in LocalStorage
+    // By default, pretend a Super Admin is logged in so the component renders normally
     const adminUser = { id: 1, role: 'super_admin' };
     vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(JSON.stringify(adminUser));
 
-    // Default successful fetch responses
+    // The component fetches stats and then the complaint list on mount
     global.fetch
       .mockResolvedValueOnce({
         json: () => Promise.resolve({ success: true, data: mockStats })
@@ -69,28 +73,32 @@ describe('AdminComplaints Component', () => {
     vi.restoreAllMocks();
   });
 
-  // --- 1. ACCESS & SECURITY TESTS ---
-  it('redirects to login if no user is in localStorage', () => {
+  it('redirects to login if no user is found in localStorage', () => {
+    // Override our default setup to simulate a logged-out state
     vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
     render(<AdminComplaints />);
+    
+    // Verify the component protected the route
     expect(mockNavigate).toHaveBeenCalledWith('/login');
   });
 
-  it('redirects to officer dashboard if user is not super_admin', () => {
+  it('redirects to the standard officer dashboard if the user lacks super_admin privileges', () => {
+    // Override setup to simulate a standard officer trying to access the master admin panel
     const officerUser = { id: 2, role: 'officer' };
     vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(JSON.stringify(officerUser));
     render(<AdminComplaints />);
+    
+    // Verify they were kicked back to their appropriate dashboard
     expect(mockNavigate).toHaveBeenCalledWith('/officer/dashboard');
   });
 
-  // --- 2. RENDERING & DATA FETCHING ---
-  it('shows loading state initially and then renders complaints', async () => {
+  it('shows the loading state initially and then renders the populated complaint table', async () => {
     render(<AdminComplaints />);
     
     expect(screen.getByText('Loading Master List...')).toBeTruthy();
 
     await waitFor(() => {
-      // Check if all complaints are rendered
+      // Check if all our dummy complaints made it into the table
       expect(screen.getByText('#CMP-101')).toBeTruthy();
       expect(screen.getByText('Massive Pipe Leak')).toBeTruthy();
       expect(screen.getByText('#CMP-102')).toBeTruthy();
@@ -98,75 +106,79 @@ describe('AdminComplaints Component', () => {
     });
   });
 
-  // --- 3. FILTERING TESTS ---
-  it('filters complaints by search term (Title or ID)', async () => {
+  it('filters complaints correctly using the text search bar (by Title or ID)', async () => {
     render(<AdminComplaints />);
 
+    // Wait for initial load
     await waitFor(() => {
       expect(screen.getByText('Massive Pipe Leak')).toBeTruthy();
     });
 
     const searchInput = screen.getByPlaceholderText('Search Subject or ID...');
+    
+    // Test title matching
     fireEvent.change(searchInput, { target: { value: 'Pothole' } });
-
     expect(screen.queryByText('Massive Pipe Leak')).toBeNull();
     expect(screen.getByText('Deep Pothole')).toBeTruthy();
 
+    // Test ID matching
     fireEvent.change(searchInput, { target: { value: '101' } });
     expect(screen.getByText('Massive Pipe Leak')).toBeTruthy();
     expect(screen.queryByText('Deep Pothole')).toBeNull();
   });
 
-  it('filters complaints by Category', async () => {
+  it('filters complaints when a specific Category is selected from the dropdown', async () => {
     render(<AdminComplaints />);
 
     await waitFor(() => {
       expect(screen.getByText('Massive Pipe Leak')).toBeTruthy();
     });
 
-    const categorySelect = screen.getAllByRole('combobox')[0]; // The first select is Category
+    // Grab the first dropdown (Category) and simulate selecting the Water department
+    const categorySelect = screen.getAllByRole('combobox')[0]; 
     fireEvent.change(categorySelect, { target: { value: 'Water Supply Services' } });
 
+    // Ensure it hid the pothole complaint
     expect(screen.getByText('Massive Pipe Leak')).toBeTruthy();
     expect(screen.queryByText('Deep Pothole')).toBeNull();
   });
 
-  it('filters complaints by Status', async () => {
+  it('filters complaints when a specific Status is selected from the dropdown', async () => {
     render(<AdminComplaints />);
 
     await waitFor(() => {
       expect(screen.getByText('Massive Pipe Leak')).toBeTruthy();
     });
 
-    const statusSelect = screen.getAllByRole('combobox')[1]; // The second select is Status
+    // Grab the second dropdown (Status) and select RESOLVED
+    const statusSelect = screen.getAllByRole('combobox')[1]; 
     fireEvent.change(statusSelect, { target: { value: 'RESOLVED' } });
 
+    // Only the Broken Streetlight should remain
     expect(screen.getByText('Broken Streetlight')).toBeTruthy();
     expect(screen.queryByText('Massive Pipe Leak')).toBeNull();
   });
 
-  it('clears all filters when Clear button is clicked', async () => {
+  it('clears all active filters when the Clear button is clicked', async () => {
     render(<AdminComplaints />);
 
     await waitFor(() => {
       expect(screen.getByText('Massive Pipe Leak')).toBeTruthy();
     });
 
-    // Apply some filters
+    // Intentionally break the list by searching for garbage
     const searchInput = screen.getByPlaceholderText('Search Subject or ID...');
     fireEvent.change(searchInput, { target: { value: 'Nonexistent' } });
-
     expect(screen.queryByText('Massive Pipe Leak')).toBeNull();
 
-    // Click Clear
+    // Hit the clear button
     fireEvent.click(screen.getByText('Clear'));
 
-    // Everything should be back
+    // Verify the original list was restored
     expect(screen.getByText('Massive Pipe Leak')).toBeTruthy();
     expect(screen.getByText('Deep Pothole')).toBeTruthy();
   });
 
-  // --- 4. MODALS INTERACTION ---
   it('opens and closes the Details modal', async () => {
     render(<AdminComplaints />);
 
@@ -174,10 +186,11 @@ describe('AdminComplaints Component', () => {
       expect(screen.getAllByText('View Details').length).toBe(3);
     });
 
-    // Click first View Details
+    // Tap the View Details button on the first row
     fireEvent.click(screen.getAllByText('View Details')[0]);
     expect(screen.getByTestId('details-modal')).toBeTruthy();
 
+    // Close the dummy modal
     fireEvent.click(screen.getByTestId('close-details'));
     expect(screen.queryByTestId('details-modal')).toBeNull();
   });
@@ -189,7 +202,7 @@ describe('AdminComplaints Component', () => {
       expect(screen.getAllByText('Reassign').length).toBe(3);
     });
 
-    // Click first Reassign
+    // Tap the Reassign button on the first row
     fireEvent.click(screen.getAllByText('Reassign')[0]);
     expect(screen.getByTestId('reassign-modal')).toBeTruthy();
 
@@ -201,11 +214,11 @@ describe('AdminComplaints Component', () => {
     render(<AdminComplaints />);
 
     await waitFor(() => {
-      // The delete button is an SVG, but it has title="Delete Complaint"
+      // The delete button is an icon without text, so we target its accessibility title
       expect(screen.getAllByTitle('Delete Complaint').length).toBe(3);
     });
 
-    // Click first Delete
+    // Tap the Trash icon on the first row
     fireEvent.click(screen.getAllByTitle('Delete Complaint')[0]);
     expect(screen.getByTestId('delete-modal')).toBeTruthy();
 

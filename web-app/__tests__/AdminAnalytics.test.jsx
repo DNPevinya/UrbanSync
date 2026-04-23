@@ -3,21 +3,23 @@ import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/re
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import AdminAnalytics from '../src/pages/AdminAnalytics';
 
-// 1. MOCK CHART.JS (We don't need to test the third-party library itself)
+// We don't need to actually render Chart.js canvases in our tests,
+// so we just replace the Bar chart with a simple div we can look for.
 vi.mock('react-chartjs-2', () => ({
   Bar: () => <div data-testid="mock-bar-chart" />
 }));
 
-// 2. MOCK CHILD COMPONENTS
+// Stub out the layout components to keep the DOM clean and focus strictly on the analytics logic.
 vi.mock('../src/components/Sidebar', () => ({ default: () => <div data-testid="sidebar" /> }));
 vi.mock('../src/components/Header', () => ({ default: () => <header data-testid="header" /> }));
 vi.mock('../src/components/Footer', () => ({ default: () => <footer data-testid="footer" /> }));
 
-// 3. MOCK FETCH
+// Intercept API calls to our backend
 global.fetch = vi.fn();
 
 describe('AdminAnalytics Component', () => {
 
+  // A solid chunk of dummy data that matches the shape of our real API response
   const mockAnalyticsData = {
     kpis: {
       avgResolution: "3.0",
@@ -39,16 +41,18 @@ describe('AdminAnalytics Component', () => {
   };
 
   beforeEach(() => {
+    // Start fresh before every test so state doesn't leak
     vi.clearAllMocks();
   });
 
   afterEach(() => {
+    // Unmount everything after each test
     cleanup();
   });
 
-  // --- 1. RENDERING TESTS ---
   it('renders the initial loading state correctly', () => {
-    global.fetch.mockReturnValue(new Promise(() => {})); // Never resolves
+    // Force the fetch promise to hang forever so we can catch the loading UI in action
+    global.fetch.mockReturnValue(new Promise(() => {})); 
     
     render(<AdminAnalytics />);
     
@@ -56,8 +60,8 @@ describe('AdminAnalytics Component', () => {
     expect(screen.getByText('Calculating national statistics...')).toBeTruthy();
   });
 
-  // --- 2. ASYNC/API TESTS ---
   it('fetches and displays the analytics KPIs and data successfully', async () => {
+    // Feed our dummy data into the component
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ success: true, data: mockAnalyticsData })
@@ -65,46 +69,47 @@ describe('AdminAnalytics Component', () => {
 
     render(<AdminAnalytics />);
 
+    // Wait for the UI to update with the fetched data
     await waitFor(() => {
-      // Check KPI Cards
+      // Verify the top-level KPI cards populated correctly
       expect(screen.getByText('3.0 Days')).toBeTruthy();
       expect(screen.getByText('85%')).toBeTruthy();
-      expect(screen.getByText('120')).toBeTruthy(); // Active pending
+      expect(screen.getByText('120')).toBeTruthy(); 
       
-      // Check if Mocked Chart is rendered
+      // Ensure our fake Chart component made it to the screen
       expect(screen.getByTestId('mock-bar-chart')).toBeTruthy();
 
-      // Check District Progress Bars
+      // Verify the breakdown by district
       expect(screen.getByText('Colombo')).toBeTruthy();
       expect(screen.getByText('50')).toBeTruthy();
 
-      // Check Authority Performance Table
+      // Verify the specific authority performance table
       expect(screen.getByText('Water Board')).toBeTruthy();
-      expect(screen.getByText('200')).toBeTruthy(); // total handled
+      expect(screen.getByText('200')).toBeTruthy();
       expect(screen.getByText('90% Resolved')).toBeTruthy();
     });
   });
 
-  // --- 3. ERROR HANDLING TESTS ---
   it('handles API failure gracefully by showing an error message', async () => {
+    // Force a network crash
     global.fetch.mockRejectedValue(new Error("Network Error"));
 
     render(<AdminAnalytics />);
 
+    // Ensure the component catches it and informs the user
     await waitFor(() => {
       expect(screen.getByText('Failed to load data.')).toBeTruthy();
     });
   });
 
-  // --- 4. STATE/INTERACTION TESTS ---
   it('triggers the CSV Export logic when the Export button is clicked', async () => {
-    // We don't mock document.createElement to avoid breaking React Testing Library.
-    // Instead, we spy on the real HTMLAnchorElement methods.
+    // Downloading files in React Testing Library is tricky. We can't actually download a file,
+    // so we spy on the DOM methods React uses to trigger the download under the hood.
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
     const removeSpy = vi.spyOn(HTMLAnchorElement.prototype, 'remove').mockImplementation(() => {});
     const appendChildSpy = vi.spyOn(document.body, 'appendChild');
     
-    // We can also spy on setAttribute to verify the correct attributes were set
+    // We track setAttribute to make sure it's generating the correct filename and data payload
     const setAttributeSpy = vi.spyOn(HTMLAnchorElement.prototype, 'setAttribute');
 
     global.fetch.mockResolvedValueOnce({
@@ -114,27 +119,30 @@ describe('AdminAnalytics Component', () => {
 
     render(<AdminAnalytics />);
 
-    // Wait for the data to load
+    // Wait for the dashboard to finish loading its data
     await waitFor(() => {
       expect(screen.getByText('3.0 Days')).toBeTruthy();
     });
 
-    // Click Export
+    // Find and click the export button
     const exportBtn = screen.getByRole('button', { name: /Export CSV/i });
     fireEvent.click(exportBtn);
 
-    // Verify CSV logic was executed
+    // Verify it tried to create a file named UrbanSync_Authority_Performance.csv
     expect(setAttributeSpy).toHaveBeenCalledWith('download', 'UrbanSync_Authority_Performance.csv');
-    // Ensure the data passed into href includes our mocked authority name
+    
+    // Verify the data payload actually contains our mocked data (like 'Water Board')
     expect(setAttributeSpy).toHaveBeenCalledWith(
       'href', 
       expect.stringContaining('Water%20Board')
     );
+    
+    // Verify the anchor tag lifecycle executed completely
     expect(appendChildSpy).toHaveBeenCalled();
     expect(clickSpy).toHaveBeenCalled();
     expect(removeSpy).toHaveBeenCalled();
 
-    // Clean up our spies
+    // Clean up our spies so they don't mess with other test files
     clickSpy.mockRestore();
     removeSpy.mockRestore();
     appendChildSpy.mockRestore();
