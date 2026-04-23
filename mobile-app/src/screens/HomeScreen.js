@@ -23,19 +23,7 @@ export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, 
   const SERVER_URL = BASE_URL;
   const t = translations[currentLang];
 
-  // 2. LIFECYCLE & UTILITIES
-  useFocusEffect(
-    useCallback(() => {
-      const loadLang = async () => {
-        const savedLang = await AsyncStorage.getItem('userLanguage');
-        if (savedLang) setCurrentLang(savedLang);
-      };
-      loadLang();
-      fetchDashboardData();
-    }, [userId])
-  );
-
-  // 3. API HANDLERS
+// 2. API HANDLERS
   const fetchDashboardData = async () => {
     try {
       const complaintsRes = await fetch(`${SERVER_URL}/api/complaints/user/${userId || 1}`);
@@ -93,6 +81,20 @@ export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, 
       setLoading(false);
     }
   };
+
+
+  // 3. LIFECYCLE & UTILITIES
+  useFocusEffect(
+    useCallback(() => {
+      const loadLang = async () => {
+        const savedLang = await AsyncStorage.getItem('userLanguage');
+        if (savedLang) setCurrentLang(savedLang);
+      };
+      loadLang();
+      fetchDashboardData();
+    }, [userId])
+  );
+
 
   // 4. UI RENDER
   return (
