@@ -2,8 +2,6 @@ const request = require('supertest');
 const express = require('express');
 
 // Fake Multer (File Upload )
-// We absolutely do not want our automated tests saving random junk files to our computer.
-// This mock intercepts Multer, prevents it from writing to disk, and simply attaches 
 // a fake file object to the request so our route logic thinks an upload succeeded.
 jest.mock('multer', () => {
     const multer = () => ({
