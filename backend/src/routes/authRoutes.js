@@ -217,15 +217,7 @@ router.post('/update-password', async (req, res) => {
     }
 });
 
-// 4. HELPER FUNCTIONS
-function generatePrefix(departmentName) {
-  if (!departmentName) return "GEN";
-  const words = departmentName.toUpperCase().split(' ');
-  if (words.length === 1) return words[0].substring(0, 3);
-  return words.map(w => w[0]).join('').substring(0, 3);
-}
-
-// 5. ADMIN ROUTES
+// 4. ADMIN ROUTES
 router.get('/admin/officers-list', async (req, res) => {
   try {
     const query = `
@@ -249,15 +241,12 @@ router.get('/admin/officers-list', async (req, res) => {
 
 router.get('/admin/next-employee-id/:authorityId', async (req, res) => {
   try {
-    const [authRows] = await db.query('SELECT department FROM authorities WHERE authority_id = ?', [req.params.authorityId]);
-    if (authRows.length === 0) return res.json({ employee_id: 'EMP-001' });
-    
-    const prefix = generatePrefix(authRows[0].department);
-
+    const [authRows] = await db.query('SELECT authority_code FROM authorities WHERE authority_id = ?', [req.params.authorityId]);
+    if (authRows.length === 0) return res.json({ employee_id: 'EMP-001' }); 
+    const prefix = authRows[0].authority_code || 'GEN';
     const [countRows] = await db.query('SELECT COUNT(*) as count FROM officers WHERE authority_id = ?', [req.params.authorityId]);
     const nextNum = countRows[0].count + 1;
     const paddedNum = nextNum.toString().padStart(3, '0');
-
     res.json({ success: true, employee_id: `EMP-${prefix}-${paddedNum}` });
   } catch (err) {
     console.error("ID Gen Error:", err.message);
