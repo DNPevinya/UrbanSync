@@ -33,7 +33,7 @@ export default function ComplaintDetailsScreen({ onBack, complaintId }) {
     }
   };
 
-  const handleCancelComplaint = () => {
+const handleCancelComplaint = () => {
     Alert.alert(
       "Cancel Complaint",
       "Are you sure you want to withdraw this complaint? This cannot be undone.",
@@ -50,12 +50,17 @@ export default function ComplaintDetailsScreen({ onBack, complaintId }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'CANCELLED' })
               });
+              
+              const data = await response.json(); 
+
               if (response.ok) {
                 Alert.alert("Withdrawn", "Your complaint has been cancelled.");
                 onBack(); 
+              } else {
+                Alert.alert("Failed to Cancel", data.message || "The server rejected the request.");
               }
             } catch (err) {
-              Alert.alert("Error", "Could not cancel at this time.");
+              Alert.alert("Network Error", "Could not reach the server.");
             } finally {
               setCancelling(false);
             }
@@ -109,7 +114,7 @@ export default function ComplaintDetailsScreen({ onBack, complaintId }) {
       case 'PENDING': return '#FF9F43';
       case 'RESOLVED': return '#28C76F';
       case 'IN PROGRESS': return '#0041C7';
-      case 'CANCELLED': return '#64748B';
+      case 'CANCELLED': return '#EF4444';
       default: return '#FF9F43';
     }
   };

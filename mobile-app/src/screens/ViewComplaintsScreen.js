@@ -36,8 +36,10 @@ export default function ViewComplaintsScreen({ onNavigateToDetails, userId }) {
     }
   };
 
+  // UPDATED: Now recognizes CANCELLED and returns Red
   const getStepLevelInfo = (status, authorityId) => {
     const s = status?.toUpperCase();
+    if (s === 'CANCELLED') return { level: 0, color: '#EF4444', width: '0%' }; // Added Cancelled logic
     if (s === 'RESOLVED') return { level: 4, color: '#28C76F', width: '100%' };
     if (s === 'IN PROGRESS') return { level: 3, color: '#0041C7', width: '72%' };
     if (authorityId) return { level: 2, color: '#00B5D8', width: '40%' };
@@ -83,7 +85,7 @@ export default function ViewComplaintsScreen({ onNavigateToDetails, userId }) {
 
       <View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterBar}>
-          {['All', 'Pending', 'In Progress', 'Resolved'].map((tab) => (
+          {['All', 'Pending', 'In Progress', 'Resolved', 'Cancelled'].map((tab) => (
             <TouchableOpacity 
               key={tab} 
               onPress={() => setFilter(tab)} 
