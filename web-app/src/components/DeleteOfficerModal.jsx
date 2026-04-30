@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiFetch } from '../utils/apiClient';
 
 export default function DeleteOfficerModal({ isOpen, onClose, refreshData, officerData }) {
   // 1. STATE & HOOKS
@@ -10,7 +11,7 @@ export default function DeleteOfficerModal({ isOpen, onClose, refreshData, offic
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/auth/admin/delete-officer/${officerData.user_id}`, {
+      const response = await apiFetch(`http://localhost:5000/api/auth/admin/delete-officer/${officerData.user_id}`, {
         method: 'DELETE'
       });
       const result = await response.json();

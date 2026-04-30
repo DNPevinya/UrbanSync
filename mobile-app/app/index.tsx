@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { DeviceEventEmitter } from 'react-native';
 
 // --- Screen Imports ---
 import LoadingScreen from '../src/screens/LoadingScreen';
 import WelcomeScreen from '../src/screens/WelcomeScreen';
 import LoginScreen from '../src/screens/LoginScreen';
-import ForgotPasswordScreen from '../src/screens/ForgotPasswordScreen'; // 👉 Ensure this import exists
+import ForgotPasswordScreen from '../src/screens/ForgotPasswordScreen';
 import SignupScreen from '../src/screens/SignupScreen';
 import HomeScreen from '../src/screens/HomeScreen';
 import ViewComplaintsScreen from '../src/screens/ViewComplaintsScreen';
@@ -36,6 +37,21 @@ interface UserData {
 export default function Index() {
   const [currentStep, setCurrentStep] = useState<string>('loading');
   const [prevStep, setPrevStep] = useState<string>('');
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('authError', () => {
+      setUserId(null);
+      setSelectedComplaintId(null);
+      setUserName('Citizen');
+      setUserEmail('');
+      setUserPhone('');
+      setUserDistrict('');
+      setUserDivision('');
+      setUserProfilePicture(null);
+      setCurrentStep('login');
+    });
+    return () => subscription.remove();
+  }, []);
   const [userId, setUserId] = useState<string | number | null>(null);
   const [selectedComplaintId, setSelectedComplaintId] = useState<string | number | null>(null);
 
@@ -71,13 +87,11 @@ export default function Index() {
           setCurrentStep('dashboard');
         }} 
         onCreateAccount={() => setCurrentStep('signup')}
-        // 👉 ADDED THIS BACK
         onNavigateToForgot={() => setCurrentStep('forgot_password')} 
       />
     );
   }
 
-  // 👉 ADDED THIS BACK
   if (currentStep === 'forgot_password') {
     return (
       <ForgotPasswordScreen 

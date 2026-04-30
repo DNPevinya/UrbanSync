@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { BASE_URL } from '../../src/config';
+import { apiFetch } from '../utils/apiClient';
 
 export default function EditProfileScreen({ onBack, initialData = {}, onUpdateSuccess }) {
   // 1. STATE & HOOKS
@@ -126,7 +127,7 @@ export default function EditProfileScreen({ onBack, initialData = {}, onUpdateSu
     }
 
     try {
-      const response = await fetch(`${SERVER_URL}/api/auth/update-profile`, {
+      const response = await apiFetch(`${SERVER_URL}/api/auth/update-profile`, {
         method: 'PUT',
         body: formData,
         headers: {

@@ -10,6 +10,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { translations } from '../../src/translations';
 import { BASE_URL } from '../../src/config';
+import { apiFetch } from '../utils/apiClient';
 
 export default function SubmitComplaintScreen({ onBack, userId }) {
   // 1. STATE & HOOKS
@@ -113,7 +114,7 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
         return;
       }
       const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.latitude},${coords.longitude}&key=${GOOGLE_API_KEY}`;
-      const response = await fetch(url);
+      const response = await apiFetch(url);
       const data = await response.json();
       if (data.status === 'OK' && data.results.length > 0) {
         setLocationName(data.results[0].formatted_address);
@@ -149,7 +150,7 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
     try {
       const query = searchQuery.toLowerCase().includes('sri lanka') ? searchQuery : `${searchQuery}, Sri Lanka`;
       const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${GOOGLE_API_KEY}`;
-      const response = await fetch(url);
+      const response = await apiFetch(url);
       const data = await response.json();
       if (data.status === 'OK' && data.results.length > 0) {
         const { lat, lng } = data.results[0].geometry.location;
@@ -217,7 +218,7 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
     });
 
     try {
-      const res = await fetch(`${SERVER_URL}/api/complaints/submit`, {
+      const res = await apiFetch(`${SERVER_URL}/api/complaints/submit`, {
         method: 'POST', body: formData, headers: { 'Accept': 'application/json', 'Content-Type': 'multipart/form-data' },
       });
       

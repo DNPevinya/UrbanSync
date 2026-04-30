@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiFetch } from '../utils/apiClient';
 
 export default function RejectComplaintModal({ isOpen, onClose, complaint, refreshData, officerName }) {
   // 1. STATE & HOOKS
@@ -13,7 +14,7 @@ export default function RejectComplaintModal({ isOpen, onClose, complaint, refre
     setIsSubmitting(true);
     
     try {
-      const response = await fetch(`http://localhost:5000/api/complaints/officer/reject-complaint/${complaint.complaint_id}`, {
+      const response = await apiFetch(`http://localhost:5000/api/complaints/officer/reject-complaint/${complaint.complaint_id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

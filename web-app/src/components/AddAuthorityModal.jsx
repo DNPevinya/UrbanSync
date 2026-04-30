@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiFetch } from '../utils/apiClient';
 
 export default function AddAuthorityModal({ isOpen, onClose, refreshData, departments, regions }) {
   // 1. STATE & HOOKS
@@ -15,7 +16,7 @@ export default function AddAuthorityModal({ isOpen, onClose, refreshData, depart
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/complaints/admin/add-authority', {
+      const response = await apiFetch('http://localhost:5000/api/complaints/admin/add-authority', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, department, region })

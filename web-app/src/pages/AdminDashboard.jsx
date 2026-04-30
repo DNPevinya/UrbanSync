@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer'; 
 import ReassignModal from '../components/ReassignModal'; 
 import DetailsModal from '../components/DetailsModal';   
+import { apiFetch } from '../utils/apiClient';
 
 export default function AdminDashboard() {
   // 1. STATE & HOOKS
@@ -32,9 +33,9 @@ export default function AdminDashboard() {
       try {
         setLoading(true);
         const [sRes, pRes, rRes] = await Promise.all([
-          fetch('http://localhost:5000/api/complaints/admin/stats'),
-          fetch('http://localhost:5000/api/complaints/admin/performance'),
-          fetch('http://localhost:5000/api/complaints/admin/all-recent')
+          apiFetch('http://localhost:5000/api/complaints/admin/stats'),
+          apiFetch('http://localhost:5000/api/complaints/admin/performance'),
+          apiFetch('http://localhost:5000/api/complaints/admin/all-recent')
         ]);
 
         const sData = await sRes.json();

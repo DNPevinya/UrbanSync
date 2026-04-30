@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../utils/apiClient';
 
 export default function ReassignModal({ isOpen, onClose, complaintId, onReassignSuccess }) {
   // 1. STATE & HOOKS
@@ -14,11 +15,11 @@ export default function ReassignModal({ isOpen, onClose, complaintId, onReassign
   // 2. LIFECYCLE & UTILITIES
   useEffect(() => {
     if (isOpen && complaintId) {
-      fetch(`http://localhost:5000/api/complaints/${complaintId}`)
+      apiFetch(`http://localhost:5000/api/complaints/${complaintId}`)
         .then(res => res.json())
         .then(data => { if (data.success) setCurrentData(data.data); });
 
-      fetch(`http://localhost:5000/api/complaints/admin/authorities`)
+      apiFetch(`http://localhost:5000/api/complaints/admin/authorities`)
         .then(res => res.json())
         .then(data => { if (data.success) setAuthorities(data.data); });
     }
@@ -27,7 +28,7 @@ export default function ReassignModal({ isOpen, onClose, complaintId, onReassign
   useEffect(() => {
     if (targetAuthority) {
       setTargetOfficer(''); 
-      fetch(`http://localhost:5000/api/complaints/admin/officers/${targetAuthority}`)
+      apiFetch(`http://localhost:5000/api/complaints/admin/officers/${targetAuthority}`)
         .then(res => res.json())
         .then(data => { if (data.success) setOfficers(data.data); });
     } else {
@@ -39,7 +40,7 @@ export default function ReassignModal({ isOpen, onClose, complaintId, onReassign
   const handleReassign = async () => {
     setIsSubmitting(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/complaints/reassign/${complaintId}`, {
+      const response = await apiFetch(`http://localhost:5000/api/complaints/reassign/${complaintId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

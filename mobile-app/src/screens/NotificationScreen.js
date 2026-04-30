@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../src/config'; 
+import { apiFetch } from '../utils/apiClient';
 
 const getNotificationStyle = (message) => {
   const text = message.toUpperCase();
@@ -39,7 +40,7 @@ export default function NotificationScreen({ onBack }) {
       const parsedUser = JSON.parse(userData);
       const userId = parsedUser.id; 
       
-      const response = await fetch(`${BASE_URL}/api/auth/notifications/${userId}`);
+      const response = await apiFetch(`${BASE_URL}/api/auth/notifications/${userId}`);
       const result = await response.json();
 
       if (result.success) {
@@ -71,7 +72,7 @@ export default function NotificationScreen({ onBack }) {
       if (!userData) return;
       const userId = JSON.parse(userData).id;
 
-      await fetch(`${BASE_URL}/api/auth/notifications/read-all/${userId}`, {
+      await apiFetch(`${BASE_URL}/api/auth/notifications/read-all/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' }
       });

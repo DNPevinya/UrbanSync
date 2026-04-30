@@ -4,6 +4,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview'; 
 import { BASE_URL } from '../../src/config';
+import { apiFetch } from '../utils/apiClient';
 
 export default function ComplaintDetailsScreen({ onBack, complaintId }) {
   // 1. STATE & HOOKS
@@ -23,7 +24,7 @@ export default function ComplaintDetailsScreen({ onBack, complaintId }) {
   // 3. API HANDLERS
   const fetchComplaintDetails = async () => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/complaints/${complaintId}`);
+      const response = await apiFetch(`${SERVER_URL}/api/complaints/${complaintId}`);
       const result = await response.json();
       if (result.success) setComplaint(result.data);
     } catch (error) {
@@ -45,7 +46,7 @@ const handleCancelComplaint = () => {
           onPress: async () => {
             setCancelling(true);
             try {
-              const response = await fetch(`${SERVER_URL}/api/complaints/update-status/${complaintId}`, {
+              const response = await apiFetch(`${SERVER_URL}/api/complaints/update-status/${complaintId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'CANCELLED' })

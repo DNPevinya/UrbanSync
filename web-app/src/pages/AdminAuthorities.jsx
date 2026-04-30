@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import AddAuthorityModal from '../components/AddAuthorityModal';
 import EditAuthorityModal from '../components/EditAuthorityModal';
 import DeleteModal from '../components/DeleteModal';
+import { apiFetch } from '../utils/apiClient';
 
 export default function AdminAuthorities() {
   // 1. STATE & HOOKS
@@ -26,9 +27,9 @@ export default function AdminAuthorities() {
     setLoading(true);
     try {
       const [authRes, deptRes, regRes] = await Promise.all([
-        fetch('http://localhost:5000/api/complaints/admin/authorities-list'),
-        fetch('http://localhost:5000/api/complaints/admin/departments-list'),
-        fetch('http://localhost:5000/api/complaints/admin/regions-list')
+        apiFetch('http://localhost:5000/api/complaints/admin/authorities-list'),
+        apiFetch('http://localhost:5000/api/complaints/admin/departments-list'),
+        apiFetch('http://localhost:5000/api/complaints/admin/regions-list')
       ]);
       
       const authData = await authRes.json();

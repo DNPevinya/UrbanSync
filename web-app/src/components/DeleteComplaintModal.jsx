@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiFetch } from '../utils/apiClient';
 
 export default function DeleteComplaintModal({ isOpen, onClose, complaintId, refreshData }) {
   // 1. STATE & HOOKS
@@ -10,7 +11,7 @@ export default function DeleteComplaintModal({ isOpen, onClose, complaintId, ref
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/complaints/admin/delete-complaint/${complaintId}`, {
+      const response = await apiFetch(`http://localhost:5000/api/complaints/admin/delete-complaint/${complaintId}`, {
         method: 'DELETE'
       });
       const result = await response.json();

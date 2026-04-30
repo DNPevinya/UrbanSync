@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, ActivityIn
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BASE_URL } from '../../src/config';
+import { apiFetch } from '../utils/apiClient';
 
 export default function ViewComplaintsScreen({ onNavigateToDetails, userId }) {
   // 1. STATE & HOOKS
@@ -21,7 +22,7 @@ export default function ViewComplaintsScreen({ onNavigateToDetails, userId }) {
   // 3. API HANDLERS
   const fetchMyComplaints = async () => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/complaints/user/${userId || 1}`);
+      const response = await apiFetch(`${SERVER_URL}/api/complaints/user/${userId || 1}`);
       const result = await response.json();
       if (result.success && Array.isArray(result.data)) {
         setComplaints(result.data);

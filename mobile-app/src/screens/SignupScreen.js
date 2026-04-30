@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { translations } from '../../src/translations';
 
 import NationalBadge from '../components/NationalBadge';
+import { apiFetch } from '../utils/apiClient';
 
 const locationData = {
   "Colombo": ["Bambalapitiya", "Kollupitiya", "Borella", "Cinnamon Gardens", "Dehiwala"],
@@ -90,7 +91,7 @@ export default function SignupScreen({
 
     setLoading(true);
     try {
-      const response = await fetch(`${BASE_URL}/api/auth/register`, {
+      const response = await apiFetch(`${BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData), 

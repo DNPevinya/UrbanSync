@@ -6,6 +6,7 @@ import Header from '../components/Header';
 import ReassignModal from '../components/ReassignModal';
 import DetailsModal from '../components/DetailsModal';
 import DeleteComplaintModal from '../components/DeleteComplaintModal'; 
+import { apiFetch } from '../utils/apiClient';
 
 export default function AdminComplaints() {
   // 1. STATE & HOOKS
@@ -36,8 +37,8 @@ export default function AdminComplaints() {
     try {
       setLoading(true);
       const [statsRes, complaintsRes] = await Promise.all([
-        fetch('http://localhost:5000/api/complaints/admin/stats'),
-        fetch('http://localhost:5000/api/complaints/admin/all')
+        apiFetch('http://localhost:5000/api/complaints/admin/stats'),
+        apiFetch('http://localhost:5000/api/complaints/admin/all')
       ]);
       const statsData = await statsRes.json();
       const complaintsData = await complaintsRes.json();

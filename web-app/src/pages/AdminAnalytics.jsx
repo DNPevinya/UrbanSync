@@ -7,6 +7,7 @@ import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { apiFetch } from '../utils/apiClient';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -19,7 +20,7 @@ export default function AdminAnalytics() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/complaints/admin/analytics');
+        const response = await apiFetch('http://localhost:5000/api/complaints/admin/analytics');
         const result = await response.json();
         if (result.success) {
           setAnalytics(result.data);

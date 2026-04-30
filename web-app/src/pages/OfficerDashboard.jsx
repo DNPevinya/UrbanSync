@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { apiFetch } from '../utils/apiClient';
 
 export default function OfficerDashboard() {
   // 1. STATE & HOOKS
@@ -20,7 +21,7 @@ export default function OfficerDashboard() {
 
     const fetchComplaints = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/complaints/authority/${parsedUser.authority_id}`);
+        const response = await apiFetch(`http://localhost:5000/api/complaints/authority/${parsedUser.authority_id}`);
         const result = await response.json();
         if (result.success) setComplaints(result.data); 
       } catch (error) {

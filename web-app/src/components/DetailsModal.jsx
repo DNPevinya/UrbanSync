@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../utils/apiClient';
 
 export default function DetailsModal({ isOpen, onClose, complaintId }) {
   // 1. STATE & HOOKS
@@ -11,7 +12,7 @@ export default function DetailsModal({ isOpen, onClose, complaintId }) {
       const fetchDetails = async () => {
         setLoading(true);
         try {
-          const response = await fetch(`http://localhost:5000/api/complaints/${complaintId}`);
+          const response = await apiFetch(`http://localhost:5000/api/complaints/${complaintId}`);
           const result = await response.json();
           if (result.success) {
             setData(result.data);

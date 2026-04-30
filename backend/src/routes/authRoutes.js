@@ -6,6 +6,8 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
+const authMiddleware = require('../middleware/authMiddleware');
 
 // 2. CONFIGURATION & MIDDLEWARE
 const storage = multer.diskStorage({
@@ -79,12 +81,20 @@ router.post('/login', async (req, res) => {
                 let cleanPhone = citizens[0].phone.toString().replace(/\s+/g, '').replace(/^0+/, '');
                 let formattedPhone = `+94${cleanPhone}`;
 
+                const secret = process.env.JWT_SECRET || 'urbansync_default_secret';
+                const token = jwt.sign(
+                    { id: userProfile.id, email: userProfile.email, role: userProfile.role },
+                    secret,
+                    { expiresIn: '24h' }
+                );
+
                 // Intercept standard login for citizens to require 2FA
                 return res.status(200).json({
                     status: "2FA_REQUIRED",
                     message: "Password verified. Proceed to OTP.",
                     phone: formattedPhone,
-                    userProfile: userProfile
+                    userProfile: userProfile,
+                    token: token
                 });
             }
         }
@@ -109,7 +119,14 @@ router.post('/login', async (req, res) => {
             }
         }
 
-        res.status(200).json({ message: "Login successful!", user: userProfile });
+        const secret = process.env.JWT_SECRET || 'urbansync_default_secret';
+        const token = jwt.sign(
+            { id: userProfile.id, email: userProfile.email, role: userProfile.role },
+            secret,
+            { expiresIn: '24h' }
+        );
+
+        res.status(200).json({ message: "Login successful!", user: userProfile, token: token });
 
     } catch (error) {
         console.error("Login DB Error:", error);
@@ -218,7 +235,7 @@ router.post('/update-password', async (req, res) => {
 });
 
 // 4. ADMIN ROUTES
-router.get('/admin/officers-list', async (req, res) => {
+router.get('/admin/officers-list', authMiddleware, async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -239,7 +256,7 @@ router.get('/admin/officers-list', async (req, res) => {
   }
 });
 
-router.get('/admin/next-employee-id/:authorityId', async (req, res) => {
+router.get('/admin/next-employee-id/:authorityId', authMiddleware, async (req, res) => {
   try {
     const [authRows] = await db.query('SELECT authority_code FROM authorities WHERE authority_id = ?', [req.params.authorityId]);
     if (authRows.length === 0) return res.json({ employee_id: 'EMP-001' }); 
@@ -254,7 +271,7 @@ router.get('/admin/next-employee-id/:authorityId', async (req, res) => {
   }
 });
 
-router.post('/admin/add-officer', async (req, res) => {
+router.post('/admin/add-officer', authMiddleware, async (req, res) => {
   const { full_name, email, authority_id, employee_id_code } = req.body;
   const tempPassword = crypto.randomBytes(4).toString('hex'); 
 
@@ -282,7 +299,7 @@ router.post('/admin/add-officer', async (req, res) => {
   }
 });
 
-router.put('/admin/update-officer/:userId', async (req, res) => {
+router.put('/admin/update-officer/:userId', authMiddleware, async (req, res) => {
   const { full_name, email, authority_id, status } = req.body;
   const userId = req.params.userId;
 
@@ -299,7 +316,7 @@ router.put('/admin/update-officer/:userId', async (req, res) => {
   }
 });
 
-router.delete('/admin/delete-officer/:userId', async (req, res) => {
+router.delete('/admin/delete-officer/:userId', authMiddleware, async (req, res) => {
   const userId = req.params.userId;
   try {
     await db.query(`DELETE FROM officers WHERE user_id = ?`, [userId]);

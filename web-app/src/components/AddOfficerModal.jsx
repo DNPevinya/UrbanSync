@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiFetch } from '../utils/apiClient';
 
 export default function AddOfficerModal({ isOpen, onClose, refreshData, authorities }) {
   // 1. STATE & HOOKS
@@ -9,7 +10,7 @@ export default function AddOfficerModal({ isOpen, onClose, refreshData, authorit
   // 2. LIFECYCLE & UTILITIES
   useEffect(() => {
     if (formData.authority_id) {
-      fetch(`http://localhost:5000/api/auth/admin/next-employee-id/${formData.authority_id}`)
+      apiFetch(`http://localhost:5000/api/auth/admin/next-employee-id/${formData.authority_id}`)
         .then(res => res.json())
         .then(data => {
           if (data.success) setFormData(prev => ({ ...prev, employee_id_code: data.employee_id }));
@@ -25,7 +26,7 @@ export default function AddOfficerModal({ isOpen, onClose, refreshData, authorit
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const response = await fetch('http://localhost:5000/api/auth/admin/add-officer', {
+      const response = await apiFetch('http://localhost:5000/api/auth/admin/add-officer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

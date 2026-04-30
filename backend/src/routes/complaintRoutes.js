@@ -4,6 +4,7 @@ const router = express.Router();
 const db = require('./../db'); 
 const multer = require('multer');
 const path = require('path');
+const authMiddleware = require('../middleware/authMiddleware');
 
 // 2. HELPER VARIABLES
 const issueToDepartmentMap = {
@@ -74,7 +75,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // 5. API ROUTES
-router.get('/admin/stats', async (req, res) => {
+router.get('/admin/stats', authMiddleware, async (req, res) => {
   try {
     const [total] = await db.query('SELECT COUNT(*) as count FROM complaints');
     const [pending] = await db.query("SELECT COUNT(*) as count FROM complaints WHERE status = 'PENDING'");
@@ -91,7 +92,7 @@ router.get('/admin/stats', async (req, res) => {
   }
 });
 
-router.get('/admin/performance', async (req, res) => {
+router.get('/admin/performance', authMiddleware, async (req, res) => {
   try {
     const query = `
       SELECT a.name, a.department, COUNT(c.complaint_id) as total_cases
@@ -109,7 +110,7 @@ router.get('/admin/performance', async (req, res) => {
   }
 });
 
-router.get('/admin/all-recent', async (req, res) => {
+router.get('/admin/all-recent', authMiddleware, async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -130,7 +131,7 @@ router.get('/admin/all-recent', async (req, res) => {
   }
 });
 
-router.get('/admin/all', async (req, res) => {
+router.get('/admin/all', authMiddleware, async (req, res) => {
   try {
     const sql = `
       SELECT c.*, a.name as authority_name, a.region 
@@ -145,7 +146,7 @@ router.get('/admin/all', async (req, res) => {
   }
 });
 
-router.get('/admin/authorities', async (req, res) => {
+router.get('/admin/authorities', authMiddleware, async (req, res) => {
   try {
     const [rows] = await db.query('SELECT authority_id, name FROM authorities ORDER BY name ASC');
     res.json({ success: true, data: rows });
@@ -154,7 +155,7 @@ router.get('/admin/authorities', async (req, res) => {
   }
 });
 
-router.get('/admin/officers/:authorityId', async (req, res) => {
+router.get('/admin/officers/:authorityId', authMiddleware, async (req, res) => {
   try {
     const sql = `SELECT user_id, full_name AS fullName FROM officers WHERE authority_id = ?`;
     const [rows] = await db.query(sql, [req.params.authorityId]);
@@ -178,7 +179,7 @@ router.patch('/reassign/:id', async (req, res) => {
   }
 });
 
-router.get('/admin/authorities-list', async (req, res) => {
+router.get('/admin/authorities-list', authMiddleware, async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -197,7 +198,7 @@ router.get('/admin/authorities-list', async (req, res) => {
   }
 });
 
-router.post('/admin/add-authority', async (req, res) => {
+router.post('/admin/add-authority', authMiddleware, async (req, res) => {
   const { name, department, region } = req.body;
   try {
     const query = `INSERT INTO authorities (name, department, region) VALUES (?, ?, ?)`;
@@ -209,7 +210,7 @@ router.post('/admin/add-authority', async (req, res) => {
   }
 });
 
-router.put('/admin/update-authority/:id', async (req, res) => {
+router.put('/admin/update-authority/:id', authMiddleware, async (req, res) => {
   const { name, department, region } = req.body;
   try {
     const query = `UPDATE authorities SET name = ?, department = ?, region = ? WHERE authority_id = ?`;
@@ -221,7 +222,7 @@ router.put('/admin/update-authority/:id', async (req, res) => {
   }
 });
 
-router.delete('/admin/delete-authority/:id', async (req, res) => {
+router.delete('/admin/delete-authority/:id', authMiddleware, async (req, res) => {
   const { fallback_authority_id } = req.body;
   const authIdToDelete = req.params.id;
 
@@ -238,7 +239,7 @@ router.delete('/admin/delete-authority/:id', async (req, res) => {
   }
 });
 
-router.get('/admin/departments-list', async (req, res) => {
+router.get('/admin/departments-list', authMiddleware, async (req, res) => {
   try {
     const query = `SELECT DISTINCT department FROM authorities WHERE department IS NOT NULL AND department != '' ORDER BY department ASC`;
     const [rows] = await db.query(query);
@@ -250,7 +251,7 @@ router.get('/admin/departments-list', async (req, res) => {
   }
 });
 
-router.get('/admin/regions-list', async (req, res) => {
+router.get('/admin/regions-list', authMiddleware, async (req, res) => {
   try {
     const query = `SELECT DISTINCT region FROM authorities WHERE region IS NOT NULL AND region != '' ORDER BY region ASC`;
     const [rows] = await db.query(query);
@@ -262,7 +263,7 @@ router.get('/admin/regions-list', async (req, res) => {
   }
 });
 
-router.delete('/admin/delete-complaint/:id', async (req, res) => {
+router.delete('/admin/delete-complaint/:id', authMiddleware, async (req, res) => {
   const complaintId = req.params.id;
   try {
     await db.query(`DELETE FROM complaints WHERE complaint_id = ?`, [complaintId]);
@@ -273,7 +274,7 @@ router.delete('/admin/delete-complaint/:id', async (req, res) => {
   }
 });
 
-router.get('/admin/analytics', async (req, res) => {
+router.get('/admin/analytics', authMiddleware, async (req, res) => {
   try {
     const [kpiRows] = await db.query(`
       SELECT 

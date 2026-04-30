@@ -4,12 +4,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { BASE_URL } from '../../src/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { translations } from '../../src/translations'; 
+import { translations } from '../../src/translations';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
-import { auth } from '../../src/firebaseConfig'; 
+import { auth } from '../../src/firebaseConfig';
 
 import NationalBadge from '../components/NationalBadge';
 
@@ -20,12 +20,12 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [currentLang, setCurrentLang] = useState('en'); 
+  const [currentLang, setCurrentLang] = useState('en');
 
-  const [isOtpMode, setIsOtpMode] = useState(false); 
-  const [otpCode, setOtpCode] = useState(''); 
-  const [pendingUser, setPendingUser] = useState(null); 
-  
+  const [isOtpMode, setIsOtpMode] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [pendingUser, setPendingUser] = useState(null);
+
   const recaptchaVerifier = useRef(null);
   const [verificationId, setVerificationId] = useState(null);
 
@@ -59,7 +59,7 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
   const handleLogin = async () => {
     if (!validateForm()) return;
     setLoading(true);
-    setErrors({}); 
+    setErrors({});
 
     try {
       const response = await fetch(`${BASE_URL}/api/auth/login`, {
@@ -69,7 +69,7 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
       });
 
       const data = await response.json();
-      
+
       if (response.ok && data.status === "2FA_REQUIRED") {
         try {
           const phoneProvider = new PhoneAuthProvider(auth);
@@ -77,11 +77,11 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
             data.phone,
             recaptchaVerifier.current
           );
-          
+
           setVerificationId(vId);
-          setPendingUser(data.userProfile); 
-          setIsOtpMode(true); 
-          
+          setPendingUser({ ...data.userProfile, token: data.token });
+          setIsOtpMode(true);
+
         } catch (firebaseErr) {
           console.error("Firebase SMS Error:", firebaseErr);
           setErrors({ server: "Failed to send SMS. Please check your number." });
@@ -91,15 +91,16 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
         const userObj = {
           id: data.user.id, fullName: data.user.fullName, email: data.user.email,
           phone: data.user.phone, district: data.user.district, division: data.user.division,
-          profilePicture: data.user.profilePicture || null 
+          profilePicture: data.user.profilePicture || null
         };
         await AsyncStorage.setItem('user', JSON.stringify(userObj));
-        
+        if (data.token) await AsyncStorage.setItem('urbanSyncToken', data.token);
+
         onLoginSuccess(
-          data.user.id, data.user.fullName, data.user.email, 
-          data.user.phone, data.user.district, data.user.division, 
-          data.user.profilePicture || null 
-        ); 
+          data.user.id, data.user.fullName, data.user.email,
+          data.user.phone, data.user.district, data.user.division,
+          data.user.profilePicture || null
+        );
       } else {
         setErrors({ server: data.message || "Invalid email or password." });
       }
@@ -126,16 +127,17 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
       const userObj = {
         id: pendingUser.id, fullName: pendingUser.fullName, email: pendingUser.email,
         phone: pendingUser.phone, district: pendingUser.district, division: pendingUser.division,
-        profilePicture: pendingUser.profilePicture || null 
+        profilePicture: pendingUser.profilePicture || null
       };
       await AsyncStorage.setItem('user', JSON.stringify(userObj));
+      if (pendingUser.token) await AsyncStorage.setItem('urbanSyncToken', pendingUser.token);
 
       onLoginSuccess(
-        pendingUser.id, pendingUser.fullName, pendingUser.email, 
-        pendingUser.phone, pendingUser.district, pendingUser.division, 
-        pendingUser.profilePicture || null 
+        pendingUser.id, pendingUser.fullName, pendingUser.email,
+        pendingUser.phone, pendingUser.district, pendingUser.division,
+        pendingUser.profilePicture || null
       );
-      
+
     } catch (error) {
       console.error("OTP Error:", error);
       setErrors({ server: "Invalid OTP code. Please try again." });
@@ -148,7 +150,7 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardAvoid}>
-        
+
         <FirebaseRecaptchaVerifierModal
           ref={recaptchaVerifier}
           firebaseConfig={auth.app.options}
@@ -156,14 +158,14 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
         />
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          
+
           <View style={styles.headerTopRow}>
             <NationalBadge size="large" />
             <View style={styles.langToggleGroup}>
               {['en', 'si', 'ta'].map((lang) => (
-                <TouchableOpacity 
-                  key={lang} 
-                  onPress={() => changeLanguage(lang)} 
+                <TouchableOpacity
+                  key={lang}
+                  onPress={() => changeLanguage(lang)}
                   style={[styles.langBtn, currentLang === lang && styles.langBtnActive]}
                 >
                   <Text style={[styles.langBtnText, currentLang === lang && styles.langBtnTextActive]}>
@@ -184,10 +186,10 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
 
           <View style={styles.form}>
             {errors.server && (
-               <View style={styles.errorBanner}>
-                  <Ionicons name="warning" size={18} color="#EF4444" />
-                  <Text style={styles.serverErrorText}>{errors.server}</Text>
-               </View>
+              <View style={styles.errorBanner}>
+                <Ionicons name="warning" size={18} color="#EF4444" />
+                <Text style={styles.serverErrorText}>{errors.server}</Text>
+              </View>
             )}
 
             {!isOtpMode ? (
@@ -195,10 +197,10 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
                 <Text style={styles.label}>{t.email_label}</Text>
                 <View style={[styles.inputContainer, errors.email && styles.inputErrorBorder]}>
                   <Ionicons name="mail-outline" size={20} color="#0160C9" style={styles.inputIcon} />
-                  <TextInput 
-                    style={styles.input} placeholder="e.g. citizen@example.com" value={email} 
-                    onChangeText={(val) => { setEmail(val); setErrors({ ...errors, email: null, server: null }); }} 
-                    keyboardType="email-address" autoCapitalize="none" placeholderTextColor="#94A3B8" 
+                  <TextInput
+                    style={styles.input} placeholder="e.g. citizen@example.com" value={email}
+                    onChangeText={(val) => { setEmail(val); setErrors({ ...errors, email: null, server: null }); }}
+                    keyboardType="email-address" autoCapitalize="none" placeholderTextColor="#94A3B8"
                   />
                 </View>
                 {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
@@ -206,15 +208,15 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
                 <View style={styles.labelRow}>
                   <Text style={styles.label}>{t.pass_label}</Text>
                   <TouchableOpacity onPress={onNavigateToForgot}>
-                      <Text style={styles.forgotText}>{t.forgot}</Text>
+                    <Text style={styles.forgotText}>{t.forgot}</Text>
                   </TouchableOpacity>
                 </View>
                 <View style={[styles.inputContainer, errors.password && styles.inputErrorBorder]}>
                   <Ionicons name="lock-closed-outline" size={20} color="#0160C9" style={styles.inputIcon} />
-                  <TextInput 
-                    style={styles.input} placeholder="Enter your password" value={password} 
-                    onChangeText={(val) => { setPassword(val); setErrors({ ...errors, password: null, server: null }); }} 
-                    secureTextEntry={!showPassword} placeholderTextColor="#94A3B8" 
+                  <TextInput
+                    style={styles.input} placeholder="Enter your password" value={password}
+                    onChangeText={(val) => { setPassword(val); setErrors({ ...errors, password: null, server: null }); }}
+                    secureTextEntry={!showPassword} placeholderTextColor="#94A3B8"
                   />
                   <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                     <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#64748B" />
@@ -238,16 +240,16 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
             ) : (
               <>
                 <Text style={styles.label}>{t.otp_title}</Text>
-                <Text style={{fontSize: 13, color: '#64748B', marginBottom: 15, lineHeight: 20}}>
+                <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 15, lineHeight: 20 }}>
                   {t.otp_sub}
                 </Text>
-                
-                <View style={[styles.inputContainer, {borderColor: '#0160C9', borderWidth: 2}]}>
+
+                <View style={[styles.inputContainer, { borderColor: '#0160C9', borderWidth: 2 }]}>
                   <Ionicons name="chatbubble-ellipses-outline" size={20} color="#0160C9" style={styles.inputIcon} />
-                  <TextInput 
-                    style={[styles.input, {fontSize: 22, letterSpacing: 8, fontWeight: 'bold', textAlign: 'center'}]} 
-                    placeholder="------" value={otpCode} onChangeText={setOtpCode} 
-                    keyboardType="number-pad" maxLength={6} placeholderTextColor="#CBD5E1" 
+                  <TextInput
+                    style={[styles.input, { fontSize: 22, letterSpacing: 8, fontWeight: 'bold', textAlign: 'center' }]}
+                    placeholder="------" value={otpCode} onChangeText={setOtpCode}
+                    keyboardType="number-pad" maxLength={6} placeholderTextColor="#CBD5E1"
                   />
                 </View>
 
@@ -264,11 +266,11 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
                   </LinearGradient>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
-                  onPress={() => { setIsOtpMode(false); setOtpCode(''); }} 
-                  style={{marginTop: 25, alignItems: 'center'}}
+                <TouchableOpacity
+                  onPress={() => { setIsOtpMode(false); setOtpCode(''); }}
+                  style={{ marginTop: 25, alignItems: 'center' }}
                 >
-                  <Text style={{color: '#64748B', fontWeight: '700', fontSize: 14}}>{t.cancel}</Text>
+                  <Text style={{ color: '#64748B', fontWeight: '700', fontSize: 14 }}>{t.cancel}</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -286,7 +288,7 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
               <Text style={styles.securityText}>SECURE ENCRYPTED CONNECTION</Text>
             </View>
           </View>
-          
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -315,7 +317,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, fontWeight: '700', color: '#1E293B', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
   forgotText: { fontSize: 13, color: '#0D85D8', fontWeight: '700' },
   inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 14, paddingHorizontal: 15, height: 58 },
-  inputErrorBorder: { borderColor: '#EF4444' }, 
+  inputErrorBorder: { borderColor: '#EF4444' },
   errorText: { color: '#EF4444', fontSize: 12, marginTop: 5, marginLeft: 2, fontWeight: '500' },
   serverErrorText: { color: '#EF4444', fontSize: 13, fontWeight: '700', marginLeft: 8 },
   inputIcon: { marginRight: 12 },

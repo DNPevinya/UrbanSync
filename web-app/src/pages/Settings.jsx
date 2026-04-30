@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { apiFetch } from '../utils/apiClient';
 
 export default function Settings() {
   // 1. STATE & HOOKS
@@ -57,7 +58,7 @@ export default function Settings() {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('http://localhost:5000/api/auth/update-password', {
+      const response = await apiFetch('http://localhost:5000/api/auth/update-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

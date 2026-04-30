@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, Modal, ScrollView,
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BASE_URL } from '../../src/config';
+import { apiFetch } from '../utils/apiClient';
 
 export default function ChatbotModal({ visible, onClose }) {
   // 1. STATE & HOOKS
@@ -25,7 +26,7 @@ export default function ChatbotModal({ visible, onClose }) {
     setIsTyping(true);
 
     try {
-      const response = await fetch(`${BASE_URL}/api/chat/ask`, {
+      const response = await apiFetch(`${BASE_URL}/api/chat/ask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMsg }),

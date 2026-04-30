@@ -10,6 +10,7 @@ import { translations } from '../../src/translations';
 import { BASE_URL } from '../../src/config';
 import ChatbotModal from '../components/ChatbotModal';
 import NationalBadge from '../components/NationalBadge';
+import { apiFetch } from '../utils/apiClient';
 
 export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, onNavigateToView, onNavigateToDetails, onNavigateToNotifications }) {
   // 1. STATE & HOOKS
@@ -26,7 +27,7 @@ export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, 
 // 2. API HANDLERS
   const fetchDashboardData = async () => {
     try {
-      const complaintsRes = await fetch(`${SERVER_URL}/api/complaints/user/${userId || 1}`);
+      const complaintsRes = await apiFetch(`${SERVER_URL}/api/complaints/user/${userId || 1}`);
       const complaintsResult = await complaintsRes.json();
       
       if (complaintsResult.success && Array.isArray(complaintsResult.data)) {
@@ -70,7 +71,7 @@ export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, 
         setRecentActivities(topRecent);
       }
 
-      const notifRes = await fetch(`${SERVER_URL}/api/auth/notifications/${userId || 1}`);
+      const notifRes = await apiFetch(`${SERVER_URL}/api/auth/notifications/${userId || 1}`);
       const notifData = await notifRes.json();
       if (notifData.success) {
         setHasUnread(notifData.data.some(n => Number(n.is_read) === 0));

@@ -9,6 +9,7 @@ import { BASE_URL } from '../../src/config';
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
 import { auth } from '../../src/firebaseConfig'; 
+import { apiFetch } from '../utils/apiClient';
 
 export default function ForgotPasswordScreen({ onBack, onResetSuccess }) {
   // 1. STATE & HOOKS
@@ -27,7 +28,7 @@ export default function ForgotPasswordScreen({ onBack, onResetSuccess }) {
     if (!email) return alert("Please enter your email.");
     setLoading(true);
     try {
-      const response = await fetch(`${BASE_URL}/api/auth/forgot-password-init`, {
+      const response = await apiFetch(`${BASE_URL}/api/auth/forgot-password-init`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.toLowerCase().trim() }),
@@ -66,7 +67,7 @@ export default function ForgotPasswordScreen({ onBack, onResetSuccess }) {
     if (newPassword.length < 6) return alert("Password must be at least 6 characters.");
     setLoading(true);
     try {
-      const response = await fetch(`${BASE_URL}/api/auth/reset-password`, {
+      const response = await apiFetch(`${BASE_URL}/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.toLowerCase().trim(), newPassword: newPassword }),
