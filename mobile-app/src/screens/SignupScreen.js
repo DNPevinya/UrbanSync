@@ -19,7 +19,7 @@ const locationData = {
 };
 
 export default function SignupScreen({ 
-  formData = { fullName: '', phone: '', email: '', district: '', division: '', password: '' }, 
+  formData = { fullName: '', phone: '', email: '', nic: '', district: '', division: '', password: '' }, 
   setFormData = (data) => {},     
   isAgreed = false,         
   setIsAgreed = (val) => {},     
@@ -76,6 +76,8 @@ export default function SignupScreen({
     if (!formData.fullName.trim()) newErrors.fullName = "Full name is required.";
     if (!phoneRegex.test(formData.phone)) newErrors.phone = "Enter 9 digits starting with 7 (e.g. 771234567).";
     if (!emailRegex.test(formData.email)) newErrors.email = "Enter a valid email address.";
+    if (!formData.nic || formData.nic.trim().length < 10) newErrors.nic = "Enter a valid 10 or 12 digit NIC.";
+    
     if (!districtValue) newErrors.district = "Please select a district.";
     if (!divisionValue) newErrors.division = "Please select a division.";
     if (formData.password.length < 8) newErrors.password = "Password must be at least 8 characters.";
@@ -176,6 +178,21 @@ export default function SignupScreen({
               <TextInput style={styles.input} placeholder="citizen@example.com" placeholderTextColor="#94A3B8" keyboardType="email-address" autoCapitalize="none" value={formData.email} onChangeText={(v) => {setFormData({...formData, email: v}); setErrors({...errors, email: null})}} />
             </View>
             {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+            
+            <Text style={styles.label}>{t.nic_label || "NIC NUMBER"}</Text>
+            <View style={[styles.inputContainer, errors.nic && styles.inputErrorBorder]}>
+              <Ionicons name="card-outline" size={20} color="#0160C9" style={styles.inputIcon} />
+              <TextInput 
+                style={styles.input} 
+                placeholder="e.g. 199912345678 or 991234567V" 
+                placeholderTextColor="#94A3B8" 
+                autoCapitalize="characters"
+                value={formData.nic} 
+                onChangeText={(v) => {setFormData({...formData, nic: v}); setErrors({...errors, nic: null})}} 
+              />
+            </View>
+            {errors.nic && <Text style={styles.errorText}>{errors.nic}</Text>}
+            {/* END ADDED NIC block */}
 
             <Text style={styles.label}>{t.district}</Text>
             <View> 

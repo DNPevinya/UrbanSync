@@ -91,7 +91,8 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
         const userObj = {
           id: data.user.id, fullName: data.user.fullName, email: data.user.email,
           phone: data.user.phone, district: data.user.district, division: data.user.division,
-          profilePicture: data.user.profilePicture || null
+          profilePicture: data.user.profilePicture || null,
+          nic: data.user.nic 
         };
         await AsyncStorage.setItem('user', JSON.stringify(userObj));
         if (data.token) await AsyncStorage.setItem('urbanSyncToken', data.token);
@@ -99,7 +100,8 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
         onLoginSuccess(
           data.user.id, data.user.fullName, data.user.email,
           data.user.phone, data.user.district, data.user.division,
-          data.user.profilePicture || null
+          data.user.profilePicture || null,
+          data.user.nic 
         );
       } else {
         setErrors({ server: data.message || "Invalid email or password." });
@@ -127,7 +129,8 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
       const userObj = {
         id: pendingUser.id, fullName: pendingUser.fullName, email: pendingUser.email,
         phone: pendingUser.phone, district: pendingUser.district, division: pendingUser.division,
-        profilePicture: pendingUser.profilePicture || null
+        profilePicture: pendingUser.profilePicture || null,
+        nic: pendingUser.nic 
       };
       await AsyncStorage.setItem('user', JSON.stringify(userObj));
       if (pendingUser.token) await AsyncStorage.setItem('urbanSyncToken', pendingUser.token);
@@ -135,7 +138,8 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
       onLoginSuccess(
         pendingUser.id, pendingUser.fullName, pendingUser.email,
         pendingUser.phone, pendingUser.district, pendingUser.division,
-        pendingUser.profilePicture || null
+        pendingUser.profilePicture || null,
+        pendingUser.nic 
       );
 
     } catch (error) {

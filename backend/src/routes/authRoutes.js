@@ -20,12 +20,19 @@ const upload = multer({ storage: storage });
 
 // 3. API ROUTES
 router.post('/register', async (req, res) => {
-    const { fullName, phone, email, district, division, password } = req.body;
+    // ADDED: Destructured 'nic' from req.body
+    const { fullName, phone, email, district, division, password, nic } = req.body;
 
     try {
         const [existingUser] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
         if (existingUser.length > 0) {
             return res.status(400).json({ message: "This email is already registered." });
+        }
+
+        // ADDED: Check if the NIC already exists in the citizens table
+        const [existingNic] = await db.query("SELECT * FROM citizens WHERE nic = ?", [nic]);
+        if (existingNic.length > 0) {
+            return res.status(409).json({ message: "An account with this NIC already exists." });
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -36,8 +43,9 @@ router.post('/register', async (req, res) => {
         
         const newUserId = userResult.insertId; 
 
-        const citizenSql = `INSERT INTO citizens (user_id, fullName, phone, district, division) VALUES (?, ?, ?, ?, ?)`;
-        await db.query(citizenSql, [newUserId, fullName, phone, district, division]);
+        // ADDED: Insert the 'nic' into the citizens table
+        const citizenSql = `INSERT INTO citizens (user_id, fullName, phone, district, division, nic) VALUES (?, ?, ?, ?, ?, ?)`;
+        await db.query(citizenSql, [newUserId, fullName, phone, district, division, nic]);
 
         res.status(201).json({ message: "Citizen registered successfully!" });
 
@@ -76,6 +84,9 @@ router.post('/login', async (req, res) => {
                 userProfile.district = citizens[0].district;
                 userProfile.division = citizens[0].division;
                 userProfile.profilePicture = citizens[0].profilePicture || null;
+                
+                // ADDED: Attach the NIC to the returned user profile
+                userProfile.nic = citizens[0].nic;
 
                 // Format the phone number for Firebase Recaptcha flow (+94 format required)
                 let cleanPhone = citizens[0].phone.toString().replace(/\s+/g, '').replace(/^0+/, '');
@@ -138,8 +149,9 @@ router.put('/update-profile', upload.single('profileImage'), async (req, res) =>
     const { email, fullName, phone, district, division, currentPassword, newPassword, deleteImage } = req.body;
 
     try {
+        // ADDED: Added c.nic to the SELECT query so the backend has access to it during profile updates
         const fetchSql = `
-            SELECT u.*, c.profilePicture 
+            SELECT u.*, c.profilePicture, c.nic 
             FROM users u 
             JOIN citizens c ON u.user_id = c.user_id 
             WHERE u.email = ?

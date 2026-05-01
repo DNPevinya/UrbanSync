@@ -92,6 +92,14 @@ export default function ProfileScreen({ userName, userEmail, initialData, onNavi
           <View style={styles.profileTextInfo}>
             <Text style={styles.userName} numberOfLines={1}>{userName || 'Citizen'}</Text>
             <Text style={styles.userDetails} numberOfLines={1}>{userEmail || 'email@example.com'}</Text>
+            
+            {initialData?.nic && (
+               <View style={styles.nicBadge}>
+                 <Ionicons name="card-outline" size={12} color="#64748B" />
+                 <Text style={styles.nicText}>{initialData.nic}</Text>
+               </View>
+            )}
+
             {initialData?.district && (
                <View style={styles.locationBadge}>
                  <Ionicons name="location-outline" size={12} color="#0160C9" />
@@ -173,7 +181,9 @@ const styles = StyleSheet.create({
   initialsText: { fontSize: 28, fontWeight: '800', color: '#0041C7' },
   profileTextInfo: { flex: 1, justifyContent: 'center' },
   userName: { fontSize: 20, fontWeight: '800', color: '#1E293B', marginBottom: 4 },
-  userDetails: { fontSize: 13, color: '#64748B', fontWeight: '500', marginBottom: 8 },
+  userDetails: { fontSize: 13, color: '#64748B', fontWeight: '500', marginBottom: 6 },
+  nicBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 0, paddingVertical: 2, marginBottom: 6 },
+  nicText: { fontSize: 12, color: '#64748B', fontWeight: '600', marginLeft: 4 },
   locationBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(1, 96, 201, 0.08)', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   locationText: { fontSize: 11, color: '#0160C9', fontWeight: '700', marginLeft: 4 },
   sectionLabel: { fontSize: 12, fontWeight: '800', color: '#94A3B8', letterSpacing: 1, marginBottom: 12, marginTop: 10, marginLeft: 5 },

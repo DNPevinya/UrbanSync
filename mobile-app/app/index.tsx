@@ -29,6 +29,7 @@ interface UserData {
   name: string;
   email: string;
   phone: string;
+  nic: string; // ADDED
   district: string;
   division: string;
   profilePicture: string | null; 
@@ -45,6 +46,7 @@ export default function Index() {
       setUserName('Citizen');
       setUserEmail('');
       setUserPhone('');
+      setUserNic(''); 
       setUserDistrict('');
       setUserDivision('');
       setUserProfilePicture(null);
@@ -52,23 +54,24 @@ export default function Index() {
     });
     return () => subscription.remove();
   }, []);
+
   const [userId, setUserId] = useState<string | number | null>(null);
   const [selectedComplaintId, setSelectedComplaintId] = useState<string | number | null>(null);
 
   const [userName, setUserName] = useState<string>('Citizen');
   const [userEmail, setUserEmail] = useState<string>('');
   const [userPhone, setUserPhone] = useState<string>('');      
+  const [userNic, setUserNic] = useState<string>(''); 
   const [userDistrict, setUserDistrict] = useState<string>(''); 
   const [userDivision, setUserDivision] = useState<string>(''); 
   const [userProfilePicture, setUserProfilePicture] = useState<string | null>(null);
 
   const [signupData, setSignupData] = useState({
-    fullName: '', phone: '', email: '', district: '', division: '', password: ''
+    fullName: '', phone: '', email: '', nic: '', district: '', division: '', password: ''
   });
   const [signupAgreed, setSignupAgreed] = useState<boolean>(false);
-
   const currentUserData: UserData = {
-    name: userName, email: userEmail, phone: userPhone, district: userDistrict, division: userDivision, profilePicture: userProfilePicture, 
+    name: userName, email: userEmail, phone: userPhone, nic: userNic, district: userDistrict, division: userDivision, profilePicture: userProfilePicture, 
   };
 
   // --- STEP 1: LOADING & WELCOME ---
@@ -79,11 +82,16 @@ export default function Index() {
   if (currentStep === 'login') {
     return (
       <LoginScreen 
-        onLoginSuccess={(id: string | number, name: string, email: string, phone: string, district: string, division: string, profilePic: string | null) => {
+        // FIXED: Added nic to the callback arguments
+        onLoginSuccess={(id: string | number, name: string, email: string, phone: string, district: string, division: string, profilePic: string | null, nic: string) => {
           setUserId(id); 
           setUserName(typeof name === 'string' ? name : 'Citizen'); 
-          setUserEmail(email || ''); setUserPhone(phone || '');
-          setUserDistrict(district || ''); setUserDivision(division || ''); setUserProfilePicture(profilePic || null);
+          setUserEmail(email || ''); 
+          setUserPhone(phone || '');
+          setUserNic(nic || ''); // ADDED
+          setUserDistrict(district || ''); 
+          setUserDivision(division || ''); 
+          setUserProfilePicture(profilePic || null);
           setCurrentStep('dashboard');
         }} 
         onCreateAccount={() => setCurrentStep('signup')}
@@ -111,11 +119,15 @@ export default function Index() {
         onBackToLogin={() => setCurrentStep('login')} 
         onNavigateToTerms={() => { setPrevStep('signup'); setCurrentStep('terms_page'); }}
         onNavigateToPrivacy={() => { setPrevStep('signup'); setCurrentStep('privacy_page'); }}
-        onSignupSuccess={(name: string, email: string, phone: string, district: string, division: string) => {
+        onSignupSuccess={(name: string, email: string, phone: string, district: string, division: string, nic: string) => {
           setUserName(typeof name === 'string' ? name : 'Citizen'); 
-          setUserEmail(email); setUserPhone(phone);
-          setUserDistrict(district); setUserDivision(division); setUserProfilePicture(null);
-          setSignupData({ fullName: '', phone: '', email: '', district: '', division: '', password: '' });
+          setUserEmail(email); 
+          setUserPhone(phone);
+          setUserNic(nic); 
+          setUserDistrict(district); 
+          setUserDivision(division); 
+          setUserProfilePicture(null);
+          setSignupData({ fullName: '', phone: '', email: '', nic: '', district: '', division: '', password: '' });
           setSignupAgreed(false);
           setCurrentStep('dashboard');
         }}
@@ -132,6 +144,7 @@ export default function Index() {
         onUpdateSuccess={(newName: string, newPhone: string, newDistrict: string, newDivision: string, newProfilePic: string | null) => {
           setUserName(newName); setUserPhone(newPhone); setUserDistrict(newDistrict);
           setUserDivision(newDivision); setUserProfilePicture(newProfilePic);
+          // Note: NIC is read-only so it doesn't need to be updated here
         }}
       />
     );
@@ -198,8 +211,13 @@ export default function Index() {
             onLogout={() => {
               setUserId(null); 
               setSelectedComplaintId(null); 
-              setUserName('Citizen'); setUserEmail(''); setUserPhone('');
-              setUserDistrict(''); setUserDivision(''); setUserProfilePicture(null);
+              setUserName('Citizen'); 
+              setUserEmail(''); 
+              setUserPhone('');
+              setUserNic(''); 
+              setUserDistrict(''); 
+              setUserDivision(''); 
+              setUserProfilePicture(null);
               setCurrentStep('login');
             }}
           />

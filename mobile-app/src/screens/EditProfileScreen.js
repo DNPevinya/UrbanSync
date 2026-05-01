@@ -213,6 +213,10 @@ export default function EditProfileScreen({ onBack, initialData = {}, onUpdateSu
             <EditableField label="FULL NAME" icon="person-outline" value={name} onChange={setName} />
             <EditableField label="PHONE NUMBER" icon="call-outline" value={phone} onChange={setPhone} keyboardType="phone-pad" />
             
+            {initialData?.nic ? (
+              <ReadOnlyField label="NIC NUMBER" icon="card-outline" value={initialData.nic} />
+            ) : null}
+
             <View style={styles.inputGroup}>
               <Text style={styles.label}>DISTRICT</Text>
               <View style={styles.selector}>
@@ -284,6 +288,21 @@ const EditableField = ({ label, icon, value, onChange, keyboardType = 'default' 
   </View>
 );
 
+const ReadOnlyField = ({ label, icon, value }) => (
+  <View style={styles.inputGroup}>
+    <Text style={styles.label}>{label}</Text>
+    <View style={[styles.inputContainer, styles.readOnlyContainer]}>
+      <Ionicons name={icon} size={20} color="#94A3B8" style={styles.inputIcon} />
+      <TextInput 
+        style={[styles.input, styles.readOnlyInput]} 
+        value={value} 
+        editable={false} 
+      />
+      <Ionicons name="lock-closed" size={16} color="#CBD5E1" />
+    </View>
+  </View>
+);
+
 const PasswordField = ({ label, value, onChange, visible, placeholder, onToggle, isLast }) => (
   <View style={[styles.inputGroup, isLast && { marginBottom: 0 }]}>
     <Text style={styles.label}>{label}</Text>
@@ -334,6 +353,9 @@ const styles = StyleSheet.create({
   inputIcon: { marginRight: 12 },
   input: { flex: 1, fontSize: 15, fontWeight: '500' },
   
+  readOnlyContainer: { backgroundColor: '#F1F5F9', borderColor: '#E2E8F0' },
+  readOnlyInput: { color: '#64748B' },
+
   selector: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F5F9', borderRadius: 14, borderWidth: 1, borderColor: '#E2E8F0', paddingHorizontal: 15, height: 55 },
   selectorText: { flex: 1, fontSize: 15, color: '#64748B', fontWeight: '500' },
   
