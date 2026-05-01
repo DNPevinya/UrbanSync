@@ -140,7 +140,12 @@ export default function OfficerComplaintDetails() {
                     </div>
                     <div>
                       <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1">Citizen Ref</p>
-                      <p className="text-[13px] font-bold text-[#1E293B]">User #{complaint.user_id}</p>
+                      <p className="text-[14px] font-bold text-[#1E293B]">
+                        {complaint.citizen_name || `User #${complaint.user_id}`}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-0.5">
+                        {complaint.citizen_phone || 'No Contact Provided'}
+                      </p>
                     </div>
                   </div>
                 </div>

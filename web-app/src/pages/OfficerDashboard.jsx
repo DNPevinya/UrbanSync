@@ -53,7 +53,7 @@ export default function OfficerDashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white p-6 rounded-xl border border-[#E2E8F0] shadow-sm relative">
-              <span className="absolute top-6 right-6 text-[11px] font-bold text-[#16A34A] bg-[#DCFCE7] px-2 py-0.5 rounded">Live</span>
+
               <p className="text-[11px] font-bold text-[#64748B] mb-1">Total Assigned Cases</p>
               <h3 className="text-3xl font-extrabold text-[#1E293B]">{loading ? "..." : complaints.length}</h3>
             </div>

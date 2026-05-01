@@ -7,10 +7,11 @@ import { apiFetch } from '../utils/apiClient';
 
 const getStatusBadgeStyle = (status) => {
   const s = status?.trim().toUpperCase();
-  if (s === 'PENDING') return 'bg-red-50 text-red-600 border-red-200';
-  if (s === 'IN PROGRESS') return 'bg-yellow-50 text-yellow-600 border-yellow-200';
-  if (s === 'RESOLVED' || s === 'COMPLETED') return 'bg-green-50 text-green-600 border-green-200';
-  if (s === 'CANCELLED') return 'bg-gray-100 text-gray-700 border-gray-300';
+  if (s === 'PENDING') return 'bg-orange-50 text-orange-600 border-orange-200';
+  if (s === 'IN PROGRESS') return 'bg-blue-50 text-blue-600 border-blue-200';
+  if (s === 'RESOLVED') return 'bg-green-50 text-green-600 border-green-200';
+  if (s === 'REJECTED') return 'bg-red-100 text-red-700 border-red-300 animate-pulse';
+  if (s === 'CANCELLED') return 'bg-red-50 text-red-600 border-red-200';
   return 'bg-slate-50 text-slate-600 border-slate-200';
 };
 

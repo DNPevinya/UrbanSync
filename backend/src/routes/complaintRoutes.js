@@ -432,7 +432,7 @@ router.get('/authority/:authorityId', async (req, res) => {
         cit.phone AS citizen_phone
       FROM complaints c
       LEFT JOIN citizens cit ON c.user_id = cit.user_id
-      WHERE c.authority_id = ? AND c.status != 'CANCELLED'
+      WHERE c.authority_id = ?
       ORDER BY c.created_at DESC
     `;
     const [rows] = await db.query(query, [authorityId]);

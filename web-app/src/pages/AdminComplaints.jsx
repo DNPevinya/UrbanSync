@@ -209,7 +209,9 @@ export default function AdminComplaints() {
                             </button>
                             <button 
                               onClick={() => setReassignId(c.complaint_id) || setIsReassignOpen(true)} 
-                              className="text-[12px] font-bold text-[#0041C7] hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+                              disabled={c.status === 'CANCELLED'}
+                              title={c.status === 'CANCELLED' ? 'Cannot reassign a cancelled complaint' : ''}
+                              className={`text-[12px] font-bold px-2 py-1 rounded transition-colors ${c.status === 'CANCELLED' ? 'text-gray-400 bg-gray-100 cursor-not-allowed opacity-50' : 'text-[#0041C7] hover:bg-blue-50'}`}
                             >
                               Reassign
                             </button>

@@ -3,5 +3,10 @@
 @tailwind utilities;
 
 body {
-  background-color: #F8FAFC; 
+  background-color: #F8FAFC;
+}
+
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
 }

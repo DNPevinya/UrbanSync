@@ -137,7 +137,7 @@ export default function NotificationScreen({ onBack }) {
                       {isUnread && <View style={styles.unreadIndicator} />}
                       <Text style={styles.notifTime}>{formatTime(item.created_at)}</Text>
                     </View>
-                    <Text style={styles.notifMessage} numberOfLines={2}>
+                    <Text style={styles.notifMessage}>
                       {item.message}
                     </Text>
                   </View>
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   notifTitle: { fontSize: 16, fontWeight: '800', color: '#1E293B' },
   notifTime: { fontSize: 11, color: '#94A3B8', fontWeight: '600' },
-  notifMessage: { fontSize: 13, color: '#64748B', lineHeight: 20, fontWeight: '500' },
+  notifMessage: { flexShrink: 1, fontSize: 13, color: '#64748B', lineHeight: 20, fontWeight: '500' },
   
   successIcon: { backgroundColor: 'rgba(40, 199, 111, 0.12)' },
   successColor: { color: '#28C76F' },

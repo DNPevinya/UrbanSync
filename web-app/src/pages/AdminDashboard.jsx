@@ -128,7 +128,7 @@ export default function AdminDashboard() {
 
           <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm overflow-hidden mb-8 flex-shrink-0">
             <div className="px-8 py-5 border-b border-[#E2E8F0] flex justify-between items-center bg-[#F8FAFC]">
-              <h3 className="text-[15px] font-bold text-[#1E293B]">Latest High-Priority Reports (Global)</h3>
+              <h3 className="text-[15px] font-bold text-[#1E293B]">Latest High-Priority Reports</h3>
               <button onClick={() => navigate('/admin/complaints')} className="text-[12px] font-bold text-[#0041C7] hover:underline">View Full Workbox</button>
             </div>
 
@@ -181,7 +181,12 @@ export default function AdminDashboard() {
                           </button>
                           <button
                             onClick={() => openReassign(c.complaint_id)}
-                            className="text-[11px] font-bold text-[#0041C7] hover:underline bg-blue-50 px-2 py-1 rounded transition-colors"
+                            disabled={c.status === 'CANCELLED'}
+                            title={c.status === 'CANCELLED' ? 'Cannot reassign a cancelled complaint' : ''}
+                            className={`text-[11px] font-bold px-2 py-1 rounded transition-colors ${c.status === 'CANCELLED'
+                                ? 'text-gray-400 bg-gray-100 cursor-not-allowed opacity-50'
+                                : 'text-[#0041C7] hover:underline bg-blue-50'
+                              }`}
                           >
                             Reassign
                           </button>
