@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { apiFetch } from '../utils/apiClient';
 
-export default function AddAuthorityModal({ isOpen, onClose, refreshData, departments, regions }) {
+// NOTE: We changed 'regions' prop to 'divisions' to match the new DB architecture
+export default function AddAuthorityModal({ isOpen, onClose, refreshData, departments, divisions }) {
   // 1. STATE & HOOKS
   const [name, setName] = useState('');
-  const [department, setDepartment] = useState('');
-  const [region, setRegion] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
+  const [divisionId, setDivisionId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
@@ -19,12 +20,16 @@ export default function AddAuthorityModal({ isOpen, onClose, refreshData, depart
       const response = await apiFetch('http://localhost:5000/api/complaints/admin/add-authority', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, department, region })
+        body: JSON.stringify({ 
+            name: name, 
+            department_id: departmentId, 
+            division_id: divisionId 
+        })
       });
 
       const result = await response.json();
       if (result.success) {
-        setName(''); setDepartment(''); setRegion('');
+        setName(''); setDepartmentId(''); setDivisionId('');
         onClose();
         if (refreshData) refreshData();
       } else {
@@ -70,28 +75,32 @@ export default function AddAuthorityModal({ isOpen, onClose, refreshData, depart
               <label className="block text-[11px] font-bold text-[#1E293B] mb-1.5">Department Category <span className="text-[#EF4444]">*</span></label>
               <select 
                 required
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
+                value={departmentId}
+                onChange={(e) => setDepartmentId(e.target.value)}
                 className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] focus:ring-2 focus:ring-[#0041C7] outline-none bg-white"
               >
                 <option value="" disabled>Select Department</option>
-                {departments && departments.map((dept, index) => (
-                  <option key={index} value={dept}>{dept}</option>
+                {departments && departments.map((dept) => (
+                  <option key={dept.department_id} value={dept.department_id}>
+                    {dept.name}
+                  </option>
                 ))}
               </select>
             </div>
             
             <div>
-              <label className="block text-[11px] font-bold text-[#1E293B] mb-1.5">Jurisdiction Region <span className="text-[#EF4444]">*</span></label>
+              <label className="block text-[11px] font-bold text-[#1E293B] mb-1.5">Jurisdiction Division <span className="text-[#EF4444]">*</span></label>
               <select 
                 required
-                value={region}
-                onChange={(e) => setRegion(e.target.value)}
+                value={divisionId}
+                onChange={(e) => setDivisionId(e.target.value)}
                 className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] focus:ring-2 focus:ring-[#0041C7] outline-none bg-white"
               >
-                <option value="" disabled>Select Region</option>
-                {regions && regions.map((reg, index) => (
-                  <option key={index} value={reg}>{reg}</option>
+                <option value="" disabled>Select Division</option>
+                {divisions && divisions.map((divi) => (
+                  <option key={divi.division_id} value={divi.division_id}>
+                    {divi.name}
+                  </option>
                 ))}
               </select>
             </div>

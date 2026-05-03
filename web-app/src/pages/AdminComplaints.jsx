@@ -13,6 +13,7 @@ export default function AdminComplaints() {
   const navigate = useNavigate();
 
   const [complaints, setComplaints] = useState([]);
+  const [categories, setCategories] = useState([]); // Dynamic categories from DB
   const [stats, setStats] = useState({ total: 0, pending: 0, active: 0, resolved: 0 });
   const [loading, setLoading] = useState(true);
 
@@ -36,14 +37,20 @@ export default function AdminComplaints() {
   const fetchMasterData = async () => {
     try {
       setLoading(true);
-      const [statsRes, complaintsRes] = await Promise.all([
+      const [statsRes, complaintsRes, categoryRes] = await Promise.all([
         apiFetch('http://localhost:5000/api/complaints/admin/stats'),
-        apiFetch('http://localhost:5000/api/complaints/admin/all')
+        apiFetch('http://localhost:5000/api/complaints/admin/all'),
+        apiFetch('http://localhost:5000/api/complaints/form-data') 
       ]);
+
       const statsData = await statsRes.json();
       const complaintsData = await complaintsRes.json();
+      const catData = await categoryRes.json();
+
       if (statsData.success) setStats(statsData.data);
       if (complaintsData.success) setComplaints(complaintsData.data);
+      if (catData.success) setCategories(Object.keys(catData.data));
+
     } catch (error) {
       console.error("Master Workbox Sync Error:", error);
     } finally {
@@ -74,7 +81,6 @@ export default function AdminComplaints() {
 
     const matchesSearch = safeTitle.toLowerCase().includes(searchTerm.toLowerCase()) || c.complaint_id.toString().includes(searchTerm);
     const matchesCategory = filterCategory === 'All Categories' || safeCategory === filterCategory;
-    
     const matchesStatus = filterStatus === 'All Statuses' || safeStatus.trim().toUpperCase() === filterStatus.trim().toUpperCase();
 
     let matchesDate = true;
@@ -101,15 +107,14 @@ export default function AdminComplaints() {
     return new Date(dateString).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
-  // UNIFIED STATUS STYLE HELPER
   const getStatusBadgeStyle = (status) => {
     const s = status?.trim().toUpperCase();
     if (s === 'PENDING') return 'bg-orange-50 text-orange-600 border-orange-200';
     if (s === 'IN PROGRESS') return 'bg-blue-50 text-blue-600 border-blue-200';
     if (s === 'RESOLVED') return 'bg-green-50 text-green-600 border-green-200';
     if (s === 'REJECTED') return 'bg-red-100 text-red-700 border-red-300 animate-pulse';
-    if (s === 'CANCELLED') return 'bg-red-50 text-red-600 border-red-200'; // Now it is red!
-    return 'bg-slate-50 text-slate-600 border-slate-200'; // Fallback
+    if (s === 'CANCELLED') return 'bg-red-50 text-red-600 border-red-200';
+    return 'bg-slate-50 text-slate-600 border-slate-200';
   };
 
   // 6. UI RENDER
@@ -133,10 +138,9 @@ export default function AdminComplaints() {
             
             <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="border border-[#E2E8F0] rounded-lg px-4 py-2.5 text-[13px] text-[#1E293B] bg-[#FFFFFF] focus:outline-none focus:ring-2 focus:ring-[#0041C7]">
               <option value="All Categories">All Categories</option>
-              <option value="Water Supply Services">Water Supply Services</option>
-              <option value="Urban Infrastructure & Municipal Services">Urban Infrastructure</option>
-              <option value="Public Safety & Law Enforcement">Public Safety</option>
-              <option value="Environmental & Public Health">Public Health</option>
+              {categories.map((cat, idx) => (
+                <option key={idx} value={cat}>{cat}</option>
+              ))}
             </select>
 
             <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="border border-[#E2E8F0] rounded-lg px-4 py-2.5 text-[13px] text-[#1E293B] bg-[#FFFFFF] focus:outline-none focus:ring-2 focus:ring-[#0041C7]">
@@ -211,7 +215,11 @@ export default function AdminComplaints() {
                               onClick={() => setReassignId(c.complaint_id) || setIsReassignOpen(true)} 
                               disabled={c.status === 'CANCELLED'}
                               title={c.status === 'CANCELLED' ? 'Cannot reassign a cancelled complaint' : ''}
-                              className={`text-[12px] font-bold px-2 py-1 rounded transition-colors ${c.status === 'CANCELLED' ? 'text-gray-400 bg-gray-100 cursor-not-allowed opacity-50' : 'text-[#0041C7] hover:bg-blue-50'}`}
+                              className={`text-[12px] font-bold px-2 py-1 rounded transition-colors ${
+                                c.status === 'CANCELLED' 
+                                  ? 'text-gray-400 bg-gray-100 cursor-not-allowed opacity-50' 
+                                  : 'text-[#0041C7] hover:bg-blue-50'
+                              }`}
                             >
                               Reassign
                             </button>
@@ -257,11 +265,9 @@ export default function AdminComplaints() {
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
                 </button>
-                
                 <span className="text-[13px] font-bold text-[#1E293B] px-2">
                   Page {currentPage} of {totalPages === 0 ? 1 : totalPages}
                 </span>
-
                 <button 
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages || totalPages === 0}
@@ -276,7 +282,6 @@ export default function AdminComplaints() {
           <Footer />
           <ReassignModal isOpen={isReassignOpen} onClose={() => setIsReassignOpen(false)} complaintId={reassignId} refreshData={fetchMasterData} />
           <DetailsModal isOpen={isDetailsOpen} onClose={() => setIsDetailsOpen(false)} complaintId={detailsId} />
-          
           <DeleteComplaintModal 
             isOpen={isDeleteOpen} 
             onClose={() => setIsDeleteOpen(false)} 

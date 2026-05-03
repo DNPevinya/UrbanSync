@@ -12,6 +12,19 @@ import { translations } from '../../src/translations';
 import { BASE_URL } from '../../src/config';
 import { apiFetch } from '../utils/apiClient';
 
+// Helper for icons since they aren't stored in the database
+const categoryIcons = {
+  'Urban Infrastructure & Municipal Services': 'office-building',
+  'Public Health & Sanitation': 'hospital-marker',
+  'Public Safety & Law Enforcement': 'shield-check',
+  'Water Supply Services': 'water',
+  'Environmental Protection': 'tree',
+  'Urban Planning & Development': 'home-city',
+  'Electricity Services': 'flash',
+  'Public Transport Infrastructure': 'bus',
+  'Local Administrative Issues': 'account-group'
+};
+
 export default function SubmitComplaintScreen({ onBack, userId }) {
   // 1. STATE & HOOKS
   const SERVER_URL = BASE_URL;
@@ -19,6 +32,25 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
   const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   const [currentLang, setCurrentLang] = useState('en');
+
+  // Dynamic Data States
+  const [dynamicData, setDynamicData] = useState({});
+  const [categories, setCategories] = useState([]);
+  const [dataLoading, setDataLoading] = useState(true);
+
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedType, setSelectedType] = useState(null);
+  const [description, setDescription] = useState('');
+  const [images, setImages] = useState([]); 
+  const [loading, setLoading] = useState(false);
+  const [showCategoryGuide, setShowCategoryGuide] = useState(false);
+  const [showTypeModal, setShowTypeModal] = useState(false); 
+  
+  const [region, setRegion] = useState({ latitude: 6.9271, longitude: 79.8612, latitudeDelta: 0.005, longitudeDelta: 0.005 });
+  const [markerCoord, setMarkerCoord] = useState({ latitude: 6.9271, longitude: 79.8612 });
+  const [locationName, setLocationName] = useState('Locating...');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchingLocation, setSearchingLocation] = useState(false);
 
   // 2. LIFECYCLE & UTILITIES
   useFocusEffect(
@@ -33,72 +65,43 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
 
   const t = translations[currentLang] || translations['en']; 
 
-  const complaintData = {
-    'Urban Infrastructure & Municipal Services': [
-      'Garbage Collection Delay', 'Illegal Waste Dumping', 'Street Cleaning Issue', 
-      'Drainage Blockage / Flooding', 'Broken Road / Pothole', 'Damaged Footpath', 
-      'Traffic Signal Malfunction', 'Public Park Maintenance Issue', 'Public Space Maintenance Issue'
-    ],
-    'Public Health & Sanitation': [
-      'Dengue Mosquito Breeding Site', 'Food Hygiene Complaint', 'Unsanitary Business Premises', 
-      'Public Sanitation Issue', 'Waste Causing Health Hazard'
-    ],
-    'Public Safety & Law Enforcement': [
-      'Noise Complaint', 'Parking Violation', 'Vandalism', 'Suspicious Activity', 'Public Disorder'
-    ],
-    'Water Supply Services': [
-      'Water Supply Interruption', 'Low Water Pressure', 'Pipe Leak', 
-      'Water Contamination', 'Sewer Line Blockage'
-    ],
-    'Environmental Protection': [
-      'Illegal Tree Cutting', 'Air Pollution', 'Water Body Pollution (River/Canal)', 
-      'Industrial Waste Disposal', 'Environmental Damage Complaint'
-    ],
-    'Urban Planning & Development': [
-      'Unauthorized Construction', 'Building Code Violation', 'Land Use Violation', 'Unsafe Construction Site'
-    ],
-    'Electricity Services': [
-      'Power Outage', 'Streetlight Breakdown', 'Fallen Electrical Line', 
-      'Unsafe Electrical Connection', 'Transformer Issue'
-    ],
-    'Public Transport Infrastructure': [
-      'Bus Stop Maintenance Issue', 'Unsafe Bus Operation', 'Route Mismanagement', 'Public Transport Safety Concern'
-    ],
-    'Local Administrative Issues': [
-      'Resident Verification Issue', 'Local Documentation Concern', 'Community-Level Dispute (Non-Criminal)'
-    ]
-  };
-
-  const categories = [
-    { id: '1', label: 'Urban Infrastructure & Municipal Services', icon: 'office-building' },
-    { id: '2', label: 'Public Health & Sanitation', icon: 'hospital-marker' },
-    { id: '3', label: 'Public Safety & Law Enforcement', icon: 'shield-check' },
-    { id: '4', label: 'Water Supply Services', icon: 'water' },
-    { id: '5', label: 'Environmental Protection', icon: 'tree' },
-    { id: '6', label: 'Urban Planning & Development', icon: 'home-city' },
-    { id: '7', label: 'Electricity Services', icon: 'flash' },
-    { id: '8', label: 'Public Transport Infrastructure', icon: 'bus' },
-    { id: '9', label: 'Local Administrative Issues', icon: 'account-group' },
-  ];
-
-  const [selectedCategory, setSelectedCategory] = useState(categories[0].label);
-  const [selectedType, setSelectedType] = useState(complaintData[categories[0].label][0]);
-  const [description, setDescription] = useState('');
-  const [images, setImages] = useState([]); 
-  const [loading, setLoading] = useState(false);
-  const [showCategoryGuide, setShowCategoryGuide] = useState(false);
-  const [showTypeModal, setShowTypeModal] = useState(false); 
-  
-  const [region, setRegion] = useState({ latitude: 6.9271, longitude: 79.8612, latitudeDelta: 0.005, longitudeDelta: 0.005 });
-  const [markerCoord, setMarkerCoord] = useState({ latitude: 6.9271, longitude: 79.8612 });
-  const [locationName, setLocationName] = useState('Locating...');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchingLocation, setSearchingLocation] = useState(false);
+  // Fetch dynamic categories and issues from the backend
+  useEffect(() => {
+    const fetchFormData = async () => {
+      try {
+        const res = await apiFetch(`${SERVER_URL}/api/complaints/form-data`);
+        const result = await res.json();
+        
+        if (result.success && result.data) {
+          setDynamicData(result.data);
+          
+          const catKeys = Object.keys(result.data);
+          const formattedCats = catKeys.map(key => ({
+            id: result.data[key].id.toString(),
+            label: key,
+            icon: categoryIcons[key] || 'alert-circle'
+          }));
+          
+          setCategories(formattedCats);
+          
+          if (formattedCats.length > 0) {
+            setSelectedCategory(formattedCats[0].label);
+            setSelectedType(result.data[formattedCats[0].label].issues[0]?.name || '');
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching form data", error);
+      } finally {
+        setDataLoading(false);
+      }
+    };
+    fetchFormData();
+  }, []);
 
   // 3. API HANDLERS
   const handleCategorySelect = (catLabel) => {
     setSelectedCategory(catLabel);
-    setSelectedType(complaintData[catLabel][0]); 
+    setSelectedType(dynamicData[catLabel]?.issues[0]?.name || ''); 
   };
 
   const fetchAddress = async (coords) => {
@@ -201,10 +204,16 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
 
   const handleSubmit = async () => {
     if (!description || images.length === 0) return Alert.alert("Required", "Please provide description and at least one photo.");
+    if (!selectedCategory || !selectedType) return Alert.alert("Required", "Please select a category and issue type.");
+    
     setLoading(true);
+
+    const categoryIdToSend = dynamicData[selectedCategory]?.id || null;
+
     const formData = new FormData();
     formData.append('user_id', userId || '1');
     formData.append('category', selectedCategory); 
+    formData.append('category_id', categoryIdToSend); 
     formData.append('title', selectedType); 
     formData.append('description', description);
     formData.append('location_text', locationName);
@@ -243,6 +252,15 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
   };
 
   // 4. UI RENDER
+  if (dataLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#0041C7" />
+        <Text style={{ marginTop: 10, color: '#64748B' }}>Loading options...</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={Platform.OS === 'android' ? ['top'] : []}>
       <View style={styles.topNavBar}>
@@ -270,7 +288,7 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
                 <TouchableOpacity key={cat.id} style={[styles.catCard, selectedCategory === cat.label && styles.catCardActive]} onPress={() => handleCategorySelect(cat.label)}>
                   <MaterialCommunityIcons name={cat.icon} size={28} color={selectedCategory === cat.label ? '#fff' : '#0160C9'} />
                   <Text style={[styles.catLabel, selectedCategory === cat.label && styles.catLabelActive]}>
-                    {t.categories[cat.label] || cat.label}
+                    {t.categories?.[cat.label] || cat.label}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -280,7 +298,7 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
           <View style={styles.formSection}>
             <Text style={styles.label}>{t.issue_label}</Text>
             <TouchableOpacity style={styles.dropBtn} onPress={() => setShowTypeModal(true)}>
-              <Text style={styles.dropText}>{t.issues[selectedType] || selectedType}</Text>
+              <Text style={styles.dropText}>{t.issues?.[selectedType] || selectedType}</Text>
               <Ionicons name="chevron-down-circle" size={22} color="#0041C7" />
             </TouchableOpacity>
           </View>
@@ -376,10 +394,10 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
               <TouchableOpacity onPress={() => setShowTypeModal(false)}><Ionicons name="close-circle" size={28} color="#94A3B8" /></TouchableOpacity>
             </View>
             <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-              {complaintData[selectedCategory].map((type, i) => (
-                <TouchableOpacity key={i} style={styles.mItem} onPress={() => { setSelectedType(type); setShowTypeModal(false); }}>
-                  <Text style={[styles.mItemT, selectedType === type && styles.mActive]}>
-                    {t.issues[type] || type}
+              {selectedCategory && dynamicData[selectedCategory]?.issues.map((issueObj, i) => (
+                <TouchableOpacity key={issueObj.id} style={styles.mItem} onPress={() => { setSelectedType(issueObj.name); setShowTypeModal(false); }}>
+                  <Text style={[styles.mItemT, selectedType === issueObj.name && styles.mActive]}>
+                    {t.issues?.[issueObj.name] || issueObj.name}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -397,9 +415,9 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
             </View>
             <ScrollView contentContainerStyle={{ paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
               {categories.map((cat, index) => {
-                const translatedTitle = t.categories[cat.label] || cat.label;
-                const translatedDesc = complaintData[cat.label]
-                  .map(issue => t.issues[issue] || issue)
+                const translatedTitle = t.categories?.[cat.label] || cat.label;
+                const translatedDesc = dynamicData[cat.label]?.issues
+                  .map(issue => t.issues?.[issue.name] || issue.name)
                   .join(', ');
 
                 return (

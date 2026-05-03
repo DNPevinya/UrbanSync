@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../utils/apiClient';
 
-export default function EditAuthorityModal({ isOpen, onClose, editData, refreshData, departments, regions }) {
+export default function EditAuthorityModal({ isOpen, onClose, editData, refreshData, departments, divisions }) {
   // 1. STATE & HOOKS
   const [name, setName] = useState('');
-  const [department, setDepartment] = useState('');
-  const [region, setRegion] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
+  const [divisionId, setDivisionId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 2. LIFECYCLE & UTILITIES
   useEffect(() => {
     if (editData) {
       setName(editData.name);
-      setDepartment(editData.department);
-      setRegion(editData.region);
+      setDepartmentId(editData.department_id);
+      setDivisionId(editData.division_id);
     }
   }, [editData]);
 
@@ -27,8 +27,13 @@ export default function EditAuthorityModal({ isOpen, onClose, editData, refreshD
       const response = await apiFetch(`http://localhost:5000/api/complaints/admin/update-authority/${editData.authority_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, department, region })
+        body: JSON.stringify({ 
+            name: name, 
+            department_id: departmentId, 
+            division_id: divisionId 
+        })
       });
+      
       const result = await response.json();
       if (result.success) {
         onClose();
@@ -62,19 +67,31 @@ export default function EditAuthorityModal({ isOpen, onClose, editData, refreshD
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-[11px] font-bold text-[#1E293B] mb-1.5">Department Category</label>
-              <select value={department} onChange={(e) => setDepartment(e.target.value)} className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] bg-white focus:ring-2 focus:ring-[#0041C7] outline-none">
+              <select 
+                value={departmentId} 
+                onChange={(e) => setDepartmentId(e.target.value)} 
+                className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] bg-white focus:ring-2 focus:ring-[#0041C7] outline-none"
+              >
                 <option value="" disabled>Select Department</option>
-                {departments && departments.map((dept, index) => (
-                  <option key={index} value={dept}>{dept}</option>
+                {departments && departments.map((dept) => (
+                  <option key={dept.department_id} value={dept.department_id}>
+                    {dept.name}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-[#1E293B] mb-1.5">Region</label>
-              <select value={region} onChange={(e) => setRegion(e.target.value)} className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] bg-white focus:ring-2 focus:ring-[#0041C7] outline-none">
-                <option value="" disabled>Select Region</option>
-                {regions && regions.map((reg, index) => (
-                  <option key={index} value={reg}>{reg}</option>
+              <label className="block text-[11px] font-bold text-[#1E293B] mb-1.5">Division</label>
+              <select 
+                value={divisionId} 
+                onChange={(e) => setRegion(e.target.value)} 
+                className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] bg-white focus:ring-2 focus:ring-[#0041C7] outline-none"
+              >
+                <option value="" disabled>Select Division</option>
+                {divisions && divisions.map((divi) => (
+                  <option key={divi.division_id} value={divi.division_id}>
+                    {divi.name}
+                  </option>
                 ))}
               </select>
             </div>

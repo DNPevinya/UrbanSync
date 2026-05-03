@@ -11,13 +11,6 @@ import { translations } from '../../src/translations';
 import NationalBadge from '../components/NationalBadge';
 import { apiFetch } from '../utils/apiClient';
 
-const locationData = {
-  "Colombo": ["Bambalapitiya", "Kollupitiya", "Borella", "Cinnamon Gardens", "Dehiwala"],
-  "Gampaha": ["Negombo", "Kelaniya", "Kiribathgoda", "Kadawatha"],
-  "Kandy": ["Kandy City", "Peradeniya", "Katugastota"],
-  "Kalutara": ["Panadura", "Horana", "Beruwala"]
-};
-
 export default function SignupScreen({ 
   formData = { fullName: '', phone: '', email: '', nic: '', district: '', division: '', password: '' }, 
   setFormData = (data) => {},     
@@ -34,13 +27,16 @@ export default function SignupScreen({
   const [showPassword, setShowPassword] = useState(false); 
   const [currentLang, setCurrentLang] = useState('en');
 
+  const [dynamicLocationData, setDynamicLocationData] = useState({});
+  const [locationsLoading, setLocationsLoading] = useState(true);
+
   const [districtOpen, setDistrictOpen] = useState(false);
   const [divisionOpen, setDivisionOpen] = useState(false);
 
   const [districtValue, setDistrictValue] = useState(formData.district || null);
   const [divisionValue, setDivisionValue] = useState(formData.division || null);
 
-  const [districtItems, setDistrictItems] = useState(Object.keys(locationData).map(dist => ({ label: dist, value: dist })));
+  const [districtItems, setDistrictItems] = useState([]);
   const [divisionItems, setDivisionItems] = useState([]);
 
   // 2. LIFECYCLE & UTILITIES
@@ -52,6 +48,26 @@ export default function SignupScreen({
     loadLang();
   }, []);
 
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const response = await apiFetch(`${BASE_URL}/api/auth/locations`);
+        const result = await response.json();
+        if (result.success) {
+          setDynamicLocationData(result.data);
+          setDistrictItems(Object.keys(result.data).map(dist => ({ label: dist, value: dist })));
+        } else {
+            console.error("Failed to load locations from API.");
+        }
+      } catch (error) {
+        console.error("Error fetching locations:", error);
+      } finally {
+          setLocationsLoading(false);
+      }
+    };
+    fetchLocations();
+  }, []);
+
   const changeLanguage = async (lang) => {
     setCurrentLang(lang);
     await AsyncStorage.setItem('userLanguage', lang);
@@ -59,14 +75,15 @@ export default function SignupScreen({
 
   const t = translations[currentLang];
 
+
   useEffect(() => {
-    if (districtValue) {
-      setDivisionItems(locationData[districtValue].map(div => ({ label: div, value: div })));
+    if (districtValue && dynamicLocationData[districtValue]) {
+      setDivisionItems(dynamicLocationData[districtValue].map(div => ({ label: div, value: div })));
     } else {
       setDivisionItems([]);
     }
     setFormData(prev => ({...prev, district: districtValue || '', division: divisionValue || ''}));
-  }, [districtValue, divisionValue]);
+  }, [districtValue, divisionValue, dynamicLocationData]);
 
   const validateForm = () => {
     let newErrors = {};
@@ -204,7 +221,7 @@ export default function SignupScreen({
                 setValue={setDistrictValue}
                 setItems={setDistrictItems}
                 onChangeValue={() => { setDivisionValue(null); setErrors({...errors, district: null}); }}
-                placeholder={t.select_district}
+                placeholder={locationsLoading ? "Loading..." : t.select_district}
                 style={[styles.dropdownStyle, errors.district && styles.inputErrorBorder]}
                 textStyle={styles.dropdownText}
                 placeholderStyle={styles.dropdownPlaceholder}
@@ -212,6 +229,7 @@ export default function SignupScreen({
                 modalProps={{ animationType: "slide" }}
                 modalTitle={t.select_district}
                 modalTitleStyle={{ fontWeight: 'bold', color: '#0041C7', fontSize: 18 }}
+                disabled={locationsLoading}
               />
             </View>
             {errors.district && <Text style={styles.errorText}>{errors.district}</Text>}
@@ -227,7 +245,7 @@ export default function SignupScreen({
                 setItems={setDivisionItems}
                 onChangeValue={() => setErrors({...errors, division: null})}
                 placeholder={t.select_division}
-                disabled={!districtValue} 
+                disabled={!districtValue || locationsLoading} 
                 style={[styles.dropdownStyle, errors.division && styles.inputErrorBorder]}
                 textStyle={styles.dropdownText}
                 placeholderStyle={styles.dropdownPlaceholder}

@@ -11,7 +11,7 @@ export default function AdminAuthorities() {
   // 1. STATE & HOOKS
   const [authorities, setAuthorities] = useState([]);
   const [departments, setDepartments] = useState([]);
-  const [regions, setRegions] = useState([]);
+  const [divisions, setDivisions] = useState([]); // Changed from regions
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   
@@ -26,19 +26,19 @@ export default function AdminAuthorities() {
   const fetchAuthorities = async () => {
     setLoading(true);
     try {
-      const [authRes, deptRes, regRes] = await Promise.all([
+      const [authRes, deptRes, divRes] = await Promise.all([
         apiFetch('http://localhost:5000/api/complaints/admin/authorities-list'),
         apiFetch('http://localhost:5000/api/complaints/admin/departments-list'),
-        apiFetch('http://localhost:5000/api/complaints/admin/regions-list')
+        apiFetch('http://localhost:5000/api/complaints/admin/divisions-list') // Updated URL
       ]);
       
       const authData = await authRes.json();
       const deptData = await deptRes.json();
-      const regData = await regRes.json();
+      const divData = await divRes.json();
 
       if (authData.success) setAuthorities(authData.data);
       if (deptData.success) setDepartments(deptData.data);
-      if (regData.success) setRegions(regData.data);
+      if (divData.success) setDivisions(divData.data); // Set divisions
       
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -55,7 +55,7 @@ export default function AdminAuthorities() {
   // 4. HELPER VARIABLES
   const filteredAuths = authorities.filter(a => 
     a.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    a.department.toLowerCase().includes(searchTerm.toLowerCase())
+    (a.department && a.department.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const totalAuthorities = authorities.length;
@@ -145,7 +145,7 @@ export default function AdminAuthorities() {
                   <tr className="border-b border-[#E2E8F0] bg-[#F8FAFC]">
                     <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Authority Name</th>
                     <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Department Category</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Region</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-wider">Division</th>
                     <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-wider text-center">Officer Count</th>
                     <th className="px-6 py-4 text-[10px] font-bold text-[#64748B] uppercase tracking-wider text-right">Actions</th>
                   </tr>
@@ -161,8 +161,8 @@ export default function AdminAuthorities() {
                         </div>
                         <span className="text-[13px] font-bold text-[#1E293B]">{auth.name}</span>
                       </td>
-                      <td className="px-6 py-4 text-[13px] text-[#64748B] font-semibold">{auth.department}</td>
-                      <td className="px-6 py-4 text-[13px] font-bold text-[#1E293B]">{auth.region}</td>
+                      <td className="px-6 py-4 text-[13px] text-[#64748B] font-semibold">{auth.department || 'N/A'}</td>
+                      <td className="px-6 py-4 text-[13px] font-bold text-[#1E293B]">{auth.region || 'N/A'}</td>
                       <td className="px-6 py-4 text-[13px] font-bold text-[#0041C7] text-center">
                         <span className={`px-2 py-1 rounded ${auth.officer_count === 0 ? 'bg-red-50 text-red-600' : 'bg-blue-50'}`}>
                           {auth.officer_count} Officers
@@ -203,7 +203,7 @@ export default function AdminAuthorities() {
             onClose={() => setIsAddOpen(false)} 
             refreshData={fetchAuthorities} 
             departments={departments}
-            regions={regions}
+            divisions={divisions} 
           />
           
           <EditAuthorityModal 
@@ -212,7 +212,7 @@ export default function AdminAuthorities() {
             editData={editData} 
             refreshData={fetchAuthorities} 
             departments={departments}
-            regions={regions}
+            divisions={divisions} 
           />
           
           <DeleteModal 
