@@ -45,7 +45,8 @@ router.get('/locations', async (req, res) => {
 });
 
 router.post('/register', async (req, res) => {
-    const { fullName, phone, email, district, division, password, nic, division_id } = req.body;
+    // FIXED: Safely destructure both division_id and divisionId
+    const { fullName, phone, email, district, division, password, nic, division_id, divisionId } = req.body;
 
     try {
         const [existingUser] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
@@ -65,16 +66,23 @@ router.post('/register', async (req, res) => {
         const [userResult] = await db.query(userSql, [email, hashedPassword]);
         const newUserId = userResult.insertId; 
 
-        let final_division_id = division_id || null;
+        let final_division_id = division_id || divisionId || null;
+        
         if (!final_division_id && division) {
-            const [divResults] = await db.query(`SELECT division_id FROM divisions WHERE name = ? LIMIT 1`, [division]);
+            const [divResults] = await db.query(`
+                SELECT division_id 
+                FROM divisions 
+                WHERE LOWER(name) LIKE CONCAT('%', LOWER(?), '%') 
+                LIMIT 1
+            `, [division.trim()]);
+            
             if (divResults.length > 0) {
                 final_division_id = divResults[0].division_id;
             }
         }
 
-        const citizenSql = `INSERT INTO citizens (user_id, fullName, phone, district, division, nic, status, division_id) VALUES (?, ?, ?, ?, ?, ?, 'Active', ?)`;
-        await db.query(citizenSql, [newUserId, fullName, phone, district, division, nic, final_division_id]);
+        const citizenSql = `INSERT INTO citizens (user_id, fullName, phone, nic, status, division_id) VALUES (?, ?, ?, ?, 'Active', ?)`;
+        await db.query(citizenSql, [newUserId, fullName, phone, nic, final_division_id]);
 
         res.status(201).json({ message: "Citizen registered successfully!" });
 
@@ -107,11 +115,12 @@ router.post('/login', async (req, res) => {
 
         if (user.role === 'citizen') {
             const citizenQuery = `
-                SELECT c.*, COALESCE(d.name, c.division) AS division 
-                FROM citizens c 
-                LEFT JOIN divisions d ON c.division_id = d.division_id 
-                WHERE c.user_id = ?
-            `;
+    SELECT c.*, d.name AS division, dist.name AS district
+    FROM citizens c 
+    LEFT JOIN divisions d ON c.division_id = d.division_id 
+    LEFT JOIN districts dist ON d.district_id = dist.district_id
+    WHERE c.user_id = ?
+`;
             const [citizens] = await db.query(citizenQuery, [user.user_id]);
             
             if (citizens.length > 0) {
@@ -122,7 +131,7 @@ router.post('/login', async (req, res) => {
                 userProfile.fullName = citizens[0].fullName;
                 userProfile.phone = citizens[0].phone;
                 userProfile.district = citizens[0].district;
-                userProfile.division = citizens[0].division; // Now safely pulled from COALESCE
+                userProfile.division = citizens[0].division; 
                 userProfile.profilePicture = citizens[0].profilePicture || null;
                 userProfile.nic = citizens[0].nic;
 
@@ -184,7 +193,7 @@ router.post('/login', async (req, res) => {
 });
 
 router.put('/update-profile', upload.single('profileImage'), async (req, res) => {
-    const { email, fullName, phone, district, division, currentPassword, newPassword, deleteImage, division_id } = req.body;
+    const { email, fullName, phone, district, division, currentPassword, newPassword, deleteImage, division_id, divisionId } = req.body;
 
     try {
         const fetchSql = `
@@ -203,7 +212,7 @@ router.put('/update-profile', upload.single('profileImage'), async (req, res) =>
             if (!currentPassword) return res.status(400).json({ message: "Current password required." });
             
             const isMatch = await bcrypt.compare(currentPassword, user.password);
-            if (!isMatch) return res.status(401).json({ message: "Incorrect current password." });
+            if (!isMatch) return res.status(400).json({ message: "Incorrect current password." });
             
             const salt = await bcrypt.genSalt(10);
             finalPassword = await bcrypt.hash(newPassword, salt);
@@ -218,13 +227,15 @@ router.put('/update-profile', upload.single('profileImage'), async (req, res) =>
             profilePicPath = `/uploads/${req.file.filename}`;
         }
 
+        let final_div_id = division_id || divisionId || null;
+
         const updateCitizenSql = `
             UPDATE citizens 
-            SET fullName = ?, phone = ?, district = ?, division = ?, profilePicture = ?, division_id = ?
+            SET fullName = ?, phone = ?, profilePicture = ?, division_id = ?
             WHERE user_id = ?
         `;
         
-        await db.query(updateCitizenSql, [fullName, phone, district, division, profilePicPath, division_id || null, user.user_id]);
+        await db.query(updateCitizenSql, [fullName, phone, profilePicPath, final_div_id, user.user_id]);
 
         res.status(200).json({ message: "Profile updated successfully!", profilePicture: profilePicPath });
 
@@ -300,7 +311,7 @@ router.get('/admin/citizens', authMiddleware, async (req, res) => {
             FROM citizens c
             JOIN users u ON c.user_id = u.user_id
             LEFT JOIN divisions divi ON c.division_id = divi.division_id
-            LEFT JOIN districts dist ON c.district_id = dist.district_id
+            LEFT JOIN districts dist ON divi.district_id = dist.district_id
             WHERE u.role = 'citizen'
             ORDER BY u.created_at DESC
         `;
@@ -311,6 +322,7 @@ router.get('/admin/citizens', authMiddleware, async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to fetch citizen list." });
     }
 });
+
 router.patch('/admin/suspend-citizen/:id', authMiddleware, async (req, res) => {
     const { status } = req.body; 
     try {
