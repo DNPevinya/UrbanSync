@@ -117,7 +117,6 @@ export default function DetailsModal({ isOpen, onClose, complaintId }) {
                   </div>
                 </div>
 
-                {/* ADDED: Officer Escalation / Admin Notes Block */}
                 {data.admin_notes && (
                   <div className="bg-[#FEF2F2] border-l-4 border-[#DC2626] p-5 rounded-xl shadow-sm">
                     <div className="flex items-center mb-3">
@@ -125,7 +124,6 @@ export default function DetailsModal({ isOpen, onClose, complaintId }) {
                       <h4 className="text-[12px] font-extrabold text-[#DC2626] uppercase tracking-wider">Officer Escalation Notes</h4>
                     </div>
                     <div className="text-[14px] text-[#1E293B] font-medium leading-relaxed">
-                      {/* whitespace-pre-wrap ensures the linebreaks (\n) from the backend show up properly */}
                       <p className="whitespace-pre-wrap">{data.admin_notes.trim()}</p>
                     </div>
                   </div>

@@ -15,7 +15,6 @@ export const apiFetch = async (url, options = {}) => {
 
   const response = await fetch(url, { ...options, headers });
 
-  // Global kickout logic for expired/invalid tokens
   if (response.status === 401 || response.status === 403) {
     await AsyncStorage.removeItem('urbanSyncToken');
     await AsyncStorage.removeItem('user');
