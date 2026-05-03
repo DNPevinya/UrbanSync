@@ -53,8 +53,9 @@ export default function DetailsModal({ isOpen, onClose, complaintId }) {
             
             {!loading && data && (
               <span className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-wide uppercase ${
-                data.status === 'PENDING' ? 'bg-red-50 text-red-600' : 
-                data.status === 'RESOLVED' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'
+                data.status === 'PENDING' ? 'bg-amber-50 text-amber-600' : 
+                data.status === 'RESOLVED' ? 'bg-green-50 text-green-600' : 
+                data.status === 'REJECTED' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'
               }`}>
                 {data.status}
               </span>
@@ -116,9 +117,23 @@ export default function DetailsModal({ isOpen, onClose, complaintId }) {
                   </div>
                 </div>
 
+                {/* ADDED: Officer Escalation / Admin Notes Block */}
+                {data.admin_notes && (
+                  <div className="bg-[#FEF2F2] border-l-4 border-[#DC2626] p-5 rounded-xl shadow-sm">
+                    <div className="flex items-center mb-3">
+                      <svg className="w-5 h-5 text-[#DC2626] mr-2" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                      <h4 className="text-[12px] font-extrabold text-[#DC2626] uppercase tracking-wider">Officer Escalation Notes</h4>
+                    </div>
+                    <div className="text-[14px] text-[#1E293B] font-medium leading-relaxed">
+                      {/* whitespace-pre-wrap ensures the linebreaks (\n) from the backend show up properly */}
+                      <p className="whitespace-pre-wrap">{data.admin_notes.trim()}</p>
+                    </div>
+                  </div>
+                )}
+
                 {data.latitude && data.longitude && (
                   <div>
-                    <h4 className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider flex items-center mb-3">
+                    <h4 className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider flex items-center mb-3 mt-6">
                       <svg className="w-4 h-4 mr-1.5 text-[#0041C7]" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>
                       Live GPS Location
                     </h4>

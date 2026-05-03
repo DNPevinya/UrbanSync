@@ -45,7 +45,6 @@ router.get('/locations', async (req, res) => {
 });
 
 router.post('/register', async (req, res) => {
-    // FIXED: Safely destructure both division_id and divisionId
     const { fullName, phone, email, district, division, password, nic, division_id, divisionId } = req.body;
 
     try {
@@ -66,15 +65,17 @@ router.post('/register', async (req, res) => {
         const [userResult] = await db.query(userSql, [email, hashedPassword]);
         const newUserId = userResult.insertId; 
 
-        let final_division_id = division_id || divisionId || null;
+        // --- THE CATCH-ALL FIX ---
+        let final_division_id = division_id || divisionId || req.body.division_id || req.body.divisionId || null;
+        let divisionSearchText = division || req.body.location || req.body.city || req.body.selectedDivision || null;
         
-        if (!final_division_id && division) {
+        if (!final_division_id && divisionSearchText) {
             const [divResults] = await db.query(`
                 SELECT division_id 
                 FROM divisions 
                 WHERE LOWER(name) LIKE CONCAT('%', LOWER(?), '%') 
                 LIMIT 1
-            `, [division.trim()]);
+            `, [divisionSearchText.trim()]);
             
             if (divResults.length > 0) {
                 final_division_id = divResults[0].division_id;
@@ -114,13 +115,14 @@ router.post('/login', async (req, res) => {
         let userProfile = { id: user.user_id, email: user.email, role: user.role };
 
         if (user.role === 'citizen') {
+            // FIXED: Added d.district_id so the frontend has all raw IDs if needed
             const citizenQuery = `
-    SELECT c.*, d.name AS division, dist.name AS district
-    FROM citizens c 
-    LEFT JOIN divisions d ON c.division_id = d.division_id 
-    LEFT JOIN districts dist ON d.district_id = dist.district_id
-    WHERE c.user_id = ?
-`;
+                SELECT c.*, d.name AS division, d.district_id, dist.name AS district
+                FROM citizens c 
+                LEFT JOIN divisions d ON c.division_id = d.division_id 
+                LEFT JOIN districts dist ON d.district_id = dist.district_id
+                WHERE c.user_id = ?
+            `;
             const [citizens] = await db.query(citizenQuery, [user.user_id]);
             
             if (citizens.length > 0) {
@@ -132,6 +134,8 @@ router.post('/login', async (req, res) => {
                 userProfile.phone = citizens[0].phone;
                 userProfile.district = citizens[0].district;
                 userProfile.division = citizens[0].division; 
+                userProfile.division_id = citizens[0].division_id; // <--- NEW: Raw ID for frontend
+                userProfile.district_id = citizens[0].district_id; // <--- NEW: Raw ID for frontend
                 userProfile.profilePicture = citizens[0].profilePicture || null;
                 userProfile.nic = citizens[0].nic;
 
@@ -227,7 +231,22 @@ router.put('/update-profile', upload.single('profileImage'), async (req, res) =>
             profilePicPath = `/uploads/${req.file.filename}`;
         }
 
-        let final_div_id = division_id || divisionId || null;
+        // --- THE CATCH-ALL FIX FOR UPDATES ---
+        let final_div_id = division_id || divisionId || req.body.division_id || req.body.divisionId || null;
+        let divisionSearchText = division || req.body.location || req.body.city || req.body.selectedDivision || null;
+        
+        if (!final_div_id && divisionSearchText) {
+            const [divResults] = await db.query(`
+                SELECT division_id 
+                FROM divisions 
+                WHERE LOWER(name) LIKE CONCAT('%', LOWER(?), '%') 
+                LIMIT 1
+            `, [divisionSearchText.trim()]);
+            
+            if (divResults.length > 0) {
+                final_div_id = divResults[0].division_id;
+            }
+        }
 
         const updateCitizenSql = `
             UPDATE citizens 
@@ -277,7 +296,7 @@ router.post('/update-password', async (req, res) => {
         const isPlainTextMatch = currentPassword === user.password; 
         
         if (!isBcryptMatch && !isPlainTextMatch) {
-            return res.status(401).json({ 
+            return res.status(400).json({ 
                 success: false, 
                 message: "Authentication Failed: The current password you entered does not match our records." 
             });

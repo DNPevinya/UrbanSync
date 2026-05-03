@@ -28,7 +28,7 @@ export default function EditProfileScreen({ onBack, initialData = {}, onUpdateSu
   // 2. LIFECYCLE & UTILITIES
   useEffect(() => {
     if (initialData) {
-      setName(initialData.name || '');
+      setName(initialData.name || initialData.fullName || '');
       setPhone(initialData.phone || '');
       setDistrict(initialData.district || 'Select District');
       setDivision(initialData.division || 'Select Division');
@@ -108,8 +108,12 @@ export default function EditProfileScreen({ onBack, initialData = {}, onUpdateSu
     formData.append('email', initialData.email);
     formData.append('fullName', name);
     formData.append('phone', phone);
+    
+    // We send the read-only values back just so the backend has them if needed
     formData.append('district', district);
     formData.append('division', division);
+    if (initialData.division_id) formData.append('division_id', initialData.division_id);
+
     formData.append('currentPassword', oldPassword);
     formData.append('newPassword', newPassword);
     formData.append('deleteImage', deleteImageFlag ? 'true' : 'false');
@@ -217,6 +221,7 @@ export default function EditProfileScreen({ onBack, initialData = {}, onUpdateSu
               <ReadOnlyField label="NIC NUMBER" icon="card-outline" value={initialData.nic} />
             ) : null}
 
+            {/* RESTORED: District and Division are back to being read-only locked fields! */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>DISTRICT</Text>
               <View style={styles.selector}>

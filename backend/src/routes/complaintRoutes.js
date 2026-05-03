@@ -73,7 +73,6 @@ router.get('/admin/performance', authMiddleware, async (req, res) => {
       LEFT JOIN complaints c ON a.authority_id = c.authority_id
       GROUP BY a.authority_id
       ORDER BY total_cases DESC
-      LIMIT 5
     `;
     const [rows] = await db.query(query);
     res.json({ success: true, data: rows });
@@ -88,7 +87,7 @@ router.get('/admin/all-recent', authMiddleware, async (req, res) => {
     const query = `
       SELECT 
         c.*, 
-        COALESCE(cat.name, c.category) AS category,
+        cat.name AS category,
         divi.name AS division,
         a.name AS authority_name, 
         cit.fullName AS citizen_name
@@ -113,7 +112,7 @@ router.get('/admin/all', authMiddleware, async (req, res) => {
     const sql = `
       SELECT 
         c.*, 
-        COALESCE(cat.name, c.category) AS category,
+        cat.name AS category,
         divi.name AS division,
         a.name as authority_name, 
         auth_div.name AS region 
@@ -188,7 +187,6 @@ router.get('/admin/authorities-list', authMiddleware, async (req, res) => {
 });
 
 router.post('/admin/add-authority', authMiddleware, async (req, res) => {
-  // Using ID variables to match the frontend update
   const { name, department_id, division_id } = req.body;
   try {
     const query = `INSERT INTO authorities (name, department_id, division_id) VALUES (?, ?, ?)`;
@@ -201,7 +199,6 @@ router.post('/admin/add-authority', authMiddleware, async (req, res) => {
 });
 
 router.put('/admin/update-authority/:id', authMiddleware, async (req, res) => {
-  // Using ID variables to match the frontend update
   const { name, department_id, division_id } = req.body;
   try {
     const query = `UPDATE authorities SET name = ?, department_id = ?, division_id = ? WHERE authority_id = ?`;
@@ -230,7 +227,6 @@ router.delete('/admin/delete-authority/:id', authMiddleware, async (req, res) =>
   }
 });
 
-// NEW 3NF ROUTES FOR DEPARTMENTS AND DIVISIONS
 router.get('/admin/departments-list', authMiddleware, async (req, res) => {
   try {
     const [rows] = await db.query(`SELECT department_id, name FROM departments ORDER BY name ASC`);
@@ -298,7 +294,6 @@ router.get('/admin/analytics', authMiddleware, async (req, res) => {
       LEFT JOIN divisions divi ON a.division_id = divi.division_id
       GROUP BY a.division_id
       ORDER BY count DESC
-      LIMIT 5
     `);
 
     const [performanceRows] = await db.query(`
@@ -310,7 +305,6 @@ router.get('/admin/analytics', authMiddleware, async (req, res) => {
       JOIN authorities a ON c.authority_id = a.authority_id
       GROUP BY a.authority_id
       ORDER BY total_handled DESC
-      LIMIT 5
     `);
 
     const authorityPerformance = performanceRows.map(auth => {
@@ -340,22 +334,22 @@ router.get('/admin/analytics', authMiddleware, async (req, res) => {
 });
 
 router.post('/submit', upload.array('images', 3), async (req, res) => {
-  const { user_id, category, title, description, location_text, latitude, longitude, category_id, division_id } = req.body;
+  const { user_id, title, description, location_text, latitude, longitude, category_id, division_id } = req.body;
   let image_url = null;
   if (req.files && req.files.length > 0) image_url = req.files.map(file => `/uploads/${file.filename}`).join(',');
 
   try {
-    if (latitude && longitude) {
+    if (latitude && longitude && category_id) {
         const duplicateCheckQuery = `
             SELECT complaint_id 
             FROM complaints 
-            WHERE category = ? 
+            WHERE category_id = ? 
             AND UPPER(status) NOT IN ('RESOLVED', 'REJECTED', 'CANCELLED')
             AND latitude IS NOT NULL AND longitude IS NOT NULL
             AND ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) <= 50
             LIMIT 1
         `;
-        const [existingComplaints] = await db.query(duplicateCheckQuery, [category, longitude, latitude]);
+        const [existingComplaints] = await db.query(duplicateCheckQuery, [category_id, longitude, latitude]);
 
         if (existingComplaints.length > 0) {
             return res.status(409).json({
@@ -421,10 +415,10 @@ router.post('/submit', upload.array('images', 3), async (req, res) => {
     }
 
     const insertSql = `
-      INSERT INTO complaints (user_id, category, title, description, location_text, latitude, longitude, status, image_url, authority_id, category_id, division_id) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?)
+      INSERT INTO complaints (user_id, title, description, location_text, latitude, longitude, status, image_url, authority_id, category_id, division_id) 
+      VALUES (?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?)
     `;
-    const values = [user_id, category, title, description, location_text, latitude || null, longitude || null, image_url, assigned_authority_id, category_id || null, final_division_id];
+    const values = [user_id, title, description, location_text, latitude || null, longitude || null, image_url, assigned_authority_id, category_id || null, final_division_id];
     const [result] = await db.query(insertSql, values);
 
     res.status(201).json({ success: true, message: "Complaint submitted successfully!", complaint_id: result.insertId });
@@ -439,7 +433,7 @@ router.get('/user/:userId', async (req, res) => {
     const query = `
       SELECT 
         c.*, 
-        COALESCE(cat.name, c.category) AS category,
+        cat.name AS category,
         divi.name AS division
       FROM complaints c 
       LEFT JOIN categories cat ON c.category_id = cat.category_id
@@ -516,7 +510,7 @@ router.get('/:id', async (req, res) => {
     const sql = `
       SELECT 
         c.*, 
-        COALESCE(cat.name, c.category) AS category,
+        cat.name AS category,
         divi.name AS division,
         a.name as authority_name,
         cit.fullName as citizen_name,

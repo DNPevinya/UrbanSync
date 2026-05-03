@@ -89,11 +89,13 @@ export default function SignupScreen({
     let newErrors = {};
     const emailRegex = /\S+@\S+\.\S+/;
     const phoneRegex = /^[7]\d{8}$/; 
+    const nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
 
     if (!formData.fullName.trim()) newErrors.fullName = "Full name is required.";
     if (!phoneRegex.test(formData.phone)) newErrors.phone = "Enter 9 digits starting with 7 (e.g. 771234567).";
     if (!emailRegex.test(formData.email)) newErrors.email = "Enter a valid email address.";
-    if (!formData.nic || formData.nic.trim().length < 10) newErrors.nic = "Enter a valid 10 or 12 digit NIC.";
+    
+    if (!nicRegex.test(formData.nic)) newErrors.nic = "Enter a valid NIC (e.g., 987654321V or 199876543210).";
     
     if (!districtValue) newErrors.district = "Please select a district.";
     if (!divisionValue) newErrors.division = "Please select a division.";
@@ -204,12 +206,12 @@ export default function SignupScreen({
                 placeholder="e.g. 199912345678 or 991234567V" 
                 placeholderTextColor="#94A3B8" 
                 autoCapitalize="characters"
+                maxLength={12} 
                 value={formData.nic} 
-                onChangeText={(v) => {setFormData({...formData, nic: v}); setErrors({...errors, nic: null})}} 
+                onChangeText={(v) => {setFormData({...formData, nic: v.toUpperCase()}); setErrors({...errors, nic: null})}} 
               />
             </View>
             {errors.nic && <Text style={styles.errorText}>{errors.nic}</Text>}
-            {/* END ADDED NIC block */}
 
             <Text style={styles.label}>{t.district}</Text>
             <View> 

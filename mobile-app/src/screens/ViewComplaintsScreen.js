@@ -37,10 +37,10 @@ export default function ViewComplaintsScreen({ onNavigateToDetails, userId }) {
     }
   };
 
-  // UPDATED: Now recognizes CANCELLED and returns Red
   const getStepLevelInfo = (status, authorityId) => {
     const s = status?.toUpperCase();
-    if (s === 'CANCELLED') return { level: 0, color: '#EF4444', width: '0%' }; // Added Cancelled logic
+    if (s === 'REJECTED') return { level: 0, color: '#DC2626', width: '0%' };
+    if (s === 'CANCELLED') return { level: 0, color: '#EF4444', width: '0%' }; 
     if (s === 'RESOLVED') return { level: 4, color: '#28C76F', width: '100%' };
     if (s === 'IN PROGRESS') return { level: 3, color: '#0041C7', width: '72%' };
     if (authorityId) return { level: 2, color: '#00B5D8', width: '40%' };
@@ -86,7 +86,7 @@ export default function ViewComplaintsScreen({ onNavigateToDetails, userId }) {
 
       <View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterBar}>
-          {['All', 'Pending', 'In Progress', 'Resolved', 'Cancelled'].map((tab) => (
+          {['All', 'Pending', 'In Progress', 'Resolved', 'Rejected', 'Cancelled'].map((tab) => (
             <TouchableOpacity 
               key={tab} 
               onPress={() => setFilter(tab)} 
@@ -139,7 +139,7 @@ export default function ViewComplaintsScreen({ onNavigateToDetails, userId }) {
                   </View>
                 </View>
 
-                {item.status?.toUpperCase() !== 'CANCELLED' && (
+                {item.status?.toUpperCase() !== 'CANCELLED' && item.status?.toUpperCase() !== 'REJECTED' && (
                   <View style={styles.trackerWrapper}>
                     <View style={styles.progressBarBackground}>
                       <View style={[styles.progressBarFill, { width: stepInfo.width, backgroundColor: stepInfo.color }]} />
