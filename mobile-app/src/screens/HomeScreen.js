@@ -26,7 +26,7 @@ export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, 
   // 2. API HANDLERS
   const fetchDashboardData = async () => {
     try {
-      const complaintsRes = await apiFetch(`${SERVER_URL}/api/complaints/user/${userId || 1}`);
+      const complaintsRes = await apiFetch(`${SERVER_URL}/api/complaints/user/${userId}`);
       const complaintsResult = await complaintsRes.json();
       
       if (complaintsResult.success && Array.isArray(complaintsResult.data)) {
@@ -70,7 +70,7 @@ export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, 
         setRecentActivities(topRecent);
       }
 
-      const notifRes = await apiFetch(`${SERVER_URL}/api/auth/notifications/${userId || 1}`);
+      const notifRes = await apiFetch(`${SERVER_URL}/api/auth/notifications/${userId}`);
       const notifData = await notifRes.json();
       if (notifData.success) {
         setHasUnread(notifData.data.some(n => Number(n.is_read) === 0));
@@ -139,7 +139,7 @@ export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, 
         <View style={styles.servicesContainer}>
           <Text style={styles.servicesLabel}>{i18n.t('services')}</Text>
           <Text style={styles.helpHeading}>{i18n.t('help_today')}</Text>
-          <Text style={styles.helpSubheading}>{i18n.t('help_today_sub')}</Text>
+          <Text style={styles.helpSubheading}>{i18n.t('help_sub')}</Text>
 
           <TouchableOpacity activeOpacity={0.9} style={styles.blueCard} onPress={onNavigateToSubmit}>
             <MaterialCommunityIcons name="bullhorn" size={120} color="#ffffff" style={styles.watermarkIcon} />

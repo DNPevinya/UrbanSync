@@ -101,7 +101,7 @@ export default function SignupScreen({
     if (!districtValue) newErrors.district = i18n.t('error_req_district', { defaultValue: "Please select a district." });
     if (!divisionValue) newErrors.division = i18n.t('error_req_division', { defaultValue: "Please select a division." });
     if (formData.password.length < 8) newErrors.password = i18n.t('error_req_password', { defaultValue: "Password must be at least 8 characters." });
-    if (!isAgreed) newErrors.agreement = i18n.t('error_req_agree', { defaultValue: "You must agree to the terms." });
+    if (!isAgreed) newErrors.agreement = i18n.t('error_req_agree', { defaultValue: "You must agree to the terms and privacy policy." });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   countryCode: { fontSize: 15, color: '#0160C9', fontWeight: 'bold', marginRight: 12, borderRightWidth: 1, borderRightColor: '#E2E8F0', paddingRight: 12 },
   helperText: { fontSize: 11, marginTop: 6, marginLeft: 5 },
   checkboxRow: { flexDirection: 'row', alignItems: 'center', marginTop: 25, marginBottom: 5 },
-  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: '#E2E8F0', marginRight: 12, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: '#94A3B8', marginRight: 12, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   checkboxActive: { backgroundColor: '#0160C9', borderColor: '#0160C9' },
   checkboxText: { flex: 1, fontSize: 13, color: '#64748B', lineHeight: 20 },
   link: { color: '#0160C9', fontWeight: 'bold' },

@@ -13,7 +13,7 @@ export default function AdminComplaints() {
   const navigate = useNavigate();
 
   const [complaints, setComplaints] = useState([]);
-  const [categories, setCategories] = useState([]); // Dynamic categories from DB
+  const [categories, setCategories] = useState([]); 
   const [stats, setStats] = useState({ total: 0, pending: 0, active: 0, resolved: 0 });
   const [loading, setLoading] = useState(true);
 

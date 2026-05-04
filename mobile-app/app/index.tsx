@@ -29,7 +29,7 @@ interface UserData {
   name: string;
   email: string;
   phone: string;
-  nic: string; // ADDED
+  nic: string; 
   district: string;
   division: string;
   profilePicture: string | null; 
@@ -82,13 +82,12 @@ export default function Index() {
   if (currentStep === 'login') {
     return (
       <LoginScreen 
-        // FIXED: Added nic to the callback arguments
         onLoginSuccess={(id: string | number, name: string, email: string, phone: string, district: string, division: string, profilePic: string | null, nic: string) => {
           setUserId(id); 
           setUserName(typeof name === 'string' ? name : 'Citizen'); 
           setUserEmail(email || ''); 
           setUserPhone(phone || '');
-          setUserNic(nic || ''); // ADDED
+          setUserNic(nic || ''); 
           setUserDistrict(district || ''); 
           setUserDivision(division || ''); 
           setUserProfilePicture(profilePic || null);
@@ -120,16 +119,10 @@ export default function Index() {
         onNavigateToTerms={() => { setPrevStep('signup'); setCurrentStep('terms_page'); }}
         onNavigateToPrivacy={() => { setPrevStep('signup'); setCurrentStep('privacy_page'); }}
         onSignupSuccess={(name: string, email: string, phone: string, district: string, division: string, nic: string) => {
-          setUserName(typeof name === 'string' ? name : 'Citizen'); 
-          setUserEmail(email); 
-          setUserPhone(phone);
-          setUserNic(nic); 
-          setUserDistrict(district); 
-          setUserDivision(division); 
-          setUserProfilePicture(null);
+          // FIX: Clear the form data and route them to Login so they get a proper auth token and userId
           setSignupData({ fullName: '', phone: '', email: '', nic: '', district: '', division: '', password: '' });
           setSignupAgreed(false);
-          setCurrentStep('dashboard');
+          setCurrentStep('login'); 
         }}
       />
     );
@@ -144,7 +137,6 @@ export default function Index() {
         onUpdateSuccess={(newName: string, newPhone: string, newDistrict: string, newDivision: string, newProfilePic: string | null) => {
           setUserName(newName); setUserPhone(newPhone); setUserDistrict(newDistrict);
           setUserDivision(newDivision); setUserProfilePicture(newProfilePic);
-          // Note: NIC is read-only so it doesn't need to be updated here
         }}
       />
     );
@@ -198,7 +190,13 @@ export default function Index() {
           />
         )}
 
-        {currentStep === 'notifications' && <NotificationScreen onBack={() => setCurrentStep('dashboard')} />}
+        {/* FIX: Passed userId to NotificationScreen */}
+        {currentStep === 'notifications' && (
+          <NotificationScreen 
+            userId={userId} 
+            onBack={() => setCurrentStep('dashboard')} 
+          />
+        )}
 
         {currentStep === 'profile' && (
           <ProfileScreen 

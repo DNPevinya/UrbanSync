@@ -211,7 +211,7 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
     const categoryIdToSend = dynamicData[selectedCategory]?.id || null;
 
     const formData = new FormData();
-    formData.append('user_id', userId || '1');
+    formData.append('user_id', userId);
     formData.append('category', selectedCategory); 
     formData.append('category_id', categoryIdToSend); 
     formData.append('title', selectedType); 

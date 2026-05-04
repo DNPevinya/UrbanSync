@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../src/config'; 
 import { apiFetch } from '../utils/apiClient';
 
@@ -22,7 +21,7 @@ const formatTime = (dateString) => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 
-export default function NotificationScreen({ onBack }) {
+export default function NotificationScreen({ onBack, userId }) {
   // 1. STATE & HOOKS
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,14 +30,10 @@ export default function NotificationScreen({ onBack }) {
   // 2. API HANDLERS
   const fetchNotifications = async () => {
     try {
-      const userData = await AsyncStorage.getItem('user');
-      if (!userData) {
+      if (!userId) {
         setLoading(false);
         return;
       }
-      
-      const parsedUser = JSON.parse(userData);
-      const userId = parsedUser.id; 
       
       const response = await apiFetch(`${BASE_URL}/api/auth/notifications/${userId}`);
       const result = await response.json();
@@ -57,20 +52,18 @@ export default function NotificationScreen({ onBack }) {
   // 3. LIFECYCLE & UTILITIES
   useEffect(() => {
     fetchNotifications();
-  }, []);
+  }, [userId]); 
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchNotifications();
-  }, []);
+  }, [userId]);
 
   const markAllAsRead = async () => {
     setNotifications(prev => prev.map(n => ({ ...n, is_read: 1 })));
 
     try {
-      const userData = await AsyncStorage.getItem('user');
-      if (!userData) return;
-      const userId = JSON.parse(userData).id;
+      if (!userId) return;
 
       await apiFetch(`${BASE_URL}/api/auth/notifications/read-all/${userId}`, {
         method: 'PATCH',
