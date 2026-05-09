@@ -5,7 +5,7 @@ const db = require('./../db');
 const multer = require('multer');
 const path = require('path');
 const authMiddleware = require('../middleware/authMiddleware');
-const { authorize } = require('../middleware/roleMiddleware'); // <-- ADDED: The Role Lock
+const { authorize } = require('../middleware/roleMiddleware');
 
 // 2. CONFIGURATION & MIDDLEWARE
 const storage = multer.diskStorage({
@@ -16,7 +16,6 @@ const upload = multer({ storage: storage });
 
 // 3. API ROUTES
 
-// Public/Citizen Routes (Left unprotected so the mobile app forms work smoothly)
 router.get('/form-data', async (req, res) => {
   try {
     const query = `
@@ -50,7 +49,6 @@ router.get('/form-data', async (req, res) => {
   }
 });
 
-// --- ADMIN ONLY ROUTES (Strictly Locked) ---
 router.get('/admin/stats', authMiddleware, authorize(['admin']), async (req, res) => {
   try {
     const [total] = await db.query('SELECT COUNT(*) as count FROM complaints');
@@ -181,7 +179,6 @@ router.post('/admin/add-authority', authMiddleware, authorize(['super_admin', 'a
   const { name, department_id, division_id } = req.body;
   
   // 1. The Auto-Code Dictionary
-  // This maps your database department_ids to their 3-letter codes
   const codeDictionary = {
     1: 'LOC', // Local Councils
     2: 'PHI', // Public Health
@@ -344,7 +341,6 @@ router.get('/admin/analytics', authMiddleware, authorize(['admin']), async (req,
   }
 });
 
-// --- ADMIN & OFFICER ROUTES (Dual Lock) ---
 router.patch('/reassign/:id', authMiddleware, authorize(['admin']), async (req, res) => {
   const { new_authority_id, reason } = req.body;
   const complaintId = req.params.id;
@@ -431,7 +427,6 @@ router.patch('/update-status/:id', authMiddleware, authorize(['admin', 'officer'
   } catch (error) { res.status(500).json({ success: false, message: "Failed to update status." }); }
 });
 
-// --- CITIZEN / GENERAL ROUTES (Left Open for App Functionality) ---
 router.post('/submit', upload.array('images', 3), async (req, res) => {
   const { user_id, title, description, location_text, latitude, longitude, category_id, division_id } = req.body;
   let image_url = null;

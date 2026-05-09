@@ -9,7 +9,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const authMiddleware = require('../middleware/authMiddleware');
 
-// 2. CONFIGURATION & MIDDLEWARE
+
 const storage = multer.diskStorage({
     destination: path.join(__dirname, '..', '..', 'uploads'),
     filename: (req, file, cb) => {
@@ -65,7 +65,6 @@ router.post('/register', async (req, res) => {
         const [userResult] = await db.query(userSql, [email, hashedPassword]);
         const newUserId = userResult.insertId; 
 
-        // --- THE CATCH-ALL FIX ---
         let final_division_id = division_id || divisionId || req.body.division_id || req.body.divisionId || null;
         let divisionSearchText = division || req.body.location || req.body.city || req.body.selectedDivision || null;
         
@@ -115,7 +114,6 @@ router.post('/login', async (req, res) => {
         let userProfile = { id: user.user_id, email: user.email, role: user.role };
 
         if (user.role === 'citizen') {
-            // FIXED: Added d.district_id so the frontend has all raw IDs if needed
             const citizenQuery = `
                 SELECT c.*, d.name AS division, d.district_id, dist.name AS district
                 FROM citizens c 
@@ -134,8 +132,8 @@ router.post('/login', async (req, res) => {
                 userProfile.phone = citizens[0].phone;
                 userProfile.district = citizens[0].district;
                 userProfile.division = citizens[0].division; 
-                userProfile.division_id = citizens[0].division_id; // <--- NEW: Raw ID for frontend
-                userProfile.district_id = citizens[0].district_id; // <--- NEW: Raw ID for frontend
+                userProfile.division_id = citizens[0].division_id;
+                userProfile.district_id = citizens[0].district_id; 
                 userProfile.profilePicture = citizens[0].profilePicture || null;
                 userProfile.nic = citizens[0].nic;
 
@@ -231,7 +229,6 @@ router.put('/update-profile', upload.single('profileImage'), async (req, res) =>
             profilePicPath = `/uploads/${req.file.filename}`;
         }
 
-        // --- THE CATCH-ALL FIX FOR UPDATES ---
         let final_div_id = division_id || divisionId || req.body.division_id || req.body.divisionId || null;
         let divisionSearchText = division || req.body.location || req.body.city || req.body.selectedDivision || null;
         
@@ -378,7 +375,6 @@ router.get('/admin/next-employee-id/:authorityId', authMiddleware, async (req, r
   try {
     const authorityId = req.params.authorityId;
 
-    // 1. Find out what 3-letter code this authority uses (e.g., 'POL')
     const [authData] = await db.query('SELECT authority_code FROM authorities WHERE authority_id = ?', [authorityId]);
     
     if (authData.length === 0) {
@@ -387,18 +383,15 @@ router.get('/admin/next-employee-id/:authorityId', authMiddleware, async (req, r
 
     const authCode = authData[0].authority_code || 'GEN';
 
-    // 2. Look at ALL officers in the database who have this same code (Global Check)
     const [officers] = await db.query(`
         SELECT employee_id_code 
         FROM officers 
         WHERE employee_id_code LIKE ?
     `, [`EMP-${authCode}-%`]);
 
-    // 3. Find the absolute highest number currently in use
     let maxNum = 0;
     officers.forEach(officer => {
         if (officer.employee_id_code) {
-            // Split "EMP-POL-005" -> grab the "005" -> turn it into a real number
             const parts = officer.employee_id_code.split('-');
             if (parts.length === 3) {
                 const num = parseInt(parts[2], 10);
@@ -409,7 +402,7 @@ router.get('/admin/next-employee-id/:authorityId', authMiddleware, async (req, r
         }
     });
 
-    // 4. Add 1 to the highest number and format it with leading zeros
+    // Add 1 to the highest number and format it with leading zeros
     const nextNum = maxNum + 1;
     const formattedNum = String(nextNum).padStart(3, '0');
     const finalEmployeeId = `EMP-${authCode}-${formattedNum}`;
