@@ -376,19 +376,51 @@ router.get('/admin/officers-list', authMiddleware, async (req, res) => {
 
 router.get('/admin/next-employee-id/:authorityId', authMiddleware, async (req, res) => {
   try {
-    const [authRows] = await db.query('SELECT authority_code FROM authorities WHERE authority_id = ?', [req.params.authorityId]);
-    if (authRows.length === 0) return res.json({ employee_id: 'EMP-001' }); 
-    const prefix = authRows[0].authority_code || 'GEN';
-    const [countRows] = await db.query('SELECT COUNT(*) as count FROM officers WHERE authority_id = ?', [req.params.authorityId]);
-    const nextNum = countRows[0].count + 1;
-    const paddedNum = nextNum.toString().padStart(3, '0');
-    res.json({ success: true, employee_id: `EMP-${prefix}-${paddedNum}` });
-  } catch (err) {
-    console.error("ID Gen Error:", err.message);
-    res.status(500).json({ success: false });
+    const authorityId = req.params.authorityId;
+
+    // 1. Find out what 3-letter code this authority uses (e.g., 'POL')
+    const [authData] = await db.query('SELECT authority_code FROM authorities WHERE authority_id = ?', [authorityId]);
+    
+    if (authData.length === 0) {
+        return res.status(404).json({ success: false, message: "Authority not found." });
+    }
+
+    const authCode = authData[0].authority_code || 'GEN';
+
+    // 2. Look at ALL officers in the database who have this same code (Global Check)
+    const [officers] = await db.query(`
+        SELECT employee_id_code 
+        FROM officers 
+        WHERE employee_id_code LIKE ?
+    `, [`EMP-${authCode}-%`]);
+
+    // 3. Find the absolute highest number currently in use
+    let maxNum = 0;
+    officers.forEach(officer => {
+        if (officer.employee_id_code) {
+            // Split "EMP-POL-005" -> grab the "005" -> turn it into a real number
+            const parts = officer.employee_id_code.split('-');
+            if (parts.length === 3) {
+                const num = parseInt(parts[2], 10);
+                if (!isNaN(num) && num > maxNum) {
+                    maxNum = num;
+                }
+            }
+        }
+    });
+
+    // 4. Add 1 to the highest number and format it with leading zeros
+    const nextNum = maxNum + 1;
+    const formattedNum = String(nextNum).padStart(3, '0');
+    const finalEmployeeId = `EMP-${authCode}-${formattedNum}`;
+
+    res.json({ success: true, employee_id: finalEmployeeId });
+
+  } catch (error) {
+    console.error("Employee ID Generation Error:", error.message);
+    res.status(500).json({ success: false, message: "Failed to generate ID." });
   }
 });
-
 router.post('/admin/add-officer', authMiddleware, async (req, res) => {
   const { full_name, email, authority_id, employee_id_code } = req.body;
   const tempPassword = crypto.randomBytes(4).toString('hex'); 

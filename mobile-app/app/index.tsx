@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DeviceEventEmitter } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 
 // --- Screen Imports ---
 import LoadingScreen from '../src/screens/LoadingScreen';
@@ -40,6 +41,7 @@ export default function Index() {
   const [prevStep, setPrevStep] = useState<string>('');
 
   useEffect(() => {
+    SplashScreen.hideAsync();
     const subscription = DeviceEventEmitter.addListener('authError', () => {
       setUserId(null);
       setSelectedComplaintId(null);

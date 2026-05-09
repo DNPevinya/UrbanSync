@@ -5,6 +5,7 @@ const db = require('./../db');
 const multer = require('multer');
 const path = require('path');
 const authMiddleware = require('../middleware/authMiddleware');
+const { authorize } = require('../middleware/roleMiddleware'); // <-- ADDED: The Role Lock
 
 // 2. CONFIGURATION & MIDDLEWARE
 const storage = multer.diskStorage({
@@ -14,6 +15,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // 3. API ROUTES
+
+// Public/Citizen Routes (Left unprotected so the mobile app forms work smoothly)
 router.get('/form-data', async (req, res) => {
   try {
     const query = `
@@ -47,7 +50,8 @@ router.get('/form-data', async (req, res) => {
   }
 });
 
-router.get('/admin/stats', authMiddleware, async (req, res) => {
+// --- ADMIN ONLY ROUTES (Strictly Locked) ---
+router.get('/admin/stats', authMiddleware, authorize(['admin']), async (req, res) => {
   try {
     const [total] = await db.query('SELECT COUNT(*) as count FROM complaints');
     const [pending] = await db.query("SELECT COUNT(*) as count FROM complaints WHERE status = 'PENDING'");
@@ -64,7 +68,7 @@ router.get('/admin/stats', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/admin/performance', authMiddleware, async (req, res) => {
+router.get('/admin/performance', authMiddleware, authorize(['admin']), async (req, res) => {
   try {
     const query = `
       SELECT a.name, d.name AS department, COUNT(c.complaint_id) as total_cases
@@ -82,7 +86,7 @@ router.get('/admin/performance', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/admin/all-recent', authMiddleware, async (req, res) => {
+router.get('/admin/all-recent', authMiddleware, authorize(['admin']), async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -107,7 +111,7 @@ router.get('/admin/all-recent', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/admin/all', authMiddleware, async (req, res) => {
+router.get('/admin/all', authMiddleware, authorize(['admin']), async (req, res) => {
   try {
     const sql = `
       SELECT 
@@ -130,7 +134,7 @@ router.get('/admin/all', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/admin/authorities', authMiddleware, async (req, res) => {
+router.get('/admin/authorities', authMiddleware, authorize(['admin']), async (req, res) => {
   try {
     const [rows] = await db.query('SELECT authority_id, name FROM authorities ORDER BY name ASC');
     res.json({ success: true, data: rows });
@@ -139,7 +143,7 @@ router.get('/admin/authorities', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/admin/officers/:authorityId', authMiddleware, async (req, res) => {
+router.get('/admin/officers/:authorityId', authMiddleware, authorize(['admin']), async (req, res) => {
   try {
     const sql = `SELECT user_id, full_name AS fullName FROM officers WHERE authority_id = ?`;
     const [rows] = await db.query(sql, [req.params.authorityId]);
@@ -150,20 +154,7 @@ router.get('/admin/officers/:authorityId', authMiddleware, async (req, res) => {
   }
 });
 
-router.patch('/reassign/:id', async (req, res) => {
-  const { new_authority_id, reason } = req.body;
-  const complaintId = req.params.id;
-
-  try {
-    await db.query(`UPDATE complaints SET authority_id = ?, status = 'PENDING' WHERE complaint_id = ?`, [new_authority_id, complaintId]);
-    res.status(200).json({ success: true, message: "Reassigned successfully!" });
-  } catch (error) { 
-    console.error("Reassign error:", error);
-    res.status(500).json({ success: false, message: "Failed to reassign." }); 
-  }
-});
-
-router.get('/admin/authorities-list', authMiddleware, async (req, res) => {
+router.get('/admin/authorities-list', authMiddleware, authorize(['admin']), async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -186,19 +177,39 @@ router.get('/admin/authorities-list', authMiddleware, async (req, res) => {
   }
 });
 
-router.post('/admin/add-authority', authMiddleware, async (req, res) => {
+router.post('/admin/add-authority', authMiddleware, authorize(['super_admin', 'admin']), async (req, res) => {
   const { name, department_id, division_id } = req.body;
+  
+  // 1. The Auto-Code Dictionary
+  // This maps your database department_ids to their 3-letter codes
+  const codeDictionary = {
+    1: 'LOC', // Local Councils
+    2: 'PHI', // Public Health
+    3: 'POL', // Police
+    4: 'WAT', // Water Board
+    5: 'ENV', // Environment Authority
+    6: 'UDA', // Urban Development
+    7: 'CEB', // Electricity Board
+    8: 'TRA', // Transport
+    9: 'GRA'  // Grama Niladhari
+  };
+
+  // Grab the right code based on the department they selected (Fallback to 'GEN' if unknown)
+  const auto_code = codeDictionary[department_id] || 'GEN';
+
   try {
-    const query = `INSERT INTO authorities (name, department_id, division_id) VALUES (?, ?, ?)`;
-    await db.query(query, [name, department_id, division_id]);
-    res.status(201).json({ success: true, message: "Authority created successfully!" });
+    // 2. Insert the auto-generated code into the database!
+    const query = `INSERT INTO authorities (name, authority_code, department_id, division_id) VALUES (?, ?, ?, ?)`;
+    await db.query(query, [name, auto_code, department_id, division_id]);
+    
+    res.status(201).json({ success: true, message: "Authority created successfully with code " + auto_code });
   } catch (err) {
     console.error("Add Authority Error:", err.message);
     res.status(500).json({ success: false, message: "Failed to create authority." });
   }
 });
 
-router.put('/admin/update-authority/:id', authMiddleware, async (req, res) => {
+router.put('/admin/update-authority/:id', authMiddleware, authorize(['admin']), async (req, res) => {
   const { name, department_id, division_id } = req.body;
   try {
     const query = `UPDATE authorities SET name = ?, department_id = ?, division_id = ? WHERE authority_id = ?`;
@@ -210,7 +221,7 @@ router.put('/admin/update-authority/:id', authMiddleware, async (req, res) => {
   }
 });
 
-router.delete('/admin/delete-authority/:id', authMiddleware, async (req, res) => {
+router.delete('/admin/delete-authority/:id', authMiddleware, authorize(['admin']), async (req, res) => {
   const { fallback_authority_id } = req.body;
   const authIdToDelete = req.params.id;
 
@@ -227,7 +238,7 @@ router.delete('/admin/delete-authority/:id', authMiddleware, async (req, res) =>
   }
 });
 
-router.get('/admin/departments-list', authMiddleware, async (req, res) => {
+router.get('/admin/departments-list', authMiddleware, authorize(['admin']), async (req, res) => {
   try {
     const [rows] = await db.query(`SELECT department_id, name FROM departments ORDER BY name ASC`);
     res.json({ success: true, data: rows });
@@ -237,7 +248,7 @@ router.get('/admin/departments-list', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/admin/divisions-list', authMiddleware, async (req, res) => {
+router.get('/admin/divisions-list', authMiddleware, authorize(['admin']), async (req, res) => {
   try {
     const [rows] = await db.query(`SELECT division_id, name FROM divisions ORDER BY name ASC`);
     res.json({ success: true, data: rows });
@@ -247,7 +258,7 @@ router.get('/admin/divisions-list', authMiddleware, async (req, res) => {
   }
 });
 
-router.delete('/admin/delete-complaint/:id', authMiddleware, async (req, res) => {
+router.delete('/admin/delete-complaint/:id', authMiddleware, authorize(['admin']), async (req, res) => {
   const complaintId = req.params.id;
   try {
     await db.query(`DELETE FROM complaints WHERE complaint_id = ?`, [complaintId]);
@@ -258,7 +269,7 @@ router.delete('/admin/delete-complaint/:id', authMiddleware, async (req, res) =>
   }
 });
 
-router.get('/admin/analytics', authMiddleware, async (req, res) => {
+router.get('/admin/analytics', authMiddleware, authorize(['admin']), async (req, res) => {
   try {
     const [kpiRows] = await db.query(`
       SELECT 
@@ -333,6 +344,94 @@ router.get('/admin/analytics', authMiddleware, async (req, res) => {
   }
 });
 
+// --- ADMIN & OFFICER ROUTES (Dual Lock) ---
+router.patch('/reassign/:id', authMiddleware, authorize(['admin']), async (req, res) => {
+  const { new_authority_id, reason } = req.body;
+  const complaintId = req.params.id;
+
+  try {
+    await db.query(`UPDATE complaints SET authority_id = ?, status = 'PENDING' WHERE complaint_id = ?`, [new_authority_id, complaintId]);
+    res.status(200).json({ success: true, message: "Reassigned successfully!" });
+  } catch (error) { 
+    console.error("Reassign error:", error);
+    res.status(500).json({ success: false, message: "Failed to reassign." }); 
+  }
+});
+
+router.get('/authority/:authorityId', authMiddleware, authorize(['admin', 'officer']), async (req, res) => {
+  try {
+    const { authorityId } = req.params;
+    const query = `
+      SELECT 
+        c.*, 
+        cat.name AS category,
+        divi.name AS division,
+        cit.fullName AS citizen_name, 
+        cit.phone AS citizen_phone
+      FROM complaints c
+      LEFT JOIN citizens cit ON c.user_id = cit.user_id
+      LEFT JOIN categories cat ON c.category_id = cat.category_id
+      LEFT JOIN divisions divi ON c.division_id = divi.division_id
+      WHERE c.authority_id = ?
+      ORDER BY c.created_at DESC
+    `;
+    const [rows] = await db.query(query, [authorityId]);
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error("Dashboard Fetch Error:", err);
+    res.status(500).json({ success: false, message: "Error fetching joined data" });
+  }
+});
+
+router.patch('/officer/reject-complaint/:id', authMiddleware, authorize(['admin', 'officer']), async (req, res) => {
+  const complaintId = req.params.id;
+  const { reason, officerName } = req.body; 
+
+  try {
+    const rejectionNote = `\n[ESCALATED BY ${officerName || 'OFFICER'}]: ${reason}`;
+
+    const query = `
+      UPDATE complaints 
+      SET 
+        status = 'REJECTED',
+        admin_notes = CONCAT(IFNULL(admin_notes, ''), ?)
+      WHERE complaint_id = ?
+    `;
+    
+    await db.query(query, [rejectionNote, complaintId]);
+    
+    res.json({ success: true, message: "Complaint escalated to Super Admin." });
+  } catch (err) {
+    console.error("Rejection Error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to reject complaint." });
+  }
+});
+
+router.patch('/update-status/:id', authMiddleware, authorize(['admin', 'officer']), async (req, res) => {
+  const { status } = req.body;
+  const complaintId = req.params.id;
+
+  try {
+    const [complaintData] = await db.query("SELECT user_id, title FROM complaints WHERE complaint_id = ?", [complaintId]);
+    if (complaintData.length === 0) return res.status(404).json({ success: false, message: "Not found" });
+
+    const { user_id, title } = complaintData[0];
+    await db.query(`
+  UPDATE complaints 
+  SET 
+    status = ?, 
+    resolved_at = CASE WHEN UPPER(?) = 'RESOLVED' THEN NOW() ELSE resolved_at END 
+  WHERE complaint_id = ?
+`, [status, status, complaintId]);
+    
+    const notificationMsg = `Update on "${title}": Your complaint is now ${status.toUpperCase()}.`;
+    await db.query(`INSERT INTO notifications (user_id, complaint_id, message) VALUES (?, ?, ?)`, [user_id, complaintId, notificationMsg]);
+
+    res.status(200).json({ success: true, message: "Status updated and citizen notified!" });
+  } catch (error) { res.status(500).json({ success: false, message: "Failed to update status." }); }
+});
+
+// --- CITIZEN / GENERAL ROUTES (Left Open for App Functionality) ---
 router.post('/submit', upload.array('images', 3), async (req, res) => {
   const { user_id, title, description, location_text, latitude, longitude, category_id, division_id } = req.body;
   let image_url = null;
@@ -456,55 +555,6 @@ router.get('/stats/:userId', async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-router.get('/authority/:authorityId', async (req, res) => {
-  try {
-    const { authorityId } = req.params;
-    const query = `
-      SELECT 
-        c.*, 
-        cat.name AS category,
-        divi.name AS division,
-        cit.fullName AS citizen_name, 
-        cit.phone AS citizen_phone
-      FROM complaints c
-      LEFT JOIN citizens cit ON c.user_id = cit.user_id
-      LEFT JOIN categories cat ON c.category_id = cat.category_id
-      LEFT JOIN divisions divi ON c.division_id = divi.division_id
-      WHERE c.authority_id = ?
-      ORDER BY c.created_at DESC
-    `;
-    const [rows] = await db.query(query, [authorityId]);
-    res.json({ success: true, data: rows });
-  } catch (err) {
-    console.error("Dashboard Fetch Error:", err);
-    res.status(500).json({ success: false, message: "Error fetching joined data" });
-  }
-});
-
-router.patch('/officer/reject-complaint/:id', async (req, res) => {
-  const complaintId = req.params.id;
-  const { reason, officerName } = req.body; 
-
-  try {
-    const rejectionNote = `\n[ESCALATED BY ${officerName || 'OFFICER'}]: ${reason}`;
-
-    const query = `
-      UPDATE complaints 
-      SET 
-        status = 'REJECTED',
-        admin_notes = CONCAT(IFNULL(admin_notes, ''), ?)
-      WHERE complaint_id = ?
-    `;
-    
-    await db.query(query, [rejectionNote, complaintId]);
-    
-    res.json({ success: true, message: "Complaint escalated to Super Admin." });
-  } catch (err) {
-    console.error("Rejection Error:", err.message);
-    res.status(500).json({ success: false, message: "Failed to reject complaint." });
-  }
-});
-
 router.get('/:id', async (req, res) => {
   try {
     const sql = `
@@ -536,30 +586,6 @@ router.get('/:id', async (req, res) => {
     console.error("Fetch Complaint Route Error:", error.message);
     res.status(500).json({ success: false, message: "Error fetching complaint." }); 
   }
-});
-
-router.patch('/update-status/:id', async (req, res) => {
-  const { status } = req.body;
-  const complaintId = req.params.id;
-
-  try {
-    const [complaintData] = await db.query("SELECT user_id, title FROM complaints WHERE complaint_id = ?", [complaintId]);
-    if (complaintData.length === 0) return res.status(404).json({ success: false, message: "Not found" });
-
-    const { user_id, title } = complaintData[0];
-    await db.query(`
-  UPDATE complaints 
-  SET 
-    status = ?, 
-    resolved_at = CASE WHEN UPPER(?) = 'RESOLVED' THEN NOW() ELSE resolved_at END 
-  WHERE complaint_id = ?
-`, [status, status, complaintId]);
-    
-    const notificationMsg = `Update on "${title}": Your complaint is now ${status.toUpperCase()}.`;
-    await db.query(`INSERT INTO notifications (user_id, complaint_id, message) VALUES (?, ?, ?)`, [user_id, complaintId, notificationMsg]);
-
-    res.status(200).json({ success: true, message: "Status updated and citizen notified!" });
-  } catch (error) { res.status(500).json({ success: false, message: "Failed to update status." }); }
 });
 
 // 6. EXPORTS
