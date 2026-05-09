@@ -52,10 +52,9 @@ const handleCancelComplaint = () => {
           onPress: async () => {
             setCancelling(true);
             try {
-              const response = await apiFetch(`${SERVER_URL}/api/complaints/update-status/${complaintId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'CANCELLED' })
+              const response = await apiFetch(`${SERVER_URL}/api/complaints/cancel/${complaintId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' }
               });
               
               const data = await response.json(); 
@@ -118,10 +117,11 @@ const handleCancelComplaint = () => {
 
   const getStatusColor = (stat) => {
     switch (stat) {
-      case 'PENDING': return '#FF9F43';
+      case 'PENDING': return '#D97706';
       case 'RESOLVED': return '#28C76F';
       case 'IN PROGRESS': return '#0041C7';
       case 'CANCELLED': return '#EF4444';
+      case 'REJECTED': return '#DC2626';
       default: return '#FF9F43';
     }
   };

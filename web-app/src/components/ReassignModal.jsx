@@ -9,7 +9,6 @@ export default function ReassignModal({ isOpen, onClose, complaintId, onReassign
   
   const [targetAuthority, setTargetAuthority] = useState('');
   const [targetOfficer, setTargetOfficer] = useState('');
-  const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 2. LIFECYCLE & UTILITIES
@@ -45,8 +44,7 @@ export default function ReassignModal({ isOpen, onClose, complaintId, onReassign
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           new_authority_id: targetAuthority,
-          assigned_officer_id: targetOfficer, 
-          reason: reason
+          assigned_officer_id: targetOfficer
         })
       });
 
@@ -149,22 +147,6 @@ export default function ReassignModal({ isOpen, onClose, complaintId, onReassign
               </div>
             </div>
 
-            <div className="mb-2">
-              <label className="block text-[11px] font-bold text-[#1E293B] mb-1.5">Reason for Reassignment <span className="text-[#EF4444]">*</span></label>
-              <textarea 
-                rows="2"
-                placeholder="Briefly explain why this complaint is being moved..."
-                className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-[13px] text-[#1E293B] bg-white focus:outline-none focus:ring-2 focus:ring-[#0041C7] resize-none"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-              ></textarea>
-            </div>
-            
-            <div className="flex items-center mt-3">
-              <input type="checkbox" id="notify" className="w-3.5 h-3.5 text-[#0041C7] border-[#E2E8F0] rounded focus:ring-[#0041C7]" defaultChecked />
-              <label htmlFor="notify" className="ml-2 text-[11px] font-semibold text-[#64748B]">Notify target officer immediately via priority email</label>
-            </div>
-
           </div>
         </div>
 
@@ -175,7 +157,7 @@ export default function ReassignModal({ isOpen, onClose, complaintId, onReassign
           <button 
             onClick={handleReassign}
             className="px-5 py-2.5 bg-[#0041C7] hover:bg-[#0033A0] text-white text-[13px] font-bold rounded-lg shadow-sm transition-colors flex items-center disabled:opacity-50"
-            disabled={!targetAuthority || !targetOfficer || !reason || isSubmitting}
+            disabled={!targetAuthority || !targetOfficer || isSubmitting}
           >
             {isSubmitting ? "Processing..." : "Confirm Reassignment"}
           </button>

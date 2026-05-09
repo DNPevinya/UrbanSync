@@ -37,14 +37,14 @@ export default function ViewComplaintsScreen({ onNavigateToDetails, userId }) {
     }
   };
 
-  const getStepLevelInfo = (status, authorityId) => {
+  const getStepLevelInfo = (status) => {
     const s = status?.toUpperCase();
     if (s === 'REJECTED') return { level: 0, color: '#DC2626', width: '0%' };
     if (s === 'CANCELLED') return { level: 0, color: '#EF4444', width: '0%' }; 
-    if (s === 'RESOLVED') return { level: 4, color: '#28C76F', width: '100%' };
-    if (s === 'IN PROGRESS') return { level: 3, color: '#0041C7', width: '72%' };
-    if (authorityId) return { level: 2, color: '#00B5D8', width: '40%' };
-    return { level: 1, color: '#FFB400', width: '10%' };
+    if (s === 'RESOLVED') return { level: 3, color: '#28C76F', width: '100%' };
+    if (s === 'IN PROGRESS') return { level: 2, color: '#0041C7', width: '50%' };
+    
+    return { level: 1, color: '#D97706', width: '15%' };
   };
 
   const formatDate = (dateString) => {
@@ -112,7 +112,7 @@ export default function ViewComplaintsScreen({ onNavigateToDetails, userId }) {
           filteredComplaints.map((item) => {
             const displayId = item.id || item.complaint_id || '0000';
             const firstImage = item.image_url ? item.image_url.split(',')[0] : null;
-            const stepInfo = getStepLevelInfo(item.status, item.authority_id);
+            const stepInfo = getStepLevelInfo(item.status);
 
             return (
               <View key={displayId} style={styles.complaintCard}>
@@ -145,10 +145,9 @@ export default function ViewComplaintsScreen({ onNavigateToDetails, userId }) {
                       <View style={[styles.progressBarFill, { width: stepInfo.width, backgroundColor: stepInfo.color }]} />
                     </View>
                     <View style={styles.labelRow}>
-                      <Text style={[styles.stepLabel, stepInfo.level >= 1 && {color: '#FFB400'}]}>Reported</Text>
-                      <Text style={[styles.stepLabel, stepInfo.level >= 2 && {color: '#00B5D8'}]}>Processing</Text>
-                      <Text style={[styles.stepLabel, stepInfo.level >= 3 && {color: '#0041C7'}]}>Active</Text>
-                      <Text style={[styles.stepLabel, stepInfo.level >= 4 && {color: '#28C76F'}]}>Fixed</Text>
+                      <Text style={[styles.stepLabel, { flex: 1, textAlign: 'left' }, stepInfo.level >= 1 && {color: '#FFB400'}]}>Reported</Text>
+                      <Text style={[styles.stepLabel, { flex: 1, textAlign: 'center' }, stepInfo.level >= 2 && {color: '#0041C7'}]}>In Progress</Text>
+                      <Text style={[styles.stepLabel, { flex: 1, textAlign: 'right' }, stepInfo.level >= 3 && {color: '#28C76F'}]}>Resolved</Text>
                     </View>
                   </View>
                 )}

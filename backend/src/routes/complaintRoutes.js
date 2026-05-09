@@ -7,14 +7,15 @@ const path = require('path');
 const authMiddleware = require('../middleware/authMiddleware');
 const { authorize } = require('../middleware/roleMiddleware');
 
-// 2. CONFIGURATION & MIDDLEWARE
+// 2. Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => { cb(null, 'uploads/'); },
   filename: (req, file, cb) => { cb(null, `COMP-${Date.now()}-${Math.floor(Math.random() * 1000)}${path.extname(file.originalname)}`); }
 });
 const upload = multer({ storage: storage });
 
-// 3. API ROUTES
+
+// 3. PUBLIC ROUTES (No Login Required)
 
 router.get('/form-data', async (req, res) => {
   try {
@@ -28,18 +29,8 @@ router.get('/form-data', async (req, res) => {
 
     const formData = {};
     rows.forEach(row => {
-      if (!formData[row.category_name]) {
-        formData[row.category_name] = {
-          id: row.category_id,
-          issues: []
-        };
-      }
-      if (row.issue_name) {
-        formData[row.category_name].issues.push({
-          id: row.issue_id,
-          name: row.issue_name
-        });
-      }
+      if (!formData[row.category_name]) formData[row.category_name] = { id: row.category_id, issues: [] };
+      if (row.issue_name) formData[row.category_name].issues.push({ id: row.issue_id, name: row.issue_name });
     });
 
     res.status(200).json({ success: true, data: formData });
@@ -49,6 +40,286 @@ router.get('/form-data', async (req, res) => {
   }
 });
 
+
+// 4. CITIZEN & GENERAL COMPLAINT ROUTES
+
+router.post('/submit', upload.array('images', 3), async (req, res) => {
+  const { user_id, title, description, location_text, latitude, longitude, category_id, division_id } = req.body;
+  let image_url = null;
+  if (req.files && req.files.length > 0) image_url = req.files.map(file => `/uploads/${file.filename}`).join(',');
+
+  try {
+    // Duplicate Check
+    if (latitude && longitude && category_id) {
+        const duplicateCheckQuery = `
+            SELECT complaint_id FROM complaints 
+            WHERE category_id = ? AND UPPER(status) NOT IN ('RESOLVED', 'REJECTED', 'CANCELLED')
+            AND latitude IS NOT NULL AND longitude IS NOT NULL
+            AND ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) <= 50 LIMIT 1
+        `;
+        const [existingComplaints] = await db.query(duplicateCheckQuery, [category_id, longitude, latitude]);
+        if (existingComplaints.length > 0) {
+            return res.status(409).json({ success: false, message: "An issue of this exact type has already been reported at this location. Our team is aware and it is currently in our system." });
+        }
+    }
+
+    let targetDept = "Local Council";
+    try {
+        const [deptResults] = await db.query(`
+            SELECT d.name AS department_name FROM complaint_issues ci
+            JOIN departments d ON ci.department_id = d.department_id
+            WHERE ci.issue_name = ? LIMIT 1
+        `, [title]);
+        if (deptResults.length > 0) targetDept = deptResults[0].department_name;
+    } catch (e) { console.error("Dynamic Department Lookup Failed:", e.message); }
+
+    let targetCity = 'Colombo'; 
+    let fallbackDistrict = 'Colombo'; //  safety 
+    let final_division_id = division_id || null; 
+
+    // THE SMART TEXT ROUTER (No Hardcoding)
+    if (!final_division_id && location_text) {
+        // Try to find the exact Division in the text
+        const [divResults] = await db.query(`
+            SELECT divi.division_id, divi.name, dist.name as district_name 
+            FROM divisions divi
+            JOIN districts dist ON divi.district_id = dist.district_id
+            WHERE LOWER(?) LIKE CONCAT('%', LOWER(divi.name), '%') LIMIT 1
+        `, [location_text]);
+
+        if (divResults.length > 0) {
+            final_division_id = divResults[0].division_id;
+            targetCity = divResults[0].name;
+            fallbackDistrict = divResults[0].district_name;
+        } else {
+            // Try to find the DISTRICT directly in the text
+            const [distResults] = await db.query(`
+                SELECT name FROM districts 
+                WHERE LOWER(?) LIKE CONCAT('%', LOWER(name), '%') LIMIT 1
+            `, [location_text]);
+            if (distResults.length > 0) fallbackDistrict = distResults[0].name;
+        }
+    } else if (final_division_id) {
+        const [divName] = await db.query(`
+            SELECT divi.name, dist.name as district_name FROM divisions divi 
+            JOIN districts dist ON divi.district_id = dist.district_id
+            WHERE divi.division_id = ? LIMIT 1
+        `, [final_division_id]);
+        if (divName.length > 0) {
+            targetCity = divName[0].name;
+            fallbackDistrict = divName[0].district_name;
+        }
+    }
+    
+    let assigned_authority_id = null;
+    const [authResults] = await db.query(`
+      SELECT a.authority_id FROM authorities a
+      JOIN departments d ON a.department_id = d.department_id
+      JOIN divisions divi ON a.division_id = divi.division_id
+      WHERE d.name = ? AND divi.name = ? LIMIT 1
+    `, [targetDept, targetCity]);
+
+    if (authResults.length > 0) {
+      assigned_authority_id = authResults[0].authority_id;
+    } else {
+      // DYNAMIC DISTRICT FALLBACK
+      const [fallbackResults] = await db.query(`
+        SELECT a.authority_id FROM authorities a
+        JOIN departments d ON a.department_id = d.department_id
+        JOIN divisions divi ON a.division_id = divi.division_id
+        JOIN districts dist ON divi.district_id = dist.district_id
+        WHERE d.name = ? AND dist.name = ? LIMIT 1
+      `, [targetDept, fallbackDistrict]);
+      
+      if (fallbackResults.length > 0) assigned_authority_id = fallbackResults[0].authority_id;
+    }
+
+    const insertSql = `
+      INSERT INTO complaints (user_id, title, description, location_text, latitude, longitude, status, image_url, authority_id, category_id, division_id) 
+      VALUES (?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?)
+    `;
+    const [result] = await db.query(insertSql, [user_id, title, description, location_text, latitude || null, longitude || null, image_url, assigned_authority_id, category_id || null, final_division_id]);
+
+    res.status(201).json({ success: true, message: "Complaint submitted successfully!", complaint_id: result.insertId });
+  } catch (error) {
+    console.error("Submit Complaint Error:", error.message);
+    res.status(500).json({ success: false, message: "Failed to save complaint." });
+  }
+});
+
+router.patch('/cancel/:id', authMiddleware, async (req, res) => {
+  try {
+    const [complaint] = await db.query("SELECT user_id, status FROM complaints WHERE complaint_id = ?", [req.params.id]);
+    
+    if (complaint.length === 0) return res.status(404).json({ success: false, message: "Complaint not found." });
+
+    if (req.user.role === 'citizen' && complaint[0].user_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: "You do not have permission to cancel this complaint." });
+    }
+
+    if (complaint[0].status.toUpperCase() !== 'PENDING') {
+      return res.status(400).json({ success: false, message: "Only pending complaints can be cancelled." });
+    }
+
+    await db.query("UPDATE complaints SET status = 'CANCELLED' WHERE complaint_id = ?", [req.params.id]);
+    res.json({ success: true, message: "Complaint cancelled successfully." });
+  } catch (err) {
+    console.error("Cancel Complaint Error:", err);
+    res.status(500).json({ success: false, message: "Failed to cancel complaint." });
+  }
+});
+
+router.get('/user/:userId', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role === 'citizen' && parseInt(req.user.id) !== parseInt(req.params.userId)) {
+      return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+
+    const query = `
+      SELECT c.*, cat.name AS category, divi.name AS division
+      FROM complaints c 
+      LEFT JOIN categories cat ON c.category_id = cat.category_id
+      LEFT JOIN divisions divi ON c.division_id = divi.division_id
+      WHERE c.user_id = ? 
+      ORDER BY c.created_at DESC
+    `;
+    const [complaints] = await db.query(query, [req.params.userId]);
+    res.status(200).json({ success: true, data: complaints });
+  } catch (error) { res.status(500).json({ success: false, message: "Failed to fetch complaints." }); }
+});
+
+router.get('/stats/:userId', authMiddleware, async (req, res) => {
+  try {
+      const userId = req.params.userId;
+      if (req.user.role === 'citizen' && parseInt(req.user.id) !== parseInt(userId)) {
+        return res.status(403).json({ success: false, message: "Unauthorized" });
+      }
+
+      const [total] = await db.query('SELECT COUNT(*) as count FROM complaints WHERE user_id = ?', [userId]);
+      const [pending] = await db.query("SELECT COUNT(*) as count FROM complaints WHERE user_id = ? AND status = 'Pending'", [userId]);
+      const [resolved] = await db.query("SELECT COUNT(*) as count FROM complaints WHERE user_id = ? AND status = 'Resolved'", [userId]);
+      res.json({ total: total[0].count, pending: pending[0].count, resolved: resolved[0].count });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+router.get('/:id', authMiddleware, async (req, res) => {
+  try {
+    const sql = `
+      SELECT c.*, cat.name AS category, divi.name AS division, a.name as authority_name,
+        cit.fullName as citizen_name, cit.phone as citizen_phone, cit.nic as citizen_nic, u.email as citizen_email
+      FROM complaints c 
+      LEFT JOIN authorities a ON c.authority_id = a.authority_id 
+      LEFT JOIN citizens cit ON c.user_id = cit.user_id
+      LEFT JOIN users u ON c.user_id = u.user_id 
+      LEFT JOIN categories cat ON c.category_id = cat.category_id
+      LEFT JOIN divisions divi ON c.division_id = divi.division_id
+      WHERE c.complaint_id = ?
+    `;
+    const [complaint] = await db.query(sql, [req.params.id]);
+    
+    if (complaint.length > 0) {
+      if (req.user.role === 'citizen' && complaint[0].user_id !== req.user.id) {
+        return res.status(403).json({ success: false, message: "Unauthorized access to this report." });
+      }
+      res.status(200).json({ success: true, data: complaint[0] });
+    } else {
+      res.status(404).json({ success: false, message: "Not found" });
+    }
+  } catch (error) { 
+    console.error("Fetch Complaint Route Error:", error.message);
+    res.status(500).json({ success: false, message: "Error fetching complaint." }); 
+  }
+});
+
+
+// 5. ADMIN & OFFICER ROUTES
+
+router.get('/authority/:authorityId', authMiddleware, authorize(['admin', 'officer']), async (req, res) => {
+  try {
+    const { authorityId } = req.params;
+    const query = `
+      SELECT c.*, cat.name AS category, divi.name AS division, cit.fullName AS citizen_name, cit.phone AS citizen_phone
+      FROM complaints c
+      LEFT JOIN citizens cit ON c.user_id = cit.user_id
+      LEFT JOIN categories cat ON c.category_id = cat.category_id
+      LEFT JOIN divisions divi ON c.division_id = divi.division_id
+      WHERE c.authority_id = ?
+      ORDER BY c.created_at DESC
+    `;
+    const [rows] = await db.query(query, [authorityId]);
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    console.error("Dashboard Fetch Error:", err);
+    res.status(500).json({ success: false, message: "Error fetching joined data" });
+  }
+});
+
+router.patch('/update-status/:id', authMiddleware, authorize(['admin', 'officer']), async (req, res) => {
+  const { status } = req.body;
+  const complaintId = req.params.id;
+
+  try {
+    const [complaintData] = await db.query("SELECT user_id, title FROM complaints WHERE complaint_id = ?", [complaintId]);
+    if (complaintData.length === 0) return res.status(404).json({ success: false, message: "Not found" });
+
+    const { user_id, title } = complaintData[0];
+    await db.query(`
+      UPDATE complaints 
+      SET status = ?, resolved_at = CASE WHEN UPPER(?) = 'RESOLVED' THEN NOW() ELSE resolved_at END 
+      WHERE complaint_id = ?
+    `, [status, status, complaintId]);
+    
+    const notificationMsg = `Update on "${title}": Your complaint is now ${status.toUpperCase()}.`;
+    await db.query(`INSERT INTO notifications (user_id, complaint_id, message) VALUES (?, ?, ?)`, [user_id, complaintId, notificationMsg]);
+
+    res.status(200).json({ success: true, message: "Status updated and citizen notified!" });
+  } catch (error) { res.status(500).json({ success: false, message: "Failed to update status." }); }
+});
+
+router.patch('/officer/reject-complaint/:id', authMiddleware, authorize(['admin', 'officer']), async (req, res) => {
+  const complaintId = req.params.id;
+  const { reason, officerName } = req.body; 
+
+  try {
+    const rejectionNote = `\n[ESCALATED BY ${officerName || 'OFFICER'}]: ${reason}`;
+    const query = `
+      UPDATE complaints 
+      SET status = 'REJECTED', admin_notes = CONCAT(IFNULL(admin_notes, ''), ?)
+      WHERE complaint_id = ?
+    `;
+    await db.query(query, [rejectionNote, complaintId]);
+    res.json({ success: true, message: "Complaint escalated to Super Admin." });
+  } catch (err) {
+    console.error("Rejection Error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to reject complaint." });
+  }
+});
+
+router.patch('/reassign/:id', authMiddleware, authorize(['admin']), async (req, res) => {
+  const { new_authority_id } = req.body;
+  const complaintId = req.params.id;
+
+  try {
+    await db.query(`UPDATE complaints SET authority_id = ?, status = 'PENDING' WHERE complaint_id = ?`, [new_authority_id, complaintId]);
+    res.status(200).json({ success: true, message: "Reassigned successfully!" });
+  } catch (error) { 
+    console.error("Reassign error:", error);
+    res.status(500).json({ success: false, message: "Failed to reassign." }); 
+  }
+});
+
+router.delete('/admin/delete-complaint/:id', authMiddleware, authorize(['admin']), async (req, res) => {
+  const complaintId = req.params.id;
+  try {
+    await db.query(`DELETE FROM complaints WHERE complaint_id = ?`, [complaintId]);
+    res.json({ success: true, message: "Complaint permanently deleted." });
+  } catch (err) {
+    console.error("Delete Complaint Error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to delete complaint." });
+  }
+});
+
+// Admin Analytics & Dashboards
 router.get('/admin/stats', authMiddleware, authorize(['admin']), async (req, res) => {
   try {
     const [total] = await db.query('SELECT COUNT(*) as count FROM complaints');
@@ -63,6 +334,24 @@ router.get('/admin/stats', authMiddleware, authorize(['admin']), async (req, res
   } catch (err) {
     console.error("Admin Stats Error:", err);
     res.status(500).json({ success: false, message: "Stats sync failed" });
+  }
+});
+
+router.get('/admin/all', authMiddleware, authorize(['admin']), async (req, res) => {
+  try {
+    const sql = `
+      SELECT c.*, cat.name AS category, divi.name AS division, a.name as authority_name, auth_div.name AS region 
+      FROM complaints c
+      LEFT JOIN authorities a ON c.authority_id = a.authority_id
+      LEFT JOIN categories cat ON c.category_id = cat.category_id
+      LEFT JOIN divisions divi ON c.division_id = divi.division_id
+      LEFT JOIN divisions auth_div ON a.division_id = auth_div.division_id
+      ORDER BY c.created_at DESC
+    `;
+    const [complaints] = await db.query(sql);
+    res.status(200).json({ success: true, data: complaints });
+  } catch (error) { 
+    res.status(500).json({ success: false, message: "Error fetching complaints" }); 
   }
 });
 
@@ -87,12 +376,7 @@ router.get('/admin/performance', authMiddleware, authorize(['admin']), async (re
 router.get('/admin/all-recent', authMiddleware, authorize(['admin']), async (req, res) => {
   try {
     const query = `
-      SELECT 
-        c.*, 
-        cat.name AS category,
-        divi.name AS division,
-        a.name AS authority_name, 
-        cit.fullName AS citizen_name
+      SELECT c.*, cat.name AS category, divi.name AS division, a.name AS authority_name, cit.fullName AS citizen_name
       FROM complaints c
       LEFT JOIN authorities a ON c.authority_id = a.authority_id
       LEFT JOIN citizens cit ON c.user_id = cit.user_id
@@ -106,29 +390,6 @@ router.get('/admin/all-recent', authMiddleware, authorize(['admin']), async (req
   } catch (err) {
     console.error("Admin Recent Activity Error:", err);
     res.status(500).json({ success: false, message: "Master list sync failed" });
-  }
-});
-
-router.get('/admin/all', authMiddleware, authorize(['admin']), async (req, res) => {
-  try {
-    const sql = `
-      SELECT 
-        c.*, 
-        cat.name AS category,
-        divi.name AS division,
-        a.name as authority_name, 
-        auth_div.name AS region 
-      FROM complaints c
-      LEFT JOIN authorities a ON c.authority_id = a.authority_id
-      LEFT JOIN categories cat ON c.category_id = cat.category_id
-      LEFT JOIN divisions divi ON c.division_id = divi.division_id
-      LEFT JOIN divisions auth_div ON a.division_id = auth_div.division_id
-      ORDER BY c.created_at DESC
-    `;
-    const [complaints] = await db.query(sql);
-    res.status(200).json({ success: true, data: complaints });
-  } catch (error) { 
-    res.status(500).json({ success: false, message: "Error fetching complaints" }); 
   }
 });
 
@@ -155,11 +416,7 @@ router.get('/admin/officers/:authorityId', authMiddleware, authorize(['admin']),
 router.get('/admin/authorities-list', authMiddleware, authorize(['admin']), async (req, res) => {
   try {
     const query = `
-      SELECT 
-        a.authority_id, a.name, a.department_id, a.division_id,
-        d.name AS department, 
-        divi.name AS region, 
-        COUNT(o.officer_id) as officer_count
+      SELECT a.authority_id, a.name, a.department_id, a.division_id, d.name AS department, divi.name AS region, COUNT(o.officer_id) as officer_count
       FROM authorities a
       LEFT JOIN departments d ON a.department_id = d.department_id
       LEFT JOIN divisions divi ON a.division_id = divi.division_id
@@ -177,26 +434,11 @@ router.get('/admin/authorities-list', authMiddleware, authorize(['admin']), asyn
 
 router.post('/admin/add-authority', authMiddleware, authorize(['super_admin', 'admin']), async (req, res) => {
   const { name, department_id, division_id } = req.body;
-  
-  // 1. The Auto-Code Dictionary
-  const codeDictionary = {
-    1: 'LOC', // Local Councils
-    2: 'PHI', // Public Health
-    3: 'POL', // Police
-    4: 'WAT', // Water Board
-    5: 'ENV', // Environment Authority
-    6: 'UDA', // Urban Development
-    7: 'CEB', // Electricity Board
-    8: 'TRA', // Transport
-    9: 'GRA'  // Grama Niladhari
-  };
-
+  const codeDictionary = { 1: 'LOC', 2: 'PHI', 3: 'POL', 4: 'WAT', 5: 'ENV', 6: 'UDA', 7: 'CEB', 8: 'TRA', 9: 'GRA' };
   const auto_code = codeDictionary[department_id] || 'GEN';
-
   try {
     const query = `INSERT INTO authorities (name, authority_code, department_id, division_id) VALUES (?, ?, ?, ?)`;
     await db.query(query, [name, auto_code, department_id, division_id]);
-    
     res.status(201).json({ success: true, message: "Authority created successfully with code " + auto_code });
   } catch (err) {
     console.error("Add Authority Error:", err.message);
@@ -219,13 +461,11 @@ router.put('/admin/update-authority/:id', authMiddleware, authorize(['admin']), 
 router.delete('/admin/delete-authority/:id', authMiddleware, authorize(['admin']), async (req, res) => {
   const { fallback_authority_id } = req.body;
   const authIdToDelete = req.params.id;
-
   try {
     if (fallback_authority_id) {
       await db.query(`UPDATE complaints SET authority_id = ? WHERE authority_id = ?`, [fallback_authority_id, authIdToDelete]);
     }
     await db.query(`DELETE FROM authorities WHERE authority_id = ?`, [authIdToDelete]);
-    
     res.json({ success: true, message: "Authority deleted and complaints reassigned!" });
   } catch (err) {
     console.error("Delete Auth Error:", err.message);
@@ -250,17 +490,6 @@ router.get('/admin/divisions-list', authMiddleware, authorize(['admin']), async 
   } catch (err) {
     console.error("Fetch Divisions Error:", err.message);
     res.status(500).json({ success: false, message: "Failed to fetch divisions." });
-  }
-});
-
-router.delete('/admin/delete-complaint/:id', authMiddleware, authorize(['admin']), async (req, res) => {
-  const complaintId = req.params.id;
-  try {
-    await db.query(`DELETE FROM complaints WHERE complaint_id = ?`, [complaintId]);
-    res.json({ success: true, message: "Complaint permanently deleted." });
-  } catch (err) {
-    console.error("Delete Complaint Error:", err.message);
-    res.status(500).json({ success: false, message: "Failed to delete complaint." });
   }
 });
 
@@ -336,248 +565,6 @@ router.get('/admin/analytics', authMiddleware, authorize(['admin']), async (req,
   } catch (err) {
     console.error("Analytics Error:", err.message); 
     res.status(500).json({ success: false, message: "Failed to load analytics." });
-  }
-});
-
-router.patch('/reassign/:id', authMiddleware, authorize(['admin']), async (req, res) => {
-  const { new_authority_id, reason } = req.body;
-  const complaintId = req.params.id;
-
-  try {
-    await db.query(`UPDATE complaints SET authority_id = ?, status = 'PENDING' WHERE complaint_id = ?`, [new_authority_id, complaintId]);
-    res.status(200).json({ success: true, message: "Reassigned successfully!" });
-  } catch (error) { 
-    console.error("Reassign error:", error);
-    res.status(500).json({ success: false, message: "Failed to reassign." }); 
-  }
-});
-
-router.get('/authority/:authorityId', authMiddleware, authorize(['admin', 'officer']), async (req, res) => {
-  try {
-    const { authorityId } = req.params;
-    const query = `
-      SELECT 
-        c.*, 
-        cat.name AS category,
-        divi.name AS division,
-        cit.fullName AS citizen_name, 
-        cit.phone AS citizen_phone
-      FROM complaints c
-      LEFT JOIN citizens cit ON c.user_id = cit.user_id
-      LEFT JOIN categories cat ON c.category_id = cat.category_id
-      LEFT JOIN divisions divi ON c.division_id = divi.division_id
-      WHERE c.authority_id = ?
-      ORDER BY c.created_at DESC
-    `;
-    const [rows] = await db.query(query, [authorityId]);
-    res.json({ success: true, data: rows });
-  } catch (err) {
-    console.error("Dashboard Fetch Error:", err);
-    res.status(500).json({ success: false, message: "Error fetching joined data" });
-  }
-});
-
-router.patch('/officer/reject-complaint/:id', authMiddleware, authorize(['admin', 'officer']), async (req, res) => {
-  const complaintId = req.params.id;
-  const { reason, officerName } = req.body; 
-
-  try {
-    const rejectionNote = `\n[ESCALATED BY ${officerName || 'OFFICER'}]: ${reason}`;
-
-    const query = `
-      UPDATE complaints 
-      SET 
-        status = 'REJECTED',
-        admin_notes = CONCAT(IFNULL(admin_notes, ''), ?)
-      WHERE complaint_id = ?
-    `;
-    
-    await db.query(query, [rejectionNote, complaintId]);
-    
-    res.json({ success: true, message: "Complaint escalated to Super Admin." });
-  } catch (err) {
-    console.error("Rejection Error:", err.message);
-    res.status(500).json({ success: false, message: "Failed to reject complaint." });
-  }
-});
-
-router.patch('/update-status/:id', authMiddleware, authorize(['admin', 'officer']), async (req, res) => {
-  const { status } = req.body;
-  const complaintId = req.params.id;
-
-  try {
-    const [complaintData] = await db.query("SELECT user_id, title FROM complaints WHERE complaint_id = ?", [complaintId]);
-    if (complaintData.length === 0) return res.status(404).json({ success: false, message: "Not found" });
-
-    const { user_id, title } = complaintData[0];
-    await db.query(`
-  UPDATE complaints 
-  SET 
-    status = ?, 
-    resolved_at = CASE WHEN UPPER(?) = 'RESOLVED' THEN NOW() ELSE resolved_at END 
-  WHERE complaint_id = ?
-`, [status, status, complaintId]);
-    
-    const notificationMsg = `Update on "${title}": Your complaint is now ${status.toUpperCase()}.`;
-    await db.query(`INSERT INTO notifications (user_id, complaint_id, message) VALUES (?, ?, ?)`, [user_id, complaintId, notificationMsg]);
-
-    res.status(200).json({ success: true, message: "Status updated and citizen notified!" });
-  } catch (error) { res.status(500).json({ success: false, message: "Failed to update status." }); }
-});
-
-router.post('/submit', upload.array('images', 3), async (req, res) => {
-  const { user_id, title, description, location_text, latitude, longitude, category_id, division_id } = req.body;
-  let image_url = null;
-  if (req.files && req.files.length > 0) image_url = req.files.map(file => `/uploads/${file.filename}`).join(',');
-
-  try {
-    if (latitude && longitude && category_id) {
-        const duplicateCheckQuery = `
-            SELECT complaint_id 
-            FROM complaints 
-            WHERE category_id = ? 
-            AND UPPER(status) NOT IN ('RESOLVED', 'REJECTED', 'CANCELLED')
-            AND latitude IS NOT NULL AND longitude IS NOT NULL
-            AND ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) <= 50
-            LIMIT 1
-        `;
-        const [existingComplaints] = await db.query(duplicateCheckQuery, [category_id, longitude, latitude]);
-
-        if (existingComplaints.length > 0) {
-            return res.status(409).json({
-                success: false,
-                message: "An issue of this exact type has already been reported at this location. Our team is aware and it is currently in our system."
-            });
-        }
-    }
-
-    let targetDept = "Local Council";
-    try {
-        const [deptResults] = await db.query(`
-            SELECT d.name AS department_name 
-            FROM complaint_issues ci
-            JOIN departments d ON ci.department_id = d.department_id
-            WHERE ci.issue_name = ? LIMIT 1
-        `, [title]);
-        if (deptResults.length > 0) targetDept = deptResults[0].department_name;
-    } catch (e) { console.error("Dynamic Department Lookup Failed:", e.message); }
-
-    let targetCity = 'Colombo'; 
-    let final_division_id = division_id || null; 
-
-    if (!final_division_id && location_text) {
-        const [divResults] = await db.query(`
-            SELECT division_id, name 
-            FROM divisions 
-            WHERE LOWER(?) LIKE CONCAT('%', LOWER(name), '%') 
-            LIMIT 1
-        `, [location_text]);
-        if (divResults.length > 0) {
-            final_division_id = divResults[0].division_id;
-            targetCity = divResults[0].name;
-        }
-    } else if (final_division_id) {
-        const [divName] = await db.query(`SELECT name FROM divisions WHERE division_id = ? LIMIT 1`, [final_division_id]);
-        if (divName.length > 0) targetCity = divName[0].name;
-    }
-    
-    let assigned_authority_id = null;
-    const findAuthSql = `
-      SELECT a.authority_id 
-      FROM authorities a
-      JOIN departments d ON a.department_id = d.department_id
-      JOIN divisions divi ON a.division_id = divi.division_id
-      WHERE d.name = ? AND divi.name = ? LIMIT 1
-    `;
-    const [authResults] = await db.query(findAuthSql, [targetDept, targetCity]);
-
-    if (authResults.length > 0) {
-      assigned_authority_id = authResults[0].authority_id;
-    } else {
-      const fallbackDistrict = (targetCity === 'Kadawatha' || targetCity === 'Negombo') ? 'Gampaha' : 'Colombo';
-      const fallbackSql = `
-        SELECT a.authority_id 
-        FROM authorities a
-        JOIN departments d ON a.department_id = d.department_id
-        JOIN divisions divi ON a.division_id = divi.division_id
-        WHERE d.name = ? AND divi.name = ? LIMIT 1
-      `;
-      const [fallbackResults] = await db.query(fallbackSql, [targetDept, fallbackDistrict]);
-      if (fallbackResults.length > 0) assigned_authority_id = fallbackResults[0].authority_id;
-    }
-
-    const insertSql = `
-      INSERT INTO complaints (user_id, title, description, location_text, latitude, longitude, status, image_url, authority_id, category_id, division_id) 
-      VALUES (?, ?, ?, ?, ?, ?, 'Pending', ?, ?, ?, ?)
-    `;
-    const values = [user_id, title, description, location_text, latitude || null, longitude || null, image_url, assigned_authority_id, category_id || null, final_division_id];
-    const [result] = await db.query(insertSql, values);
-
-    res.status(201).json({ success: true, message: "Complaint submitted successfully!", complaint_id: result.insertId });
-  } catch (error) {
-    console.error("Submit Complaint Error:", error.message);
-    res.status(500).json({ success: false, message: "Failed to save complaint." });
-  }
-});
-
-router.get('/user/:userId', async (req, res) => {
-  try {
-    const query = `
-      SELECT 
-        c.*, 
-        cat.name AS category,
-        divi.name AS division
-      FROM complaints c 
-      LEFT JOIN categories cat ON c.category_id = cat.category_id
-      LEFT JOIN divisions divi ON c.division_id = divi.division_id
-      WHERE c.user_id = ? 
-      ORDER BY c.created_at DESC
-    `;
-    const [complaints] = await db.query(query, [req.params.userId]);
-    res.status(200).json({ success: true, data: complaints });
-  } catch (error) { res.status(500).json({ success: false, message: "Failed to fetch complaints." }); }
-});
-
-router.get('/stats/:userId', async (req, res) => {
-  try {
-      const userId = req.params.userId;
-      const [total] = await db.query('SELECT COUNT(*) as count FROM complaints WHERE user_id = ?', [userId]);
-      const [pending] = await db.query("SELECT COUNT(*) as count FROM complaints WHERE user_id = ? AND status = 'Pending'", [userId]);
-      const [resolved] = await db.query("SELECT COUNT(*) as count FROM complaints WHERE user_id = ? AND status = 'Resolved'", [userId]);
-      res.json({ total: total[0].count, pending: pending[0].count, resolved: resolved[0].count });
-  } catch (error) { res.status(500).json({ error: error.message }); }
-});
-
-router.get('/:id', async (req, res) => {
-  try {
-    const sql = `
-      SELECT 
-        c.*, 
-        cat.name AS category,
-        divi.name AS division,
-        a.name as authority_name,
-        cit.fullName as citizen_name,
-        cit.phone as citizen_phone,
-        cit.nic as citizen_nic,
-        u.email as citizen_email
-      FROM complaints c 
-      LEFT JOIN authorities a ON c.authority_id = a.authority_id 
-      LEFT JOIN citizens cit ON c.user_id = cit.user_id
-      LEFT JOIN users u ON c.user_id = u.user_id 
-      LEFT JOIN categories cat ON c.category_id = cat.category_id
-      LEFT JOIN divisions divi ON c.division_id = divi.division_id
-      WHERE c.complaint_id = ?
-    `;
-    const [complaint] = await db.query(sql, [req.params.id]);
-    
-    if (complaint.length > 0) {
-      res.status(200).json({ success: true, data: complaint[0] });
-    } else {
-      res.status(404).json({ success: false, message: "Not found" });
-    }
-  } catch (error) { 
-    console.error("Fetch Complaint Route Error:", error.message);
-    res.status(500).json({ success: false, message: "Error fetching complaint." }); 
   }
 });
 

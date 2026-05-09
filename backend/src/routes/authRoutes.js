@@ -1,3 +1,4 @@
+
 // 1. MODULE IMPORTS
 const express = require('express');
 const router = express.Router();
@@ -7,9 +8,12 @@ const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+
+// Security Middlewares
 const authMiddleware = require('../middleware/authMiddleware');
+const { authorize } = require('../middleware/roleMiddleware');
 
-
+// 2. CONFIGURATION
 const storage = multer.diskStorage({
     destination: path.join(__dirname, '..', '..', 'uploads'),
     filename: (req, file, cb) => {
@@ -18,7 +22,8 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// 3. API ROUTES
+// 3. PUBLIC ROUTES (No Login Required)
+
 router.get('/locations', async (req, res) => {
     try {
         const query = `
@@ -31,9 +36,7 @@ router.get('/locations', async (req, res) => {
 
         const locationData = {};
         rows.forEach(row => {
-            if (!locationData[row.district_name]) {
-                locationData[row.district_name] = [];
-            }
+            if (!locationData[row.district_name]) locationData[row.district_name] = [];
             locationData[row.district_name].push(row.division_name);
         });
 
@@ -49,14 +52,10 @@ router.post('/register', async (req, res) => {
 
     try {
         const [existingUser] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
-        if (existingUser.length > 0) {
-            return res.status(400).json({ message: "This email is already registered." });
-        }
+        if (existingUser.length > 0) return res.status(400).json({ message: "This email is already registered." });
 
         const [existingNic] = await db.query("SELECT * FROM citizens WHERE nic = ?", [nic]);
-        if (existingNic.length > 0) {
-            return res.status(409).json({ message: "An account with this NIC already exists." });
-        }
+        if (existingNic.length > 0) return res.status(409).json({ message: "An account with this NIC already exists." });
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
@@ -70,22 +69,17 @@ router.post('/register', async (req, res) => {
         
         if (!final_division_id && divisionSearchText) {
             const [divResults] = await db.query(`
-                SELECT division_id 
-                FROM divisions 
-                WHERE LOWER(name) LIKE CONCAT('%', LOWER(?), '%') 
-                LIMIT 1
+                SELECT division_id FROM divisions 
+                WHERE LOWER(name) LIKE CONCAT('%', LOWER(?), '%') LIMIT 1
             `, [divisionSearchText.trim()]);
             
-            if (divResults.length > 0) {
-                final_division_id = divResults[0].division_id;
-            }
+            if (divResults.length > 0) final_division_id = divResults[0].division_id;
         }
 
         const citizenSql = `INSERT INTO citizens (user_id, fullName, phone, nic, status, division_id) VALUES (?, ?, ?, ?, 'Active', ?)`;
         await db.query(citizenSql, [newUserId, fullName, phone, nic, final_division_id]);
 
         res.status(201).json({ message: "Citizen registered successfully!" });
-
     } catch (error) {
         console.error("Registration Error:", error);
         res.status(500).json({ message: "Internal Server Error" });
@@ -97,18 +91,12 @@ router.post('/login', async (req, res) => {
 
     try {
         const [users] = await db.query(`SELECT * FROM users WHERE email = ?`, [email]);
-        
-        if (users.length === 0) {
-            return res.status(401).json({ message: "Invalid email or password." });
-        }
+        if (users.length === 0) return res.status(401).json({ message: "Invalid email or password." });
 
         const user = users[0];
-
         const isBcryptMatch = await bcrypt.compare(password, user.password);
 
-        if (!isBcryptMatch) {
-        return res.status(401).json({ message: "Invalid email or password." });
-        }
+        if (!isBcryptMatch) return res.status(401).json({ message: "Invalid email or password." });
 
         let userProfile = { id: user.user_id, email: user.email, role: user.role };
 
@@ -123,26 +111,26 @@ router.post('/login', async (req, res) => {
             const [citizens] = await db.query(citizenQuery, [user.user_id]);
             
             if (citizens.length > 0) {
-                if (citizens[0].status === 'Suspended') {
-                    return res.status(403).json({ message: "Your account has been suspended. Please contact support." });
-                }
+                if (citizens[0].status === 'Suspended') return res.status(403).json({ message: "Your account has been suspended. Please contact support." });
 
-                userProfile.fullName = citizens[0].fullName;
-                userProfile.phone = citizens[0].phone;
-                userProfile.district = citizens[0].district;
-                userProfile.division = citizens[0].division; 
-                userProfile.division_id = citizens[0].division_id;
-                userProfile.district_id = citizens[0].district_id; 
-                userProfile.profilePicture = citizens[0].profilePicture || null;
-                userProfile.nic = citizens[0].nic;
+                userProfile = {
+                    ...userProfile,
+                    fullName: citizens[0].fullName,
+                    phone: citizens[0].phone,
+                    district: citizens[0].district,
+                    division: citizens[0].division,
+                    division_id: citizens[0].division_id,
+                    district_id: citizens[0].district_id,
+                    profilePicture: citizens[0].profilePicture || null,
+                    nic: citizens[0].nic
+                };
 
                 let cleanPhone = citizens[0].phone.toString().replace(/\s+/g, '').replace(/^0+/, '');
                 let formattedPhone = `+94${cleanPhone}`;
 
-                const secret = process.env.JWT_SECRET;
                 const token = jwt.sign(
                     { id: userProfile.id, email: userProfile.email, role: userProfile.role },
-                    secret,
+                    process.env.JWT_SECRET,
                     { expiresIn: '24h' }
                 );
 
@@ -154,11 +142,9 @@ router.post('/login', async (req, res) => {
                     token: token
                 });
             }
-        }
-        else if (user.role === 'officer') {
+        } else if (user.role === 'officer') {
             const officerQuery = `
-                SELECT o.full_name, o.authority_id, o.status, a.name as authority_name, 
-                       dept.name as dept_type
+                SELECT o.full_name, o.authority_id, o.status, a.name as authority_name, dept.name as dept_type
                 FROM officers o
                 LEFT JOIN authorities a ON o.authority_id = a.authority_id
                 LEFT JOIN departments dept ON a.department_id = dept.department_id
@@ -167,43 +153,79 @@ router.post('/login', async (req, res) => {
             const [officers] = await db.query(officerQuery, [user.user_id]);
             
             if (officers.length > 0) {
-                if (officers[0].status === 'Inactive') {
-                    return res.status(403).json({ message: "Your account has been deactivated. Please contact the Super Admin." });
-                }
+                if (officers[0].status === 'Inactive') return res.status(403).json({ message: "Your account has been deactivated. Please contact the Super Admin." });
 
-                userProfile.fullName = officers[0].full_name;
-                userProfile.authority_id = officers[0].authority_id;
-                userProfile.authorityName = officers[0].authority_name; 
-                userProfile.deptType = officers[0].dept_type; 
+                userProfile = {
+                    ...userProfile,
+                    fullName: officers[0].full_name,
+                    authority_id: officers[0].authority_id,
+                    authorityName: officers[0].authority_name,
+                    deptType: officers[0].dept_type
+                };
             }
         }
 
-        const secret = process.env.JWT_SECRET;
         const token = jwt.sign(
             { id: userProfile.id, email: userProfile.email, role: userProfile.role },
-            secret,
+            process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
 
         res.status(200).json({ message: "Login successful!", user: userProfile, token: token });
-
     } catch (error) {
         console.error("Login DB Error:", error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 });
 
-router.put('/update-profile', upload.single('profileImage'), async (req, res) => {
-    const { email, fullName, phone, district, division, currentPassword, newPassword, deleteImage, division_id, divisionId } = req.body;
+router.post('/forgot-password-init', async (req, res) => {
+    const { email } = req.body;
+    try {
+        const [users] = await db.query('SELECT user_id, role FROM users WHERE email = ?', [email]);
+        if (users.length === 0 || users[0].role !== 'citizen') return res.status(404).json({ message: "No citizen account found with this email." });
+
+        const [citizens] = await db.query('SELECT phone FROM citizens WHERE user_id = ?', [users[0].user_id]);
+        if (citizens.length === 0) return res.status(404).json({ message: "Phone number not found for this account." });
+
+        let cleanPhone = citizens[0].phone.toString().replace(/\s+/g, '').replace(/^0+/, '');
+        let formattedPhone = `+94${cleanPhone}`;
+
+        res.status(200).json({ success: true, phone: formattedPhone });
+    } catch (error) {
+        console.error("Forgot Password Error:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
+router.post('/reset-password', async (req, res) => {
+    const { email, newPassword } = req.body;
+    try {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        await db.query('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, email]);
+        res.status(200).json({ success: true, message: "Password reset successfully!" });
+    } catch (error) {
+        console.error("Reset Password Error:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+
+// 4. LOGGED-IN USER ROUTES (Citizens/Officers)
+
+router.put('/update-profile', authMiddleware, upload.single('profileImage'), async (req, res) => {
+    const { fullName, phone, district, division, currentPassword, newPassword, deleteImage, division_id, divisionId } = req.body;
 
     try {
+        // Securely use the token ID
+        const userId = req.user.id;
+
         const fetchSql = `
             SELECT u.*, c.profilePicture, c.nic 
-            FROM users u 
-            JOIN citizens c ON u.user_id = c.user_id 
-            WHERE u.email = ?
+            FROM users u JOIN citizens c ON u.user_id = c.user_id 
+            WHERE u.user_id = ?
         `;
-        const [users] = await db.query(fetchSql, [email]);
+        const [users] = await db.query(fetchSql, [userId]);
         if (users.length === 0) return res.status(404).json({ message: "User not found." });
         
         const user = users[0];
@@ -232,36 +254,53 @@ router.put('/update-profile', upload.single('profileImage'), async (req, res) =>
         let divisionSearchText = division || req.body.location || req.body.city || req.body.selectedDivision || null;
         
         if (!final_div_id && divisionSearchText) {
-            const [divResults] = await db.query(`
-                SELECT division_id 
-                FROM divisions 
-                WHERE LOWER(name) LIKE CONCAT('%', LOWER(?), '%') 
-                LIMIT 1
-            `, [divisionSearchText.trim()]);
-            
-            if (divResults.length > 0) {
-                final_div_id = divResults[0].division_id;
-            }
+            const [divResults] = await db.query(`SELECT division_id FROM divisions WHERE LOWER(name) LIKE CONCAT('%', LOWER(?), '%') LIMIT 1`, [divisionSearchText.trim()]);
+            if (divResults.length > 0) final_div_id = divResults[0].division_id;
         }
 
-        const updateCitizenSql = `
-            UPDATE citizens 
-            SET fullName = ?, phone = ?, profilePicture = ?, division_id = ?
-            WHERE user_id = ?
-        `;
-        
+        const updateCitizenSql = `UPDATE citizens SET fullName = ?, phone = ?, profilePicture = ?, division_id = ? WHERE user_id = ?`;
         await db.query(updateCitizenSql, [fullName, phone, profilePicPath, final_div_id, user.user_id]);
 
         res.status(200).json({ message: "Profile updated successfully!", profilePicture: profilePicPath });
-
     } catch (error) {
         console.error("Update Error:", error);
         res.status(500).json({ message: "Failed to update profile details." });
     }
 });
 
+router.post('/update-password', authMiddleware, async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+
+    try {
+        const userId = req.user.id;
+
+        const [users] = await db.query('SELECT * FROM users WHERE user_id = ?', [userId]);
+        if (users.length === 0) return res.status(404).json({ message: "User not found" });
+
+        const user = users[0];
+        
+        const isBcryptMatch = await bcrypt.compare(currentPassword, user.password);
+        const isPlainTextMatch = currentPassword === user.password; 
+        
+        if (!isBcryptMatch && !isPlainTextMatch) {
+            return res.status(400).json({ success: false, message: "Authentication Failed: Incorrect current password." });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        await db.query('UPDATE users SET password = ? WHERE user_id = ?', [hashedPassword, userId]);
+        res.json({ success: true, message: "Security credentials updated successfully!" });
+    } catch (error) {
+        console.error("Update Password Error:", error);
+        res.status(500).json({ message: "Internal Server error" });
+    }
+});
+
 router.get('/notifications/:userId', authMiddleware, async (req, res) => {
   try {
+    if (parseInt(req.user.id) !== parseInt(req.params.userId)) return res.status(403).json({ success: false, message: "Unauthorized" });
+
     const [rows] = await db.query("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC", [req.params.userId]);
     res.status(200).json({ success: true, data: rows });
   } catch (error) {
@@ -269,9 +308,11 @@ router.get('/notifications/:userId', authMiddleware, async (req, res) => {
   }
 });
 
-router.patch('/notifications/read-all/:userId', async (req, res) => {
+router.patch('/notifications/read-all/:userId', authMiddleware, async (req, res) => {
   try {
     const { userId } = req.params;
+    if (parseInt(req.user.id) !== parseInt(userId)) return res.status(403).json({ success: false, message: "Unauthorized" });
+
     await db.query('UPDATE notifications SET is_read = 1 WHERE user_id = ?', [userId]);
     res.json({ success: true, message: "All notifications marked as read" });
   } catch (err) {
@@ -279,56 +320,17 @@ router.patch('/notifications/read-all/:userId', async (req, res) => {
   }
 });
 
-router.post('/update-password', async (req, res) => {
-    const { email, currentPassword, newPassword } = req.body;
+// 5. ADMIN ONLY ROUTES
 
-    try {
-        const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-        if (users.length === 0) return res.status(404).json({ message: "User not found" });
-
-        const user = users[0];
-
-        const isBcryptMatch = await bcrypt.compare(currentPassword, user.password);
-        const isPlainTextMatch = currentPassword === user.password; 
-        
-        if (!isBcryptMatch && !isPlainTextMatch) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Authentication Failed: The current password you entered does not match our records." 
-            });
-        }
-
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-        await db.query('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, email]);
-        res.json({ success: true, message: "Security credentials updated successfully!" });
-
-    } catch (error) {
-        res.status(500).json({ message: "Internal Server error" });
-    }
-});
-
-// 4. ADMIN ROUTES
-router.get('/admin/citizens', authMiddleware, async (req, res) => {
+router.get('/admin/citizens', authMiddleware, authorize(['admin']), async (req, res) => {
     try {
         const query = `
-            SELECT 
-                c.citizen_id, 
-                c.fullName, 
-                u.email, 
-                c.phone, 
-                c.nic, 
-                dist.name AS district, 
-                divi.name AS division, 
-                c.status,
-                u.created_at 
+            SELECT c.citizen_id, c.fullName, u.email, c.phone, c.nic, dist.name AS district, divi.name AS division, c.status, u.created_at 
             FROM citizens c
             JOIN users u ON c.user_id = u.user_id
             LEFT JOIN divisions divi ON c.division_id = divi.division_id
             LEFT JOIN districts dist ON divi.district_id = dist.district_id
-            WHERE u.role = 'citizen'
-            ORDER BY u.created_at DESC
+            WHERE u.role = 'citizen' ORDER BY u.created_at DESC
         `;
         const [rows] = await db.query(query);
         res.json({ success: true, data: rows });
@@ -338,7 +340,7 @@ router.get('/admin/citizens', authMiddleware, async (req, res) => {
     }
 });
 
-router.patch('/admin/suspend-citizen/:id', authMiddleware, async (req, res) => {
+router.patch('/admin/suspend-citizen/:id', authMiddleware, authorize(['admin']), async (req, res) => {
     const { status } = req.body; 
     try {
         await db.query('UPDATE citizens SET status = ? WHERE citizen_id = ?', [status, req.params.id]);
@@ -349,18 +351,14 @@ router.patch('/admin/suspend-citizen/:id', authMiddleware, async (req, res) => {
     }
 });
 
-router.get('/admin/officers-list', authMiddleware, async (req, res) => {
+router.get('/admin/officers-list', authMiddleware, authorize(['admin']), async (req, res) => {
   try {
     const query = `
-      SELECT 
-        u.user_id, u.email, u.created_at,
-        o.officer_id, o.full_name, o.employee_id_code, o.status,
-        a.name AS authority_name, a.authority_id
+      SELECT u.user_id, u.email, u.created_at, o.officer_id, o.full_name, o.employee_id_code, o.status, a.name AS authority_name, a.authority_id
       FROM users u
       JOIN officers o ON u.user_id = o.user_id
       LEFT JOIN authorities a ON o.authority_id = a.authority_id
-      WHERE u.role = 'officer'
-      ORDER BY u.created_at DESC
+      WHERE u.role = 'officer' ORDER BY u.created_at DESC
     `;
     const [rows] = await db.query(query);
     res.json({ success: true, data: rows });
@@ -370,23 +368,15 @@ router.get('/admin/officers-list', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/admin/next-employee-id/:authorityId', authMiddleware, async (req, res) => {
+router.get('/admin/next-employee-id/:authorityId', authMiddleware, authorize(['admin']), async (req, res) => {
   try {
     const authorityId = req.params.authorityId;
-
     const [authData] = await db.query('SELECT authority_code FROM authorities WHERE authority_id = ?', [authorityId]);
     
-    if (authData.length === 0) {
-        return res.status(404).json({ success: false, message: "Authority not found." });
-    }
+    if (authData.length === 0) return res.status(404).json({ success: false, message: "Authority not found." });
 
     const authCode = authData[0].authority_code || 'GEN';
-
-    const [officers] = await db.query(`
-        SELECT employee_id_code 
-        FROM officers 
-        WHERE employee_id_code LIKE ?
-    `, [`EMP-${authCode}-%`]);
+    const [officers] = await db.query(`SELECT employee_id_code FROM officers WHERE employee_id_code LIKE ?`, [`EMP-${authCode}-%`]);
 
     let maxNum = 0;
     officers.forEach(officer => {
@@ -394,26 +384,23 @@ router.get('/admin/next-employee-id/:authorityId', authMiddleware, async (req, r
             const parts = officer.employee_id_code.split('-');
             if (parts.length === 3) {
                 const num = parseInt(parts[2], 10);
-                if (!isNaN(num) && num > maxNum) {
-                    maxNum = num;
-                }
+                if (!isNaN(num) && num > maxNum) maxNum = num;
             }
         }
     });
 
-    // Add 1 to the highest number and format it with leading zeros
     const nextNum = maxNum + 1;
     const formattedNum = String(nextNum).padStart(3, '0');
     const finalEmployeeId = `EMP-${authCode}-${formattedNum}`;
 
     res.json({ success: true, employee_id: finalEmployeeId });
-
   } catch (error) {
     console.error("Employee ID Generation Error:", error.message);
     res.status(500).json({ success: false, message: "Failed to generate ID." });
   }
 });
-router.post('/admin/add-officer', authMiddleware, async (req, res) => {
+
+router.post('/admin/add-officer', authMiddleware, authorize(['admin']), async (req, res) => {
   const { full_name, email, authority_id, employee_id_code } = req.body;
   const tempPassword = crypto.randomBytes(4).toString('hex'); 
 
@@ -422,11 +409,7 @@ router.post('/admin/add-officer', authMiddleware, async (req, res) => {
     if (existing.length > 0) return res.status(400).json({ success: false, message: "Email already exists." });
 
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
-
-    const [userResult] = await db.query(
-      `INSERT INTO users (email, password, role) VALUES (?, ?, 'officer')`, 
-      [email, hashedPassword]
-    );
+    const [userResult] = await db.query(`INSERT INTO users (email, password, role) VALUES (?, ?, 'officer')`, [email, hashedPassword]);
     const newUserId = userResult.insertId;
 
     await db.query(
@@ -441,16 +424,13 @@ router.post('/admin/add-officer', authMiddleware, async (req, res) => {
   }
 });
 
-router.put('/admin/update-officer/:userId', authMiddleware, async (req, res) => {
+router.put('/admin/update-officer/:userId', authMiddleware, authorize(['admin']), async (req, res) => {
   const { full_name, email, authority_id, status } = req.body;
   const userId = req.params.userId;
 
   try {
     await db.query(`UPDATE users SET email = ? WHERE user_id = ?`, [email, userId]);
-    await db.query(
-      `UPDATE officers SET full_name = ?, authority_id = ?, status = ? WHERE user_id = ?`,
-      [full_name, authority_id, status, userId]
-    );
+    await db.query(`UPDATE officers SET full_name = ?, authority_id = ?, status = ? WHERE user_id = ?`, [full_name, authority_id, status, userId]);
     res.json({ success: true, message: "Officer updated successfully!" });
   } catch (err) {
     console.error("Update Officer Error:", err.message);
@@ -458,7 +438,7 @@ router.put('/admin/update-officer/:userId', authMiddleware, async (req, res) => 
   }
 });
 
-router.delete('/admin/delete-officer/:userId', authMiddleware, async (req, res) => {
+router.delete('/admin/delete-officer/:userId', authMiddleware, authorize(['admin']), async (req, res) => {
   const userId = req.params.userId;
   try {
     await db.query(`DELETE FROM officers WHERE user_id = ?`, [userId]);
@@ -468,50 +448,6 @@ router.delete('/admin/delete-officer/:userId', authMiddleware, async (req, res) 
     console.error("Delete Officer Error:", err.message);
     res.status(500).json({ success: false, message: "Failed to delete officer." });
   }
-});
-
-router.post('/forgot-password-init', async (req, res) => {
-    const { email } = req.body;
-
-    try {
-        const [users] = await db.query('SELECT user_id, role FROM users WHERE email = ?', [email]);
-        
-        if (users.length === 0 || users[0].role !== 'citizen') {
-            return res.status(404).json({ message: "No citizen account found with this email." });
-        }
-
-        const [citizens] = await db.query('SELECT phone FROM citizens WHERE user_id = ?', [users[0].user_id]);
-        
-        if (citizens.length === 0) {
-            return res.status(404).json({ message: "Phone number not found for this account." });
-        }
-
-        let cleanPhone = citizens[0].phone.toString().replace(/\s+/g, '').replace(/^0+/, '');
-        let formattedPhone = `+94${cleanPhone}`;
-
-        res.status(200).json({ success: true, phone: formattedPhone });
-
-    } catch (error) {
-        console.error("Forgot Password Error:", error);
-        res.status(500).json({ message: "Internal Server Error" });
-    }
-});
-
-router.post('/reset-password', async (req, res) => {
-    const { email, newPassword } = req.body;
-
-    try {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-        await db.query('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, email]);
-        
-        res.status(200).json({ success: true, message: "Password reset successfully!" });
-
-    } catch (error) {
-        console.error("Reset Password Error:", error);
-        res.status(500).json({ message: "Internal Server Error" });
-    }
 });
 
 module.exports = router;
