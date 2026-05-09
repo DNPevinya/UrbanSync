@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { apiFetch } from '../utils/apiClient';
 
-// NOTE: We changed 'regions' prop to 'divisions' to match the new DB architecture
 export default function AddAuthorityModal({ isOpen, onClose, refreshData, departments, divisions }) {
   // 1. STATE & HOOKS
   const [name, setName] = useState('');
