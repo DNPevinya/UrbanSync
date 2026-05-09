@@ -50,7 +50,10 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
   const [markerCoord, setMarkerCoord] = useState({ latitude: 6.9271, longitude: 79.8612 });
   const [locationName, setLocationName] = useState('Locating...');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // SECURE RACE-CONDITION TRACKERS
   const [searchingLocation, setSearchingLocation] = useState(false);
+  const fetchId = useRef(0);
 
   // 2. LIFECYCLE & UTILITIES
   useFocusEffect(
@@ -104,27 +107,24 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
     setSelectedType(dynamicData[catLabel]?.issues[0]?.name || ''); 
   };
 
+  //MAP FUNCTIONS
   const fetchAddress = async (coords) => {
+    const currentFetchId = ++fetchId.current;
+
     try {
-      if (GOOGLE_API_KEY === 'PASTE_YOUR_API_KEY_HERE') {
-        let address = await Location.reverseGeocodeAsync(coords);
-        if (address.length > 0) {
-          const addr = address[0];
-          const district = addr.subregion || addr.city || addr.region || 'Unknown District';
-          const street = addr.street || addr.name || 'Unknown Location';
-          setLocationName(`${street}, ${district}`);
-        }
-        return;
-      }
       const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.latitude},${coords.longitude}&key=${GOOGLE_API_KEY}`;
       const response = await apiFetch(url);
       const data = await response.json();
+
+      if (currentFetchId !== fetchId.current) return; // Ignore stale result
+
       if (data.status === 'OK' && data.results.length > 0) {
         setLocationName(data.results[0].formatted_address);
       } else {
         setLocationName('Address Unavailable');
       }
     } catch (error) { 
+      if (currentFetchId !== fetchId.current) return;
       setLocationName('Address Unavailable'); 
     }
   };
@@ -145,16 +145,14 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
 
   const handleLocationSearch = async () => {
     if (!searchQuery.trim()) return;
-    if (GOOGLE_API_KEY === 'PASTE_YOUR_API_KEY_HERE') {
-      Alert.alert("API Key Missing", "Please add your Google Maps API Key to search.");
-      return;
-    }
     setSearchingLocation(true);
+
     try {
       const query = searchQuery.toLowerCase().includes('sri lanka') ? searchQuery : `${searchQuery}, Sri Lanka`;
       const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${GOOGLE_API_KEY}`;
       const response = await apiFetch(url);
       const data = await response.json();
+
       if (data.status === 'OK' && data.results.length > 0) {
         const { lat, lng } = data.results[0].geometry.location;
         const newCoords = { latitude: lat, longitude: lng };

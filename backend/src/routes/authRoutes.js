@@ -105,10 +105,9 @@ router.post('/login', async (req, res) => {
         const user = users[0];
 
         const isBcryptMatch = await bcrypt.compare(password, user.password);
-        const isPlainTextMatch = password === user.password; 
-        
-        if (!isBcryptMatch && !isPlainTextMatch) {
-            return res.status(401).json({ message: "Invalid email or password." });
+
+        if (!isBcryptMatch) {
+        return res.status(401).json({ message: "Invalid email or password." });
         }
 
         let userProfile = { id: user.user_id, email: user.email, role: user.role };
@@ -140,7 +139,7 @@ router.post('/login', async (req, res) => {
                 let cleanPhone = citizens[0].phone.toString().replace(/\s+/g, '').replace(/^0+/, '');
                 let formattedPhone = `+94${cleanPhone}`;
 
-                const secret = process.env.JWT_SECRET || 'urbansync_default_secret';
+                const secret = process.env.JWT_SECRET;
                 const token = jwt.sign(
                     { id: userProfile.id, email: userProfile.email, role: userProfile.role },
                     secret,
@@ -179,7 +178,7 @@ router.post('/login', async (req, res) => {
             }
         }
 
-        const secret = process.env.JWT_SECRET || 'urbansync_default_secret';
+        const secret = process.env.JWT_SECRET;
         const token = jwt.sign(
             { id: userProfile.id, email: userProfile.email, role: userProfile.role },
             secret,
@@ -261,7 +260,7 @@ router.put('/update-profile', upload.single('profileImage'), async (req, res) =>
     }
 });
 
-router.get('/notifications/:userId', async (req, res) => {
+router.get('/notifications/:userId', authMiddleware, async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC", [req.params.userId]);
     res.status(200).json({ success: true, data: rows });
