@@ -116,11 +116,11 @@ export default function Index() {
     return () => subscription.remove();
   }, []);
 
-  // --- STEP 1: LOADING & WELCOME ---
+  //STEP 1: LOADING & WELCOME 
   if (currentStep === 'loading') return <LoadingScreen onFinish={() => setCurrentStep('welcome')} />;
   if (currentStep === 'welcome') return <WelcomeScreen onGetStarted={() => setCurrentStep('login')} />;
   
-  // --- STEP 2: AUTHENTICATION ---
+  // STEP 2: AUTHENTICATION 
   if (currentStep === 'login') {
     return (
       <LoginScreen 
@@ -169,7 +169,7 @@ export default function Index() {
     );
   }
 
-  // --- STEP 3: PROFILE & PAGES ---
+  //STEP 3: PROFILE & PAGES 
   if (currentStep === 'edit_profile') {
     return (
       <EditProfileScreen 
@@ -188,7 +188,7 @@ export default function Index() {
   if (currentStep === 'terms_page') return <TermsScreen onBack={() => setCurrentStep(prevStep || 'signup')} />;
   if (currentStep === 'privacy_page') return <PrivacyScreen onBack={() => setCurrentStep(prevStep || 'signup')} />;
 
-  // --- STEP 4: COMPLAINTS & DASHBOARD ---
+  //  STEP 4: COMPLAINTS & DASHBOARD 
   if (currentStep === 'submit_complaint') return <SubmitComplaintScreen onBack={() => setCurrentStep('dashboard')} userId={userId} />;
   if (currentStep === 'chat_page') return <ChatScreen onBack={() => setCurrentStep('complaint_details')} complaintId="#SL-8923" />;
   
@@ -257,7 +257,7 @@ export default function Index() {
               setUserDivision(''); 
               setUserProfilePicture(null);
               
-              // CRITICAL: Clear the notepad on logout so it doesn't auto-login again!
+              //  Clear on logout so it doesn't auto-login again
               AsyncStorage.removeItem('urbanSyncToken');
               AsyncStorage.removeItem('user');
               
