@@ -191,11 +191,9 @@ router.post('/admin/add-authority', authMiddleware, authorize(['super_admin', 'a
     9: 'GRA'  // Grama Niladhari
   };
 
-  // Grab the right code based on the department they selected (Fallback to 'GEN' if unknown)
   const auto_code = codeDictionary[department_id] || 'GEN';
 
   try {
-    // 2. Insert the auto-generated code into the database!
     const query = `INSERT INTO authorities (name, authority_code, department_id, division_id) VALUES (?, ?, ?, ?)`;
     await db.query(query, [name, auto_code, department_id, division_id]);
     
