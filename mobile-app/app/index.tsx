@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DeviceEventEmitter } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // --- Screen Imports ---
 import LoadingScreen from '../src/screens/LoadingScreen';
@@ -40,23 +41,6 @@ export default function Index() {
   const [currentStep, setCurrentStep] = useState<string>('loading');
   const [prevStep, setPrevStep] = useState<string>('');
 
-  useEffect(() => {
-    SplashScreen.hideAsync();
-    const subscription = DeviceEventEmitter.addListener('authError', () => {
-      setUserId(null);
-      setSelectedComplaintId(null);
-      setUserName('Citizen');
-      setUserEmail('');
-      setUserPhone('');
-      setUserNic(''); 
-      setUserDistrict('');
-      setUserDivision('');
-      setUserProfilePicture(null);
-      setCurrentStep('login');
-    });
-    return () => subscription.remove();
-  }, []);
-
   const [userId, setUserId] = useState<string | number | null>(null);
   const [selectedComplaintId, setSelectedComplaintId] = useState<string | number | null>(null);
 
@@ -75,6 +59,62 @@ export default function Index() {
   const currentUserData: UserData = {
     name: userName, email: userEmail, phone: userPhone, nic: userNic, district: userDistrict, division: userDivision, profilePicture: userProfilePicture, 
   };
+
+  useEffect(() => {
+    const prepareApp = async () => {
+      try {
+        // Check if the user is already logged in
+        const savedToken = await AsyncStorage.getItem('urbanSyncToken');
+        const savedUserStr = await AsyncStorage.getItem('user');
+
+        if (savedToken && savedUserStr) {
+          const savedUser = JSON.parse(savedUserStr);
+          
+          setUserId(savedUser.id);
+          setUserName(savedUser.fullName || 'Citizen');
+          setUserEmail(savedUser.email || '');
+          setUserPhone(savedUser.phone || '');
+          setUserNic(savedUser.nic || '');
+          setUserDistrict(savedUser.district || '');
+          setUserDivision(savedUser.division || '');
+          setUserProfilePicture(savedUser.profilePicture || null);
+          
+          // Skip login and go straight to the dashboard
+          setCurrentStep('dashboard');
+        }
+
+        // Drop the splash screen 
+        setTimeout(async () => {
+          await SplashScreen.hideAsync();
+        }, 500);
+
+      } catch (e) {
+        console.warn("Startup error parsing user data:", e);
+        await SplashScreen.hideAsync();
+      }
+    };
+
+    prepareApp();
+
+    const subscription = DeviceEventEmitter.addListener('authError', () => {
+      setUserId(null);
+      setSelectedComplaintId(null);
+      setUserName('Citizen');
+      setUserEmail('');
+      setUserPhone('');
+      setUserNic(''); 
+      setUserDistrict('');
+      setUserDivision('');
+      setUserProfilePicture(null);
+      
+      AsyncStorage.removeItem('urbanSyncToken');
+      AsyncStorage.removeItem('user');
+      
+      setCurrentStep('login');
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   // --- STEP 1: LOADING & WELCOME ---
   if (currentStep === 'loading') return <LoadingScreen onFinish={() => setCurrentStep('welcome')} />;
@@ -121,7 +161,6 @@ export default function Index() {
         onNavigateToTerms={() => { setPrevStep('signup'); setCurrentStep('terms_page'); }}
         onNavigateToPrivacy={() => { setPrevStep('signup'); setCurrentStep('privacy_page'); }}
         onSignupSuccess={(name: string, email: string, phone: string, district: string, division: string, nic: string) => {
-          // FIX: Clear the form data and route them to Login so they get a proper auth token and userId
           setSignupData({ fullName: '', phone: '', email: '', nic: '', district: '', division: '', password: '' });
           setSignupAgreed(false);
           setCurrentStep('login'); 
@@ -192,7 +231,6 @@ export default function Index() {
           />
         )}
 
-        {/* FIX: Passed userId to NotificationScreen */}
         {currentStep === 'notifications' && (
           <NotificationScreen 
             userId={userId} 
@@ -218,6 +256,11 @@ export default function Index() {
               setUserDistrict(''); 
               setUserDivision(''); 
               setUserProfilePicture(null);
+              
+              // CRITICAL: Clear the notepad on logout so it doesn't auto-login again!
+              AsyncStorage.removeItem('urbanSyncToken');
+              AsyncStorage.removeItem('user');
+              
               setCurrentStep('login');
             }}
           />
