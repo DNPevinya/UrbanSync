@@ -69,7 +69,7 @@ export default function AdminAnalytics() {
       {
         label: 'Resolved',
         data: analytics?.trends?.map(t => t.resolved) || [],
-        backgroundColor: '#93C5FD', // Light Blue
+        backgroundColor: '#93C5FD', 
         borderRadius: 4,
       }
     ]
@@ -118,7 +118,6 @@ export default function AdminAnalytics() {
             <div className="flex-1 flex items-center justify-center text-red-500 font-bold">Failed to load data.</div>
           ) : (
             <>
-              {/* UPDATED: Changed md:grid-cols-4 to md:grid-cols-3 */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 
                 <div className="bg-blue-50 p-5 rounded-xl border border-blue-100 shadow-sm relative">
