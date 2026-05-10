@@ -71,13 +71,13 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   iconCircle: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
+    width: 160,           
+    height: 160,         
+    borderRadius: 80,   
+    overflow: 'hidden',  
     backgroundColor: '#ffffff', 
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 30,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
@@ -86,8 +86,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden', 
   },
   logoImage: {
-    width: '140%',
-    height: '140%',
+    width: '90%',
+    height: '90%',
   },
   title: {
     fontSize: 38,

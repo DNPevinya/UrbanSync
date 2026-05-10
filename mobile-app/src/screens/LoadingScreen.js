@@ -12,7 +12,7 @@ export default function LoadingScreen({ onFinish }) {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 1000, // 1 second fade in
+        duration: 1000, 
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
@@ -89,8 +89,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   logoImage: {
-    width: '75%', 
-    height: '75%',
+    width: '100%', 
+    height: '100%',
   },
   logoText: {
     color: '#fff',
