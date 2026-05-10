@@ -54,13 +54,13 @@ router.post('/ask', async (req, res) => {
 
     try {
         const completion = await openai.chat.completions.create({
-            model: "gpt-4o-mini", // Using mini is perfect here for fast, cheap, contextual replies
+            model: "gpt-4o-mini",
             messages: [
                 { role: "system", content: URBAN_SYNC_KNOWLEDGE },
                 { role: "user", content: message }
             ],
             max_tokens: 250,
-            temperature: 0.2, // LOWERED to 0.2 to force strict adherence to your routing rules instead of "creative" guessing.
+            temperature: 0.2, 
         });
 
         const reply = completion.choices[0].message.content;
