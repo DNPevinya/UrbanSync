@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View, Image } from 'react-native';
 
 // 1. UI RENDER
 export default function NationalBadge({ size = 'large', style }) {
@@ -7,7 +7,12 @@ export default function NationalBadge({ size = 'large', style }) {
 
   return (
     <View style={[styles.container, isLarge ? styles.largeContainer : styles.smallContainer, style]}>
-      <Text style={isLarge ? styles.largeFlag : styles.smallFlag}>🇱🇰</Text>
+      {/* We replaced the <Text> emoji with an <Image> component */}
+      <Image 
+        source={require('../../assets/images/emblem.png')} // Make sure this path is correct!
+        style={isLarge ? styles.largeEmblem : styles.smallEmblem}
+        resizeMode="contain"
+      />
     </View>
   );
 }
@@ -15,33 +20,33 @@ export default function NationalBadge({ size = 'large', style }) {
 // 2. STYLES
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#ffffff', // Changed to white so the golden emblem pops
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#BFDBFE',
-    elevation: 2,
-    shadowColor: '#0041C7',
+    borderColor: '#E2E8F0', // Softened the border
+    elevation: 3,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: 4,
   },
   largeContainer: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 56, // Slightly larger to frame the emblem
+    height: 56,
+    borderRadius: 28,
   },
-  largeFlag: {
-    fontSize: 26,
-    marginLeft: 2,
+  largeEmblem: {
+    width: '75%', // Leaves a nice white border around the emblem
+    height: '75%',
   },
   smallContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
   },
-  smallFlag: {
-    fontSize: 18,
-    marginLeft: 1,
+  smallEmblem: {
+    width: '75%',
+    height: '75%',
   },
 });

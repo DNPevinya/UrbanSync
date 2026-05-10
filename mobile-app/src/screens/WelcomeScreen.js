@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons'; 
 
 export default function WelcomeScreen({ onGetStarted }) {
   // 1. UI RENDER
@@ -19,7 +19,7 @@ export default function WelcomeScreen({ onGetStarted }) {
               <Image 
                 source={require('../../assets/images/smartlogo.png')} 
                 style={styles.logoImage}
-                resizeMode="cover" 
+                resizeMode="contain" 
               />
             </View>
             <Text style={styles.title}>UrbanSync</Text>
@@ -63,18 +63,18 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 30,
-    paddingVertical: 40,
+    paddingTop: 40,
+    paddingBottom: 20, 
     justifyContent: 'space-between',
   },
   topSection: {
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 10, 
   },
   iconCircle: {
-    width: 160,           
-    height: 160,         
-    borderRadius: 80,   
-    overflow: 'hidden',  
+    width: 120,        
+    height: 120,         
+    borderRadius: 60,   
     backgroundColor: '#ffffff', 
     justifyContent: 'center',
     alignItems: 'center',
@@ -84,10 +84,11 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 10,
     overflow: 'hidden', 
+    marginBottom: 20,    
   },
   logoImage: {
-    width: '90%',
-    height: '90%',
+    width: '85%',      
+    height: '85%',
   },
   title: {
     fontSize: 38,
@@ -107,8 +108,7 @@ const styles = StyleSheet.create({
   bottomSection: {
     width: '100%',
     alignItems: 'center',
-    paddingBottom: 20,
-    marginTop: 40,
+    marginTop: 30,
   },
   glassInfoBox: {
     backgroundColor: 'rgba(255, 255, 255, 0.15)', 
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 35, 
+    marginBottom: 30, 
     width: '100%',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)', 
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 11, 
     letterSpacing: 2,
-    marginTop: 35,
+    marginTop: 25,      
     fontWeight: 'bold',
     textAlign: 'center',
   },

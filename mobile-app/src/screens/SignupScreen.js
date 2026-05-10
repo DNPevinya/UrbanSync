@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     elevation: 5, 
     overflow: 'hidden' 
   },
-  logoImage: { width: '130%', height: '130%' },
+  logoImage: { width: '100%', height: '100%' },
   title: { fontSize: 26, fontWeight: '800', color: '#0041C7', marginBottom: 8 },
   subtitle: { fontSize: 13, color: '#64748B', textAlign: 'center', paddingHorizontal: 20 },
   form: { marginTop: 10 },

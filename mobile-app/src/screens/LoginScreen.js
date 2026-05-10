@@ -184,7 +184,7 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
 
           <View style={styles.header}>
             <View style={styles.logoWrapper}>
-              <Image source={require('../../assets/images/smartlogo.png')} style={styles.logoImage} resizeMode="cover" />
+              <Image source={require('../../assets/images/smartlogo.png')} style={styles.logoImage} resizeMode="contain" />
             </View>
             <Text style={styles.welcomeText}>{i18n.t('welcome')}</Text>
             <Text style={styles.subtitle}>{i18n.t('subtitle')}</Text>
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
 
   header: { alignItems: 'center', marginBottom: 35 },
   logoWrapper: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', marginBottom: 20, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5, overflow: 'hidden' },
-  logoImage: { width: '130%', height: '130%' },
+  logoImage: { width: '85%', height: '85%' },
   welcomeText: { fontSize: 28, fontWeight: '800', color: '#0041C7', marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#64748B', textAlign: 'center', lineHeight: 22, paddingHorizontal: 20 },
   form: { marginBottom: 10 },
