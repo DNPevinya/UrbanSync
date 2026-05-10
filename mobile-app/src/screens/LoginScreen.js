@@ -43,7 +43,7 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
 
   const changeLanguage = async (lang) => {
     setCurrentLang(lang);
-    i18n.locale = lang; // 👈 Instantly switch i18n language
+    i18n.locale = lang; 
     await AsyncStorage.setItem('userLanguage', lang);
   };
 
@@ -173,6 +173,7 @@ export default function LoginScreen({ onLoginSuccess, onCreateAccount, onNavigat
                   key={lang}
                   onPress={() => changeLanguage(lang)}
                   style={[styles.langBtn, currentLang === lang && styles.langBtnActive]}
+                  activeOpacity={0.7} // Added a softer click effect
                 >
                   <Text style={[styles.langBtnText, currentLang === lang && styles.langBtnTextActive]}>
                     {lang === 'en' ? 'EN' : lang === 'si' ? 'සිං' : 'த'}
@@ -306,11 +307,34 @@ const styles = StyleSheet.create({
   keyboardAvoid: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingHorizontal: 25, paddingVertical: 30 },
   headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
-  langToggleGroup: { flexDirection: 'row', alignItems: 'center' },
-  langBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, marginLeft: 8, backgroundColor: '#E2E8F0', borderWidth: 1, borderColor: '#CBD5E1' },
-  langBtnActive: { backgroundColor: '#0160C9', borderColor: '#0041C7' },
-  langBtnText: { fontSize: 12, fontWeight: '800', color: '#64748B' },
-  langBtnTextActive: { color: '#fff' },
+  
+  langToggleGroup: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#E2E8F0', 
+    borderRadius: 20, 
+    padding: 4 
+  },
+  langBtn: { 
+    paddingHorizontal: 14, 
+    paddingVertical: 6, 
+    borderRadius: 16 
+  },
+  langBtnActive: { 
+    backgroundColor: '#FFFFFF', 
+    shadowColor: '#000', 
+    shadowOpacity: 0.05, 
+    shadowRadius: 4, 
+    elevation: 2 
+  },
+  langBtnText: { 
+    fontSize: 13, 
+    fontWeight: '700', 
+    color: '#64748B' 
+  },
+  langBtnTextActive: { 
+    color: '#0160C9' 
+  },
 
   header: { alignItems: 'center', marginBottom: 35 },
   logoWrapper: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', marginBottom: 20, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5, overflow: 'hidden' },

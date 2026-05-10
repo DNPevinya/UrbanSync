@@ -113,7 +113,7 @@ export default function HomeScreen({ userFirstName, userId, onNavigateToSubmit, 
             <Ionicons name="notifications-outline" size={24} color="#1E293B" />
             {hasUnread && <View style={styles.notificationDot} />}
           </TouchableOpacity>
-          <NationalBadge size="small" style={{ marginLeft: 12 }} />
+          <NationalBadge size="large" style={{ marginLeft: 12 }} />
         </View>
       </View>
 

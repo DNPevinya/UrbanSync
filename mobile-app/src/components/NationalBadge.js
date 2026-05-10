@@ -7,9 +7,8 @@ export default function NationalBadge({ size = 'large', style }) {
 
   return (
     <View style={[styles.container, isLarge ? styles.largeContainer : styles.smallContainer, style]}>
-      {/* We replaced the <Text> emoji with an <Image> component */}
       <Image 
-        source={require('../../assets/images/emblem.png')} // Make sure this path is correct!
+        source={require('../../assets/images/emblem.png')} 
         style={isLarge ? styles.largeEmblem : styles.smallEmblem}
         resizeMode="contain"
       />
@@ -20,11 +19,11 @@ export default function NationalBadge({ size = 'large', style }) {
 // 2. STYLES
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#ffffff', // Changed to white so the golden emblem pops
+    backgroundColor: '#ffffff', 
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0', // Softened the border
+    borderColor: '#E2E8F0', 
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -32,12 +31,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   largeContainer: {
-    width: 56, // Slightly larger to frame the emblem
+    width: 56, 
     height: 56,
     borderRadius: 28,
   },
   largeEmblem: {
-    width: '75%', // Leaves a nice white border around the emblem
+    width: '75%', 
     height: '75%',
   },
   smallContainer: {

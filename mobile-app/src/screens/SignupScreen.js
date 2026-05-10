@@ -73,7 +73,7 @@ export default function SignupScreen({
 
   const changeLanguage = async (lang) => {
     setCurrentLang(lang);
-    i18n.locale = lang; // 
+    i18n.locale = lang; 
     await AsyncStorage.setItem('userLanguage', lang);
   };
 
@@ -144,13 +144,14 @@ export default function SignupScreen({
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           
           <View style={styles.headerTopRow}>
-            <NationalBadge size="large" />
+            <NationalBadge size="large" />         
             <View style={styles.langToggleGroup}>
               {['en', 'si', 'ta'].map((lang) => (
                 <TouchableOpacity 
                   key={lang} 
                   onPress={() => changeLanguage(lang)} 
                   style={[styles.langBtn, currentLang === lang && styles.langBtnActive]}
+                  activeOpacity={0.7}
                 >
                   <Text style={[styles.langBtnText, currentLang === lang && styles.langBtnTextActive]}>
                     {lang === 'en' ? 'EN' : lang === 'si' ? 'සිං' : 'த'}
@@ -165,7 +166,7 @@ export default function SignupScreen({
               <Image 
                 source={require('../../assets/images/smartlogo.png')} 
                 style={styles.logoImage}
-                resizeMode="cover"
+                resizeMode="contain" 
               />
             </View>
             <Text style={styles.title}>{i18n.t('create')}</Text>
@@ -313,11 +314,34 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   scrollContent: { paddingHorizontal: 25, paddingVertical: 20 },
   headerTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  langToggleGroup: { flexDirection: 'row', alignItems: 'center' },
-  langBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, marginLeft: 8, backgroundColor: '#E2E8F0', borderWidth: 1, borderColor: '#CBD5E1' },
-  langBtnActive: { backgroundColor: '#0160C9', borderColor: '#0041C7' },
-  langBtnText: { fontSize: 12, fontWeight: '800', color: '#64748B' },
-  langBtnTextActive: { color: '#fff' },
+  
+  langToggleGroup: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#E2E8F0', 
+    borderRadius: 20, 
+    padding: 4 
+  },
+  langBtn: { 
+    paddingHorizontal: 14, 
+    paddingVertical: 6, 
+    borderRadius: 16 
+  },
+  langBtnActive: { 
+    backgroundColor: '#FFFFFF', 
+    shadowColor: '#000', 
+    shadowOpacity: 0.05, 
+    shadowRadius: 4, 
+    elevation: 2 
+  },
+  langBtnText: { 
+    fontSize: 13, 
+    fontWeight: '700', 
+    color: '#64748B' 
+  },
+  langBtnTextActive: { 
+    color: '#0160C9' 
+  },
 
   header: { alignItems: 'center', marginBottom: 25 },
   logoWrapper: { 
@@ -334,7 +358,7 @@ const styles = StyleSheet.create({
     elevation: 5, 
     overflow: 'hidden' 
   },
-  logoImage: { width: '100%', height: '100%' },
+  logoImage: { width: '100%', height: '100%' }, 
   title: { fontSize: 26, fontWeight: '800', color: '#0041C7', marginBottom: 8 },
   subtitle: { fontSize: 13, color: '#64748B', textAlign: 'center', paddingHorizontal: 20 },
   form: { marginTop: 10 },

@@ -72,10 +72,10 @@ export default function ProfileScreen({ userName, userEmail, initialData, onNavi
         </View>
 
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <NationalBadge size="small" />
           <TouchableOpacity style={[styles.editBtn, { marginLeft: 12 }]} onPress={onNavigateToEdit} activeOpacity={0.7}>
             <Ionicons name="pencil" size={20} color="#0041C7" />
           </TouchableOpacity>
+          <NationalBadge size="large" />
         </View>
       </View>
 
