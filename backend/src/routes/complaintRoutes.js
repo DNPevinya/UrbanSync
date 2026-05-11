@@ -41,7 +41,7 @@ router.get('/form-data', async (req, res) => {
 });
 
 
-// 4. CITIZEN & GENERAL COMPLAINT ROUTES
+//  CITIZEN  COMPLAINT ROUTES
 
 router.post('/submit', upload.array('images', 3), async (req, res) => {
   const { user_id, title, description, location_text, latitude, longitude, category_id, division_id } = req.body;
@@ -74,10 +74,10 @@ router.post('/submit', upload.array('images', 3), async (req, res) => {
     } catch (e) { console.error("Dynamic Department Lookup Failed:", e.message); }
 
     let targetCity = 'Colombo'; 
-    let fallbackDistrict = 'Colombo'; //  safety 
+    let fallbackDistrict = 'Colombo'; 
     let final_division_id = division_id || null; 
 
-    // THE SMART TEXT ROUTER (No Hardcoding)
+
     if (!final_division_id && location_text) {
         // Try to find the exact Division in the text
         const [divResults] = await db.query(`
@@ -122,7 +122,7 @@ router.post('/submit', upload.array('images', 3), async (req, res) => {
     if (authResults.length > 0) {
       assigned_authority_id = authResults[0].authority_id;
     } else {
-      // DYNAMIC DISTRICT FALLBACK
+      // Dynamic District Fallback
       const [fallbackResults] = await db.query(`
         SELECT a.authority_id FROM authorities a
         JOIN departments d ON a.department_id = d.department_id
