@@ -1,7 +1,7 @@
 # UrbanSync 🏛️
 
 <p align="center">
-  <img src="./mobile-app/assets/images/smartlogo.png" alt="UrbanSync Logo" width="200"/>
+  <img src="./mobile-app/assets/images/splash.png" alt="UrbanSync Logo" width="200"/>
 </p>
 <p align="center">
   <b>A Centralized Urban Management System for Sri Lanka</b><br>
