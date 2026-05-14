@@ -73,8 +73,8 @@ router.post('/submit', upload.array('images', 3), async (req, res) => {
         if (deptResults.length > 0) targetDept = deptResults[0].department_name;
     } catch (e) { console.error("Dynamic Department Lookup Failed:", e.message); }
 
-    let targetCity = 'Colombo'; 
-    let fallbackDistrict = 'Colombo'; 
+    let targetCity = 'null'; 
+    let fallbackDistrict = 'null'; 
     let final_division_id = division_id || null; 
 
 
@@ -316,6 +316,24 @@ router.delete('/admin/delete-complaint/:id', authMiddleware, authorize(['admin']
   } catch (err) {
     console.error("Delete Complaint Error:", err.message);
     res.status(500).json({ success: false, message: "Failed to delete complaint." });
+  }
+});
+
+router.get('/admin/unassigned', authMiddleware, authorize(['admin']), async (req, res) => {
+  try {
+    const sql = `
+      SELECT c.*, cat.name AS category 
+      FROM complaints c
+      LEFT JOIN categories cat ON c.category_id = cat.category_id
+      WHERE c.authority_id IS NULL
+      ORDER BY c.created_at DESC
+    `;
+    const [complaints] = await db.query(sql);
+    
+    res.status(200).json({ success: true, data: complaints });
+  } catch (error) { 
+    console.error("Fetch Unassigned Error:", error);
+    res.status(500).json({ success: false, message: "Error fetching triage queue." }); 
   }
 });
 

@@ -8,6 +8,7 @@ import Terms from './pages/Terms';
 // Admin Pages
 import AdminDashboard from './pages/AdminDashboard';
 import AdminComplaints from './pages/AdminComplaints';
+import UnassignedComplaints from './pages/UnassignedComplaints'; 
 import AdminAuthorities from './pages/AdminAuthorities';
 import AdminOfficerManagement from './pages/AdminOfficerManagement';
 import AdminAnalytics from './pages/AdminAnalytics';
@@ -34,6 +35,7 @@ export default function App() {
         {/* --- ADMIN ROUTES --- */}
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/complaints" element={<AdminComplaints />} />
+        <Route path="/admin/unassigned" element={<UnassignedComplaints />} />
         <Route path="/admin/users" element={<UserManagement />} />
         <Route path="/authorities" element={<AdminAuthorities />} />
         <Route path="admin/officers" element={<AdminOfficerManagement />} />

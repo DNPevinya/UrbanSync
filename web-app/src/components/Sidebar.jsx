@@ -8,6 +8,7 @@ export default function Sidebar({ role = 'admin' }) {
   const effectiveRole = role === 'super_admin' ? 'admin' : role;
   
   const [userInfo, setUserInfo] = useState({ fullName: '', authorityName: '' });
+  const [pendingCount, setPendingCount] = useState(0); 
 
   // 2. LIFECYCLE & UTILITIES
   useEffect(() => {
@@ -19,7 +20,24 @@ export default function Sidebar({ role = 'admin' }) {
         authorityName: parsed.authorityName || 'UrbanSync Portal'
       });
     }
-  }, [role]);
+    if (effectiveRole === 'admin') {
+      const fetchPendingCount = async () => {
+        try {
+          const token = localStorage.getItem('urbanSyncToken');
+          const res = await fetch(`${BASE_URL}/api/admin/unassigned`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            setPendingCount(data.data.length); 
+          }
+        } catch (err) {
+          console.error("Failed to fetch pending count", err);
+        }
+      };
+      fetchPendingCount();
+    }
+  }, [role, effectiveRole]);
 
   // 3. HELPER VARIABLES
   const menuItems = [
@@ -34,6 +52,13 @@ export default function Sidebar({ role = 'admin' }) {
       path: effectiveRole === 'officer' ? '/officer/complaints' : '/admin/complaints', 
       allowedRoles: ['admin', 'officer'],
       icon: <svg className="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+    },
+    {
+      title: 'Pending Assignments',
+      path: '/admin/unassigned',
+      allowedRoles: ['admin'], 
+      hasBadge: true, 
+      icon: <svg className="w-5 h-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
     },
     {
       title: 'Citizen Directory',
@@ -87,14 +112,22 @@ export default function Sidebar({ role = 'admin' }) {
             <button
               key={index}
               onClick={() => navigate(item.path)}
-              className={`w-full flex items-center px-4 py-3 rounded-xl text-[13px] font-bold transition-colors ${
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-[13px] font-bold transition-colors ${
                 isActive 
                   ? 'bg-[#0041C7] text-white shadow-md' 
                   : 'text-slate-400 hover:bg-slate-800 hover:text-white'
               }`}
             >
-              {item.icon}
-              {item.title}
+              <div className="flex items-center">
+                {item.icon}
+                {item.title}
+              </div>
+            
+              {item.hasBadge && pendingCount > 0 && (
+                <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  {pendingCount}
+                </span>
+              )}
             </button>
           );
         })}
