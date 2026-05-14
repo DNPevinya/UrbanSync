@@ -5,16 +5,10 @@
 </p>
 
 <p align="center">
-  <b>🌍 Centralized Smart-Governance Platform</b><br>
+  <b>A Centralized Urban Management System for Sri lanka</b><br>
   <i>Bridging the gap between citizens and local authorities through transparent, location-aware reporting.</i>
 </p>
 
-<p align="center">
-  <img src="https://img.shields.io/badge/status-active-brightgreen?style=flat-square"/>
-  <img src="https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web-blue?style=flat-square"/>
-  <img src="https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square"/>
-  <img src="https://img.shields.io/badge/university-University%20of%20Plymouth-navy?style=flat-square"/>
-</p>
 
 ---
 
