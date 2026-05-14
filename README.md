@@ -3,9 +3,8 @@
 <p align="center">
   <img src="./mobile-app/assets/images/smartlogo.png" alt="UrbanSync Logo" width="200"/>
 </p>
-
 <p align="center">
-  <b>A Centralized Urban Management System for Sri lanka</b><br>
+  <b>A Centralized Urban Management System for Sri Lanka</b><br>
   <i>Bridging the gap between citizens and local authorities through transparent, location-aware reporting.</i>
 </p>
 
@@ -65,6 +64,7 @@
 
 ## 📁 Project Structure
 
+```text
 UrbanSync/
 ├── backend/                  # Node.js + Express RESTful API
 │   ├── __tests__/            # Automated test suites
@@ -96,8 +96,8 @@ UrbanSync/
 │   ├── src/                  # Main source code
 │   │   ├── components/       # Shared UI (ChatbotModal, MainLayout, NationalBadge)
 │   │   ├── screens/          # Specific mobile screen views
-│   │   └── utils/            # Helpers 
-│   └── app.config.js, .env , apiClient, config, firebaseConfig, translations   # Expo configuration and environment variables
+│   │   └── utils/            # Helpers
+│   └── app.config.js, .env, apiClient, config, firebaseConfig, translations   # Expo configuration and environment variables
 ```
 
 ---
