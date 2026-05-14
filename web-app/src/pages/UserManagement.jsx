@@ -3,6 +3,7 @@ import { apiFetch } from '../utils/apiClient';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { BASE_URL } from '../config'; 
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -16,7 +17,7 @@ export default function UserManagement() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await apiFetch('http://localhost:5000/api/auth/admin/citizens');
+      const response = await apiFetch(`${BASE_URL}/api/auth/admin/citizens`);
       const result = await response.json();
       if (result.success) {
         setUsers(result.data);
@@ -33,7 +34,7 @@ export default function UserManagement() {
     if (!window.confirm(`Are you sure you want to set this account to ${newStatus}?`)) return;
 
     try {
-      const response = await apiFetch(`http://localhost:5000/api/auth/admin/suspend-citizen/${id}`, {
+      const response = await apiFetch(`${BASE_URL}/api/auth/admin/suspend-citizen/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })

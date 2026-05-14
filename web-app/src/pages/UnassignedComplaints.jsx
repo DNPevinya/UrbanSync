@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { BASE_URL } from '../config'; 
 
 export default function UnassignedComplaints() {
   const [complaints, setComplaints] = useState([]);
@@ -22,14 +23,13 @@ export default function UnassignedComplaints() {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       };
-
-      const compRes = await fetch(`http://localhost:5000/api/complaints/admin/unassigned`, { headers });
+      const compRes = await fetch(`${BASE_URL}/api/complaints/admin/unassigned`, { headers });
       const compData = await compRes.json();
       if (compData.success) {
         setComplaints(compData.data);
       }
 
-      const authRes = await fetch(`http://localhost:5000/api/complaints/admin/authorities`, { headers });
+      const authRes = await fetch(`${BASE_URL}/api/complaints/admin/authorities`, { headers });
       const authData = await authRes.json();
       if (authData.success) {
         setAuthorities(authData.data);
@@ -61,7 +61,7 @@ export default function UnassignedComplaints() {
     try {
       const token = localStorage.getItem('urbanSyncToken');
       
-      const response = await fetch(`http://localhost:5000/api/complaints/reassign/${complaintId}`, {
+      const response = await fetch(`${BASE_URL}/api/complaints/reassign/${complaintId}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
