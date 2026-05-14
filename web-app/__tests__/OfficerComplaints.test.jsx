@@ -4,18 +4,18 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import OfficerComplaints from '../src/pages/OfficerComplaints';
 import { BASE_URL } from '../src/config';
 
-// Intercept routing so we can verify if unauthorized users are correctly redirected
+// Mock React Router navigation
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-// leave out the standard layout components to keep the test DOM clean and focused on the table logic
+// Mock layout components
 vi.mock('../src/components/Sidebar', () => ({ default: () => <div data-testid="sidebar" /> }));
 vi.mock('../src/components/Header', () => ({ default: ({ title }) => <header data-testid="header">{title}</header> }));
 vi.mock('../src/components/Footer', () => ({ default: () => <footer data-testid="footer" /> }));
 
-// Replace the browser's native localStorage so we can simulate active user sessions
+// Mock localStorage
 Object.defineProperty(window, 'localStorage', {
   value: { 
     getItem: vi.fn(),
@@ -24,12 +24,12 @@ Object.defineProperty(window, 'localStorage', {
   writable: true
 });
 
-// Intercept network requests to prevent the test runner from pinging a real backend
+// Mock API calls
 global.fetch = vi.fn();
 
 describe('OfficerComplaints Component', () => {
 
-  // Dummy user profile representing a standard department officer
+  // Mock Officer user session
   const mockOfficerUser = {
     id: 1,
     fullName: 'Jane Officer',
@@ -38,7 +38,7 @@ describe('OfficerComplaints Component', () => {
     role: 'officer'
   };
 
-  // Dummy data set containing various complaint statuses and citizen details for our filter tests
+  // Mock API response data
   const mockComplaints = [
     { complaint_id: 101, citizen_name: 'Alex Doe', citizen_phone: '555-0100', title: 'Leaking pipe on main st', status: 'PENDING' },
     { complaint_id: 102, citizen_name: 'Sam Smith', citizen_phone: '555-0200', title: 'No water pressure', status: 'IN PROGRESS' },
@@ -46,27 +46,27 @@ describe('OfficerComplaints Component', () => {
   ];
 
   beforeEach(() => {
-    // Start fresh before every test
+    // Clear mock data before each test
     vi.clearAllMocks();
     
-    // By default, pretend an authorized officer is actively logged in
+    // Simulate a logged-in Officer
     window.localStorage.getItem.mockReturnValue(JSON.stringify(mockOfficerUser));
   });
 
   afterEach(() => {
-    // Wipe the DOM clean after every test
+    // Clean up rendered components after each test
     cleanup();
   });
 
   it('redirects to the login page if no user session is found in localStorage', () => {
-    // Override our default setup to simulate a logged-out state
+    // Simulate a logged-out user
     window.localStorage.getItem.mockReturnValue(null);
     render(<OfficerComplaints />);
     
-    // Verify the component protected the route
+    // Check if user is redirected to login
     expect(mockNavigate).toHaveBeenCalledWith('/login');
     
-    // Ensure it didn't waste resources trying to fetch data for an unauthorized user
+    // Check if API request is prevented
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
@@ -78,13 +78,12 @@ describe('OfficerComplaints Component', () => {
 
     render(<OfficerComplaints />);
     
-    // Verify the static UI elements rendered
+    // Check if static UI elements are rendered
     expect(screen.getByText('Assigned Workbox')).toBeTruthy();
     expect(screen.getByTestId('sidebar')).toBeTruthy();
     expect(screen.getByTestId('footer')).toBeTruthy();
     
-    // Verify the component successfully grabbed the officer's department from local storage 
-    // and injected it into the Header title
+    // Check if header title includes officer's department
     await waitFor(() => {
       expect(screen.getByTestId('header').textContent).toBe('Master Workbox | Water Board');
     });
@@ -99,10 +98,10 @@ describe('OfficerComplaints Component', () => {
     render(<OfficerComplaints />);
 
     await waitFor(() => {
-      // Verify it dynamically requested data for Authority ID 10
+      // Check if API call targets the correct Authority ID
       expect(global.fetch).toHaveBeenCalledWith(`${BASE_URL}/api/complaints/authority/10`);
       
-      // Verify the table mapped our dummy data to rows
+      // Check if complaint data is rendered in the table
       expect(screen.getByText('#CMP-101')).toBeTruthy();
       expect(screen.getByText('Leaking pipe on main st')).toBeTruthy();
       
@@ -112,16 +111,16 @@ describe('OfficerComplaints Component', () => {
   });
 
   it('handles API failure gracefully without crashing the app', async () => {
-    // Force a network crash
+    // Simulate an API network error
     global.fetch.mockRejectedValueOnce(new Error('API Down'));
 
     render(<OfficerComplaints />);
 
     await waitFor(() => {
-      // The table shell and headers should survive the crash
+      // Check if table headers are visible
       expect(screen.getByText('Complaint ID')).toBeTruthy();
       
-      // But no data rows should be rendered
+      // Check if table body is empty
       expect(screen.queryByText('#CMP-101')).toBeNull();
     });
   });
@@ -134,24 +133,24 @@ describe('OfficerComplaints Component', () => {
 
     render(<OfficerComplaints />);
 
-    // Wait for the table to populate
+    // Wait for data to load
     await waitFor(() => {
       expect(screen.getByText('#CMP-101')).toBeTruthy();
     });
 
     const searchInput = screen.getByPlaceholderText('Search by ID, Name or Phone...');
     
-    // Test matching against the complaint title
+    // Test searching by complaint title
     fireEvent.change(searchInput, { target: { value: 'pressure' } });
     expect(screen.queryByText('#CMP-101')).toBeNull();
     expect(screen.getByText('#CMP-102')).toBeTruthy();
 
-    // Test matching against the citizen's name
+    // Test searching by citizen's name
     fireEvent.change(searchInput, { target: { value: 'Alex' } });
     expect(screen.getByText('#CMP-101')).toBeTruthy();
     expect(screen.queryByText('#CMP-102')).toBeNull();
 
-    // Test matching against the complaint ID
+    // Test searching by complaint ID
     fireEvent.change(searchInput, { target: { value: '103' } });
     expect(screen.queryByText('#CMP-101')).toBeNull();
     expect(screen.getByText('#CMP-103')).toBeTruthy();
@@ -171,10 +170,10 @@ describe('OfficerComplaints Component', () => {
 
     const statusDropdown = screen.getByRole('combobox');
     
-    // Filter the view to only show pending items
+    // Filter by Pending status
     fireEvent.change(statusDropdown, { target: { value: 'Pending' } });
     
-    // The component logic should convert the dropdown's "Pending" to "PENDING" and match our dummy data
+    // Check if filtered results are displayed correctly
     expect(screen.getByText('#CMP-101')).toBeTruthy(); 
     expect(screen.queryByText('#CMP-102')).toBeNull();
     expect(screen.queryByText('#CMP-103')).toBeNull();
@@ -192,12 +191,11 @@ describe('OfficerComplaints Component', () => {
       expect(screen.getByText('#CMP-101')).toBeTruthy();
     });
 
-    // The action buttons in the rows don't have text, but they are the only interactive buttons inside the table body.
-    // We grab all buttons and simulate clicking the first one (which belongs to ID 101).
+    // Simulate clicking the action button
     const actionButtons = screen.getAllByRole('button');
     fireEvent.click(actionButtons[0]);
 
-    // Verify it told the router to open the details view and passed the correct ID via query param
+    // Check if user is navigated to complaint details page
     expect(mockNavigate).toHaveBeenCalledWith('/officer/complaint-details?id=101');
   });
 

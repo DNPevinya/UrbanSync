@@ -3,19 +3,18 @@ import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/re
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import AdminComplaints from '../src/pages/AdminComplaints';
 
-// Intercept the router so we can test if the component kicks unauthorized users out
+// Mock React Router navigation
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-// Stub out the standard layout components so the DOM isn't cluttered
+// Mock layout components
 vi.mock('../src/components/Sidebar', () => ({ default: () => <div data-testid="sidebar" /> }));
 vi.mock('../src/components/Header', () => ({ default: () => <header data-testid="header" /> }));
 vi.mock('../src/components/Footer', () => ({ default: () => <footer data-testid="footer" /> }));
 
-// Replace the complex modal components with simple dummy divs.
-// We pass through the `isOpen` and `onClose` props to test if the parent controls them correctly.
+// Mock modal components to verify visibility
 vi.mock('../src/components/ReassignModal', () => ({ 
   default: ({ isOpen, onClose }) => isOpen ? (
     <div data-testid="reassign-modal">
@@ -38,10 +37,10 @@ vi.mock('../src/components/DeleteComplaintModal', () => ({
   ) : null 
 }));
 
-// Intercept network requests
+// Mock API calls
 global.fetch = vi.fn();
 
-// Dummy data matching the shape of the expected backend response
+// Mock API response data
 const mockStats = { total: 100, pending: 10, active: 40, resolved: 50 };
 const mockComplaints = [
   { complaint_id: 101, title: 'Massive Pipe Leak', category: 'Water Supply Services', status: 'PENDING', authority_name: null, created_at: '2023-10-01' },
@@ -54,11 +53,11 @@ describe('AdminComplaints Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     
-    // By default, pretend a Super Admin is logged in so the component renders normally
+    // Simulate a logged-in Super Admin user
     const adminUser = { id: 1, role: 'super_admin' };
     vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(JSON.stringify(adminUser));
 
-    // The component fetches stats and then the complaint list on mount
+    // Mock API responses for stats and complaints
     global.fetch
       .mockResolvedValueOnce({
         json: () => Promise.resolve({ success: true, data: mockStats })
@@ -74,21 +73,21 @@ describe('AdminComplaints Component', () => {
   });
 
   it('redirects to login if no user is found in localStorage', () => {
-    // Override our default setup to simulate a logged-out state
+    // Simulate a logged-out user
     vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
     render(<AdminComplaints />);
     
-    // Verify the component protected the route
+    // Check if the user is redirected to login
     expect(mockNavigate).toHaveBeenCalledWith('/login');
   });
 
   it('redirects to the standard officer dashboard if the user lacks super_admin privileges', () => {
-    // Override setup to simulate a standard officer trying to access the master admin panel
+    // Simulate an officer accessing the admin panel
     const officerUser = { id: 2, role: 'officer' };
     vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(JSON.stringify(officerUser));
     render(<AdminComplaints />);
     
-    // Verify they were kicked back to their appropriate dashboard
+    // Check if the officer is redirected to their dashboard
     expect(mockNavigate).toHaveBeenCalledWith('/officer/dashboard');
   });
 
@@ -98,7 +97,7 @@ describe('AdminComplaints Component', () => {
     expect(screen.getByText('Loading Master List...')).toBeTruthy();
 
     await waitFor(() => {
-      // Check if all our dummy complaints made it into the table
+      // Check if complaints are rendered in the table
       expect(screen.getByText('#CMP-101')).toBeTruthy();
       expect(screen.getByText('Massive Pipe Leak')).toBeTruthy();
       expect(screen.getByText('#CMP-102')).toBeTruthy();
@@ -109,19 +108,19 @@ describe('AdminComplaints Component', () => {
   it('filters complaints correctly using the text search bar (by Title or ID)', async () => {
     render(<AdminComplaints />);
 
-    // Wait for initial load
+    // Wait for data to load
     await waitFor(() => {
       expect(screen.getByText('Massive Pipe Leak')).toBeTruthy();
     });
 
     const searchInput = screen.getByPlaceholderText('Search Subject or ID...');
     
-    // Test title matching
+    // Test searching by title
     fireEvent.change(searchInput, { target: { value: 'Pothole' } });
     expect(screen.queryByText('Massive Pipe Leak')).toBeNull();
     expect(screen.getByText('Deep Pothole')).toBeTruthy();
 
-    // Test ID matching
+    // Test searching by ID
     fireEvent.change(searchInput, { target: { value: '101' } });
     expect(screen.getByText('Massive Pipe Leak')).toBeTruthy();
     expect(screen.queryByText('Deep Pothole')).toBeNull();
@@ -134,11 +133,11 @@ describe('AdminComplaints Component', () => {
       expect(screen.getByText('Massive Pipe Leak')).toBeTruthy();
     });
 
-    // Grab the first dropdown (Category) and simulate selecting the Water department
+    // Simulate filtering by category
     const categorySelect = screen.getAllByRole('combobox')[0]; 
     fireEvent.change(categorySelect, { target: { value: 'Water Supply Services' } });
 
-    // Ensure it hid the pothole complaint
+    // Check if complaints are filtered correctly
     expect(screen.getByText('Massive Pipe Leak')).toBeTruthy();
     expect(screen.queryByText('Deep Pothole')).toBeNull();
   });
@@ -150,11 +149,11 @@ describe('AdminComplaints Component', () => {
       expect(screen.getByText('Massive Pipe Leak')).toBeTruthy();
     });
 
-    // Grab the second dropdown (Status) and select RESOLVED
+    // Simulate filtering by status
     const statusSelect = screen.getAllByRole('combobox')[1]; 
     fireEvent.change(statusSelect, { target: { value: 'RESOLVED' } });
 
-    // Only the Broken Streetlight should remain
+    // Check if only resolved complaints are shown
     expect(screen.getByText('Broken Streetlight')).toBeTruthy();
     expect(screen.queryByText('Massive Pipe Leak')).toBeNull();
   });
@@ -166,15 +165,15 @@ describe('AdminComplaints Component', () => {
       expect(screen.getByText('Massive Pipe Leak')).toBeTruthy();
     });
 
-    // Intentionally break the list by searching for garbage
+    // Simulate an empty search result
     const searchInput = screen.getByPlaceholderText('Search Subject or ID...');
     fireEvent.change(searchInput, { target: { value: 'Nonexistent' } });
     expect(screen.queryByText('Massive Pipe Leak')).toBeNull();
 
-    // Hit the clear button
+    // Simulate clicking the clear filter button
     fireEvent.click(screen.getByText('Clear'));
 
-    // Verify the original list was restored
+    // Check if all complaints are visible again
     expect(screen.getByText('Massive Pipe Leak')).toBeTruthy();
     expect(screen.getByText('Deep Pothole')).toBeTruthy();
   });
@@ -186,11 +185,11 @@ describe('AdminComplaints Component', () => {
       expect(screen.getAllByText('View Details').length).toBe(3);
     });
 
-    // Tap the View Details button on the first row
+    // Simulate clicking the View Details button
     fireEvent.click(screen.getAllByText('View Details')[0]);
     expect(screen.getByTestId('details-modal')).toBeTruthy();
 
-    // Close the dummy modal
+    // Simulate closing the modal
     fireEvent.click(screen.getByTestId('close-details'));
     expect(screen.queryByTestId('details-modal')).toBeNull();
   });
@@ -202,7 +201,7 @@ describe('AdminComplaints Component', () => {
       expect(screen.getAllByText('Reassign').length).toBe(3);
     });
 
-    // Tap the Reassign button on the first row
+    // Simulate clicking the Reassign button
     fireEvent.click(screen.getAllByText('Reassign')[0]);
     expect(screen.getByTestId('reassign-modal')).toBeTruthy();
 
@@ -214,11 +213,11 @@ describe('AdminComplaints Component', () => {
     render(<AdminComplaints />);
 
     await waitFor(() => {
-      // The delete button is an icon without text, so we target its accessibility title
+      // Find delete buttons by title
       expect(screen.getAllByTitle('Delete Complaint').length).toBe(3);
     });
 
-    // Tap the Trash icon on the first row
+    // Simulate clicking the delete button
     fireEvent.click(screen.getAllByTitle('Delete Complaint')[0]);
     expect(screen.getByTestId('delete-modal')).toBeTruthy();
 

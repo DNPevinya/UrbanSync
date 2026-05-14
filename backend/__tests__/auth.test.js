@@ -2,18 +2,16 @@ const request = require('supertest');
 const express = require('express');
 const bcrypt = require('bcrypt');
 
-// Grab the actual route logic we want to test
+// Import the authentication routes
 const authRoutes = require('../src/routes/authRoutes'); 
 
-// Intercept database calls so we don't accidentally write garbage data 
-// to our real MySQL database every time we run the test suite.
+// Mock the database
 jest.mock('../src/db', () => ({ 
     query: jest.fn()
 }));
 const db = require('../src/db');
 
-// Spin up a fake Express app in memory so we can fire HTTP requests 
-// at our router without needing to start up a real web server.
+// Set up a mock Express app
 const app = express();
 app.use(express.json()); 
 app.use('/api/auth', authRoutes);
@@ -21,18 +19,18 @@ app.use('/api/auth', authRoutes);
 describe('Auth API Routes', () => {
 
     beforeEach(() => {
-        // Wipe the slate clean before every test so database mock returns don't bleed over
+        // Clear mock data before each test
         jest.clearAllMocks();
     });
 
     describe('POST /api/auth/register', () => {
         
         it('should successfully register a new citizen (Happy Path - 201)', async () => {
-            // 1. Pretend the database checked for the email and found nothing (it's available)
+            // Simulate email availability
             db.query.mockResolvedValueOnce([[]]); 
-            // 2. Pretend the insert into the 'users' table succeeded and gave us an ID of 10
+            // Simulate successful user insertion
             db.query.mockResolvedValueOnce([{ insertId: 10 }]); 
-            // 3. Pretend the insert into the 'citizens' table also succeeded
+            // Simulate successful citizen insertion
             db.query.mockResolvedValueOnce([{}]); 
 
             const response = await request(app)
@@ -49,12 +47,12 @@ describe('Auth API Routes', () => {
             expect(response.status).toBe(201);
             expect(response.body.message).toBe('Citizen registered successfully!');
             
-            // Prove our API actually tried to run all 3 required database queries
+            // Verify number of database queries
             expect(db.query).toHaveBeenCalledTimes(3); 
         });
 
         it('should fail if email is already registered (Sad Path - 400)', async () => {
-            // Pretend the database found an existing user when checking the email
+            // Simulate email already registered
             db.query.mockResolvedValueOnce([[{ user_id: 1, email: 'citizen@urbansync.com' }]]);
 
             const response = await request(app)
@@ -69,7 +67,7 @@ describe('Auth API Routes', () => {
             expect(response.status).toBe(400);
             expect(response.body.message).toBe('This email is already registered.');
             
-            // Prove the code stopped early and didn't attempt to run the INSERT queries
+            // Verify no insertion queries
             expect(db.query).toHaveBeenCalledTimes(1); 
         });
     });
@@ -77,15 +75,15 @@ describe('Auth API Routes', () => {
     describe('POST /api/auth/login', () => {
         
         it('should login a citizen and trigger 2FA OTP flow (Happy Path - 200)', async () => {
-            // Pretend we found the user in the database and their password matches
+            // Simulate successful user lookup and password match
             db.query.mockResolvedValueOnce([[{ 
                 user_id: 1, 
                 email: 'citizen@urbansync.com', 
                 role: 'citizen', 
-                password: 'plainTextPassword123' // Testing the plain-text fallback logic
+                password: 'plainTextPassword123'
             }]]);
             
-            // Pretend we successfully fetched their extended profile details
+            // Simulate successful profile fetch
             db.query.mockResolvedValueOnce([[{ 
                 fullName: 'John Doe', 
                 phone: '0771234567', 
@@ -100,16 +98,16 @@ describe('Auth API Routes', () => {
                     password: 'plainTextPassword123'
                 });
 
-            // Even though it asks for an OTP, the initial credential check was a success (200)
+            // Verify initial credential check
             expect(response.status).toBe(200);
             expect(response.body.status).toBe('2FA_REQUIRED');
             
-            // Verify our backend regex correctly formatted the local phone number for Firebase
+            // Verify phone number format
             expect(response.body.phone).toBe('+94771234567'); 
         });
 
         it('should fail with invalid email or password (Sad Path - 401)', async () => {
-            // Pretend the database returned an empty array (User not found)
+            // Simulate user not found
             db.query.mockResolvedValueOnce([[]]);
 
             const response = await request(app)
@@ -124,7 +122,7 @@ describe('Auth API Routes', () => {
         });
 
         it('should successfully login an officer bypassing 2FA (Happy Path - 200)', async () => {
-            // Pretend we found an Officer in the users table
+            // Simulate successful officer lookup
             db.query.mockResolvedValueOnce([[{ 
                 user_id: 99, 
                 email: 'officer@urbansync.com', 
@@ -132,7 +130,7 @@ describe('Auth API Routes', () => {
                 password: 'officerPassword123' 
             }]]);
             
-            // Pretend we successfully joined and fetched their specific department details
+            // Simulate successful department fetch
             db.query.mockResolvedValueOnce([[{ 
                 full_name: 'Inspector Gadget', 
                 authority_id: 5, 
@@ -151,7 +149,7 @@ describe('Auth API Routes', () => {
             expect(response.status).toBe(200);
             expect(response.body.message).toBe('Login successful!');
             
-            // Ensure the payload correctly attaches the officer's department info
+            // Verify officer department info
             expect(response.body.user.role).toBe('officer');
             expect(response.body.user.authorityName).toBe('RDA');
         });
@@ -160,9 +158,9 @@ describe('Auth API Routes', () => {
     describe('POST /api/auth/forgot-password-init', () => {
         
         it('should successfully initiate forgot password for a citizen (Happy Path - 200)', async () => {
-            // Pretend we verified the email belongs to a valid citizen
+            // Simulate valid citizen email
             db.query.mockResolvedValueOnce([[{ user_id: 1, role: 'citizen' }]]);
-            // Pretend we fetched their associated phone number to send the SMS
+            // Simulate successful phone number fetch
             db.query.mockResolvedValueOnce([[{ phone: '0779998888' }]]);
 
             const response = await request(app)
@@ -171,11 +169,11 @@ describe('Auth API Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
-            expect(response.body.phone).toBe('+94779998888'); // Verifies Regex formatting again
+            expect(response.body.phone).toBe('+94779998888');
         });
 
         it('should return 404 if no citizen account is found (Sad Path - 404)', async () => {
-            // Pretend the user lookup failed
+            // Simulate user lookup failure
             db.query.mockResolvedValueOnce([[]]);
 
             const response = await request(app)
@@ -190,7 +188,7 @@ describe('Auth API Routes', () => {
     describe('Admin Officer Management', () => {
         
         it('GET /api/auth/admin/officers-list should return list of officers (Happy Path - 200)', async () => {
-            // Mock the database returning an array containing one officer
+            // Simulate returning list of officers
             db.query.mockResolvedValueOnce([[{ 
                 user_id: 2, 
                 email: 'officer1@test.com',
@@ -207,11 +205,11 @@ describe('Auth API Routes', () => {
         });
 
         it('POST /api/auth/admin/add-officer should create a new officer (Happy Path - 201)', async () => {
-            // 1. Email check returns empty (email is available)
+            // Simulate email availability
             db.query.mockResolvedValueOnce([[]]);
-            // 2. Insert into users table returns a fake ID of 50
+            // Simulate successful user insertion
             db.query.mockResolvedValueOnce([{ insertId: 50 }]);
-            // 3. Insert into officers table succeeds
+            // Simulate successful officer insertion
             db.query.mockResolvedValueOnce([{}]);
 
             const response = await request(app)
@@ -227,14 +225,14 @@ describe('Auth API Routes', () => {
             expect(response.body.success).toBe(true);
             expect(response.body.message).toBe('Officer added!');
             
-            // Prove the API automatically generated a secure temporary password for the new officer
+            // Verify temporary password generation
             expect(response.body.tempPassword).toBeDefined(); 
         });
 
         it('DELETE /api/auth/admin/delete-officer/:userId should delete an officer (Happy Path - 200)', async () => {
-            // 1. Pretend the delete from the 'officers' table succeeded
+            // Simulate successful deletion from officers table
             db.query.mockResolvedValueOnce([{}]);
-            // 2. Pretend the delete from the 'users' table succeeded
+            // Simulate successful deletion from users table
             db.query.mockResolvedValueOnce([{}]);
 
             const response = await request(app).delete('/api/auth/admin/delete-officer/50');
@@ -243,7 +241,7 @@ describe('Auth API Routes', () => {
             expect(response.body.success).toBe(true);
             expect(response.body.message).toBe('Officer deleted.');
             
-            // Ensure both the user record and the officer profile were cleaned up
+            // Verify number of database queries
             expect(db.query).toHaveBeenCalledTimes(2); 
         });
     });

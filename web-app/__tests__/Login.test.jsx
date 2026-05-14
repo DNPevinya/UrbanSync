@@ -4,29 +4,29 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useNavigate } from 'react-router-dom';
 import Login from '../src/pages/Login'; 
 
-// Intercept routing so we can verify if the login directs users to the correct dashboard
+// Mock React Router navigation
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-// left out localStorage so we can verify session saving without breaking the test environment
+// Mock localStorage
 Object.defineProperty(window, 'localStorage', {
   value: { setItem: vi.fn() },
 });
 
-// Intercept network requests so we don't hit the real auth backend
+// Mock API calls
 global.fetch = vi.fn();
 
 describe('Web Dashboard Login Component', () => {
 
   beforeEach(() => {
-    // Start fresh before every test
+    // Clear mock data before each test
     vi.clearAllMocks();
   });
 
   afterEach(() => {
-    // Wipe the DOM clean after every test so inputs and error messages don't run over into the next one
+    // Clean up rendered components after each test
     cleanup();
   });
 
@@ -47,13 +47,13 @@ describe('Web Dashboard Login Component', () => {
     fireEvent.change(emailInput, { target: { value: 'admin@urbansync.com' } });
     fireEvent.change(passwordInput, { target: { value: 'secure123' } });
 
-    // Verify the component state updated to reflect the typed values
+    // Check if input values are updated
     expect(emailInput.value).toBe('admin@urbansync.com');
     expect(passwordInput.value).toBe('secure123');
   });
 
   it('successfully logs in a Super Admin and navigates to the admin dashboard', async () => {
-    // Pretend the server authenticated the super admin successfully
+    // Simulate successful Super Admin login
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({
@@ -64,24 +64,24 @@ describe('Web Dashboard Login Component', () => {
 
     render(<Login />);
     
-    // Fill out the form
+    // Simulate filling the login form
     fireEvent.change(screen.getByPlaceholderText('Official Email Address'), { target: { value: 'admin@test.com' } });
     fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'pass123' } });
     fireEvent.click(screen.getByRole('button', { name: 'Login' }));
 
     await waitFor(() => {
-      // Verify it saved the session token/user data
+      // Check if user session is saved
       expect(window.localStorage.setItem).toHaveBeenCalledWith(
         'urbanSyncUser', 
         JSON.stringify({ id: 1, email: 'admin@urbansync.com', role: 'super_admin' })
       );
-      // Verify it routed them to the master admin panel
+      // Check if Super Admin is redirected to the admin dashboard
       expect(mockNavigate).toHaveBeenCalledWith('/admin/dashboard');
     });
   });
 
   it('successfully logs in an Officer and navigates to the officer dashboard', async () => {
-    // Pretend the server authenticated a standard department officer
+    // Simulate successful Officer login
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({
@@ -95,14 +95,14 @@ describe('Web Dashboard Login Component', () => {
     fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'pass123' } });
     fireEvent.click(screen.getByRole('button', { name: 'Login' }));
 
-    // Verify they were routed to their restricted workspace
+    // Check if Officer is redirected to the officer dashboard
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/officer/dashboard');
     });
   });
 
   it('blocks citizens from logging into the admin web portal', async () => {
-    // Pretend a regular mobile app user tried to log in here
+    // Simulate a Citizen login attempt
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({
@@ -116,7 +116,7 @@ describe('Web Dashboard Login Component', () => {
     fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'pass123' } });
     fireEvent.click(screen.getByRole('button', { name: 'Login' }));
 
-    // Verify the app actively rejected their login and displayed a warning
+    // Check if Citizen login is rejected with a warning message
     await waitFor(() => {
       expect(screen.getByText("Authorized personnel only. Please use the mobile app.")).toBeTruthy();
       expect(mockNavigate).not.toHaveBeenCalled();
@@ -124,7 +124,7 @@ describe('Web Dashboard Login Component', () => {
   });
 
   it('displays an error message if credentials are wrong', async () => {
-    // Force the API to reject the login attempt
+    // Simulate a failed login attempt
     global.fetch.mockResolvedValueOnce({
       ok: false,
       json: () => Promise.resolve({ message: "Invalid email or password." })
@@ -132,13 +132,13 @@ describe('Web Dashboard Login Component', () => {
 
     render(<Login />);
     
-    // We must type in fake credentials so the browser's built-in HTML 'required' validation passes and fires the API call
+    // Simulate entering incorrect credentials
     fireEvent.change(screen.getByPlaceholderText('Official Email Address'), { target: { value: 'wrong@test.com' } });
     fireEvent.change(screen.getByPlaceholderText('Password'), { target: { value: 'wrongpassword' } });
     
     fireEvent.click(screen.getByRole('button', { name: 'Login' }));
 
-    // Verify the server's error message made it to the screen
+    // Check if error message is displayed
     await waitFor(() => {
       expect(screen.getByText("Invalid email or password.")).toBeTruthy();
     });

@@ -2,7 +2,7 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import ViewComplaintsScreen from '../../src/screens/ViewComplaintsScreen';
 
-// Fake Dependencies 
+// Mock Dependencies 
 
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: jest.fn().mockImplementation(({ children }) => children),
@@ -19,11 +19,10 @@ jest.mock('../../src/config', () => ({
   BASE_URL: 'http://mock-server.com',
 }));
 
-// Intercept all network requests to avoid hitting a real database during tests
+// Mock API requests
 global.fetch = jest.fn();
 
-// Dummy Data
-// A few fake complaints covering different statuses so we can test the filtering logic.
+// Mock API response data
 const mockComplaints = [
   { 
     id: 1, 
@@ -42,7 +41,7 @@ const mockComplaints = [
     authority_id: 5 
   },
   { 
-    complaint_id: 3, // Testing the fallback ID logic in the component
+    complaint_id: 3, // Test fallback ID logic
     title: 'Deep Pothole', 
     description: 'Damaging cars on 5th Ave.', 
     status: 'IN PROGRESS', 
@@ -56,12 +55,12 @@ describe('ViewComplaintsScreen', () => {
   const testUserId = 99;
 
   beforeEach(() => {
-    // Start fresh for every test
+    // Clear mock data before each test
     jest.clearAllMocks();
   });
 
   it('fetches complaints on mount and renders them correctly', async () => {
-    // Pretend the server returned our fake list of complaints
+    // Mock successful API response
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ success: true, data: mockComplaints }),
@@ -71,27 +70,27 @@ describe('ViewComplaintsScreen', () => {
       <ViewComplaintsScreen onNavigateToDetails={mockOnNavigateToDetails} userId={testUserId} />
     );
 
-    // Verify it asked the server for the correct user's data
+    // Verify API call is made
     expect(global.fetch).toHaveBeenCalledWith(`http://mock-server.com/api/complaints/user/${testUserId}`);
 
-    // Wait for the UI to update and verify the data rendered properly
+    // Verify complaints are rendered
     await waitFor(() => {
       expect(getByText('Broken Water Pipe')).toBeTruthy();
       expect(getByText('Noise Complaint')).toBeTruthy();
       expect(getByText('Deep Pothole')).toBeTruthy();
       
-      // Verify that the custom ID formatting (#SL-1) worked
+      // Verify formatted ID
       expect(getByText('#SL-1')).toBeTruthy(); 
     });
   });
 
   it('displays the empty state when no complaints are returned or the fetch fails', async () => {
-    // Force a network failure to test the error handling
+    // Mock API error
     global.fetch.mockRejectedValueOnce(new Error('Network failure'));
 
     const { getByText } = render(<ViewComplaintsScreen onNavigateToDetails={mockOnNavigateToDetails} />);
 
-    // Ensure the fallback message appears gracefully
+    // Verify error message
     await waitFor(() => {
       expect(getByText('No reports found.')).toBeTruthy();
     });
@@ -105,13 +104,13 @@ describe('ViewComplaintsScreen', () => {
 
     const { getByText, queryByText } = render(<ViewComplaintsScreen onNavigateToDetails={mockOnNavigateToDetails} />);
 
-    // Wait for the initial list to load
+    // Wait for list to load
     await waitFor(() => expect(getByText('Broken Water Pipe')).toBeTruthy());
 
-    // Tap the "Resolved" tab
+    // Simulate tapping "Resolved"
     fireEvent.press(getByText('Resolved'));
 
-    // Verify the list filtered out the unresolved items
+    // Verify filtered list
     await waitFor(() => {
       expect(getByText('Noise Complaint')).toBeTruthy();
       expect(queryByText('Broken Water Pipe')).toBeNull();
@@ -133,14 +132,14 @@ describe('ViewComplaintsScreen', () => {
 
     const searchInput = getByPlaceholderText('Search by ID or Title...');
 
-    // Test searching by word
+    // Test searching by keyword
     fireEvent.changeText(searchInput, 'Pothole');
     await waitFor(() => {
       expect(getByText('Deep Pothole')).toBeTruthy();
       expect(queryByText('Broken Water Pipe')).toBeNull();
     });
 
-    // Test searching by ID format
+    // Test searching by ID
     fireEvent.changeText(searchInput, 'SL-1');
     await waitFor(() => {
       expect(getByText('Broken Water Pipe')).toBeTruthy();
@@ -160,11 +159,11 @@ describe('ViewComplaintsScreen', () => {
 
     await waitFor(() => expect(getByText('Broken Water Pipe')).toBeTruthy());
 
-    // Grab the first "View Details" button, which corresponds to the first item (ID: 1)
+    // Simulate tapping "View Details"
     const viewDetailsButtons = getAllByText('View Details');
     fireEvent.press(viewDetailsButtons[0]);
 
-    // Verify it told the app navigator to open the details page for ID 1
+    // Verify navigation callback
     expect(mockOnNavigateToDetails).toHaveBeenCalledWith(1);
   });
 });

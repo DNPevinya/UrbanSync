@@ -5,18 +5,18 @@ import { useNavigate } from 'react-router-dom';
 import OfficerDashboard from '../src/pages/OfficerDashboard';
 import { BASE_URL } from '../src/config';
 
-// Intercept routing so we can verify if unauthorized users are correctly redirected
+// Mock React Router navigation
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
 }));
 
-// Stub out the standard layout components to keep the test DOM clean and focused strictly on the dashboard logic
+// Mock layout components
 vi.mock('../src/components/Sidebar', () => ({ default: () => <div data-testid="sidebar" /> }));
 vi.mock('../src/components/Header', () => ({ default: ({ title }) => <header data-testid="header">{title}</header> }));
 vi.mock('../src/components/Footer', () => ({ default: () => <footer data-testid="footer" /> }));
 
-// Replace the browser's native localStorage so we can simulate active user sessions
+// Mock localStorage
 Object.defineProperty(window, 'localStorage', {
   value: { 
     getItem: vi.fn(),
@@ -24,12 +24,12 @@ Object.defineProperty(window, 'localStorage', {
   writable: true
 });
 
-// Intercept network requests to prevent the test runner from pinging a real backend
+// Mock API calls
 global.fetch = vi.fn();
 
 describe('OfficerDashboard Component', () => {
 
-  // Dummy user profile representing a standard department officer
+  // Mock Officer user session
   const mockOfficerUser = {
     id: 2,
     fullName: 'Jane Smith',
@@ -38,52 +38,51 @@ describe('OfficerDashboard Component', () => {
     role: 'officer'
   };
 
-  // Dummy data representing recent complaints assigned to this officer's department
+  // Mock API response data
   const mockComplaints = [
     { complaint_id: 201, citizen_name: 'John Wick', citizen_phone: '555-0999', title: 'Power outage', status: 'PENDING' },
     { complaint_id: 202, citizen_name: 'Sarah Connor', citizen_phone: '555-0888', title: 'Sparking wire', status: 'IN PROGRESS' }
   ];
 
   beforeEach(() => {
-    // Start fresh before every test to prevent mock state bleeding
+    // Clear mock data before each test
     vi.clearAllMocks();
     
-    // By default, pretend an authorized officer is actively logged in
+    // Simulate a logged-in Officer
     window.localStorage.getItem.mockReturnValue(JSON.stringify(mockOfficerUser));
   });
 
   afterEach(() => {
-    // Wipe the DOM clean after every test
+    // Clean up rendered components after each test
     cleanup();
   });
 
   it('redirects to the login page if no user session is found in localStorage', () => {
-    // Override our default setup to simulate a logged-out state
+    // Simulate a logged-out user
     window.localStorage.getItem.mockReturnValue(null);
     render(<OfficerDashboard />);
     
-    // Verify the component protected the route
+    // Check if user is redirected to login
     expect(mockNavigate).toHaveBeenCalledWith('/login');
     
-    // Ensure it didn't waste resources trying to fetch data for an unauthorized user
+    // Check if API request is prevented
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
   it('renders the initial loading state and layout correctly', () => {
-    // Force the fetch promise to hang forever so we can catch the loading UI in action
+    // Simulate a pending API request to test loading state
     global.fetch.mockReturnValue(new Promise(() => {})); 
     
     render(<OfficerDashboard />);
     
-    // Verify the component successfully grabbed the officer's info from local storage 
-    // and injected it into the Header title
+    // Check if header includes the officer's name and department
     expect(screen.getByTestId('header').textContent).toBe('Welcome, Officer Jane Smith | Electrical Dept');
     
-    // Verify the UI shows placeholder dots for stats while waiting for the network
+    // Check if placeholder stats are shown
     expect(screen.getByText('Total Assigned Cases')).toBeTruthy();
     expect(screen.getByText('...')).toBeTruthy();
     
-    // Verify the table shows the syncing indicator
+    // Check if loading text is shown in the table
     expect(screen.getByText('Syncing records...')).toBeTruthy();
   });
 
@@ -96,13 +95,13 @@ describe('OfficerDashboard Component', () => {
     render(<OfficerDashboard />);
 
     await waitFor(() => {
-      // Verify it dynamically requested data for Authority ID 15
+      // Check if API request uses the correct Authority ID
       expect(global.fetch).toHaveBeenCalledWith(`${BASE_URL}/api/complaints/authority/15`);
       
-      // Verify the total cases count updated correctly based on the returned array
+      // Check if total cases count is calculated accurately
       expect(screen.getByText('2')).toBeTruthy();
       
-      // Verify the recent activity table mapped our dummy data to rows
+      // Check if recent complaints are rendered
       expect(screen.getByText('#CMP-201')).toBeTruthy();
       expect(screen.getByText('John Wick')).toBeTruthy();
       expect(screen.getByText('Power outage')).toBeTruthy();
@@ -114,7 +113,7 @@ describe('OfficerDashboard Component', () => {
   });
 
   it('handles API failure gracefully by leaving the table empty without crashing', async () => {
-    // Force a network crash
+    // Simulate an API network error
     global.fetch.mockRejectedValueOnce(new Error("Network Error"));
 
     render(<OfficerDashboard />);
@@ -122,7 +121,7 @@ describe('OfficerDashboard Component', () => {
     await waitFor(() => {
       expect(screen.queryByText('Syncing records...')).toBeNull();
       
-      // The total count should safely fall back to 0 instead of throwing an undefined error
+      // Check if total cases count falls back to 0
       expect(screen.getByText('0')).toBeTruthy();
     });
   });
@@ -135,7 +134,7 @@ describe('OfficerDashboard Component', () => {
 
     render(<OfficerDashboard />);
 
-    // Wait for the data to settle
+    // Wait for data to load
     await waitFor(() => {
       expect(screen.queryByText('Syncing records...')).toBeNull();
     });
@@ -143,7 +142,7 @@ describe('OfficerDashboard Component', () => {
     const viewAllBtn = screen.getByText('View Full Workbox');
     fireEvent.click(viewAllBtn);
 
-    // Verify it told the router to go to the main complaints list
+    // Check if user is navigated to complaints list
     expect(mockNavigate).toHaveBeenCalledWith('/officer/complaints');
   });
 
@@ -159,16 +158,15 @@ describe('OfficerDashboard Component', () => {
       expect(screen.getByText('#CMP-201')).toBeTruthy();
     });
 
-    // The action buttons in the rows don't have text, so we filter out the explicit "View Full Workbox" 
-    // header button to ensure we only grab the interactive row buttons.
+    // Select row action buttons
     const actionButtons = screen.getAllByRole('button').filter(btn => 
       !btn.textContent.includes('View Full Workbox') 
     );
     
-    // Simulate clicking the first row's action button (CMP-201)
+    // Simulate clicking the first action button
     fireEvent.click(actionButtons[0]);
 
-    // Verify it passed the correct ID via query param
+    // Check if user is navigated to complaint details page
     expect(mockNavigate).toHaveBeenCalledWith('/officer/complaint-details?id=201');
   });
 

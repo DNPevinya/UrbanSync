@@ -4,9 +4,7 @@ import { Alert } from 'react-native';
 import ComplaintDetailsScreen from '../../src/screens/ComplaintDetailsScreen';
 
 
-// Fake Dependencies (Mocks)
-// We replace complex native libraries with simple views 
-// so the test runner doesn't crash trying to render them.
+// Mock Dependencies
 
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: jest.fn().mockImplementation(({ children }) => children),
@@ -14,14 +12,14 @@ jest.mock('react-native-safe-area-context', () => ({
 
 jest.mock('@expo/vector-icons', () => {
   const { View } = require('react-native');
-  // Trick: Give every icon a testID based on its name so we can find it later
+  // Assign testID based on icon name for testing
   return {
     Ionicons: (props) => <View testID={`icon-${props.name}`} {...props} />,
     MaterialCommunityIcons: (props) => <View testID={`icon-${props.name}`} {...props} />,
   };
 });
 
-// WebViews crash Node.js test environments, so we fake it out entirely
+// Mock WebView component
 jest.mock('react-native-webview', () => {
   const { View } = require('react-native');
   return {
@@ -33,14 +31,14 @@ jest.mock('../../src/config', () => ({
   BASE_URL: 'http://mock-server.com',
 }));
 
-// Intercept all API calls so we don't hit the real backend
+// Mock API calls
 global.fetch = jest.fn();
 
 describe('ComplaintDetailsScreen', () => {
   const mockOnBack = jest.fn();
   const mockComplaintId = '12345';
 
-  // Dummy data to feed into the screen when it tries to fetch details
+  // Mock API response data
   const mockComplaintData = {
     id: mockComplaintId,
     title: 'Huge Pothole on Main St',
@@ -56,13 +54,13 @@ describe('ComplaintDetailsScreen', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks(); // Start fresh for every test
-    // We spy on Alert so we can programmatically "click" its buttons during tests
+    jest.clearAllMocks(); // Clear mock data before each test
+    // Mock Alert dialog
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   });
 
   it('shows a loading spinner before the API responds', () => {
-    // Force the fetch to hang forever so we can inspect the loading state
+    // Simulate a pending API request to test loading state
     global.fetch.mockReturnValue(new Promise(() => {}));
 
     const { getByText } = render(
@@ -73,7 +71,7 @@ describe('ComplaintDetailsScreen', () => {
   });
 
   it('shows an error screen with a back button if the complaint is deleted or fails to load', async () => {
-    // Pretend the server returned an empty result
+    // Mock empty API response
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ success: false, data: null }),
@@ -83,18 +81,18 @@ describe('ComplaintDetailsScreen', () => {
       <ComplaintDetailsScreen onBack={mockOnBack} complaintId={mockComplaintId} />
     );
 
-    // Wait for the UI to show the error message
+    // Wait for error message to render
     await waitFor(() => {
       expect(getByText('Complaint not found.')).toBeTruthy();
     });
 
-    // Make sure the fallback back button actually works
+    // Verify back button functionality
     fireEvent.press(getByText('Go Back'));
     expect(mockOnBack).toHaveBeenCalledTimes(1);
   });
 
   it('loads the complaint data and renders the text, images, and map correctly', async () => {
-    // Feed it our dummy data
+    // Mock successful API response
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ success: true, data: mockComplaintData }),
@@ -105,24 +103,24 @@ describe('ComplaintDetailsScreen', () => {
     );
 
     await waitFor(() => {
-      // Check if all the crucial text blocks rendered
+      // Check if complaint details are displayed
       expect(getByText('Huge Pothole on Main St')).toBeTruthy();
       expect(getByText('There is a massive pothole causing traffic near the junction.')).toBeTruthy();
       expect(getByText('Main St, Colombo')).toBeTruthy();
       expect(getByText('#SL-12345')).toBeTruthy();
       expect(getByText('IN PROGRESS')).toBeTruthy();
       
-      // Verify the dynamic timeline states
+      // Check if status information is displayed
       expect(getByText('Road Development Authority')).toBeTruthy();
       expect(getByText('Work In Progress')).toBeTruthy();
 
-      // Ensure the map (WebView) didn't crash and is present
+      // Check if WebView is rendered
       expect(getByTestId('mock-webview')).toBeTruthy();
     });
   });
 
   it('allows the user to tap an image to view it full-screen', async () => {
-    // Feed it data so the images render
+    // Mock successful API response
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ success: true, data: mockComplaintData }),
@@ -134,29 +132,29 @@ describe('ComplaintDetailsScreen', () => {
 
     await waitFor(() => expect(getByText('Huge Pothole on Main St')).toBeTruthy());
 
-    // Find the expand icon over the images
+    // Find the image expansion icon
     const expandIcons = getAllByTestId('icon-expand');
     expect(expandIcons.length).toBeGreaterThan(0);
 
-    // Tap the first one to open the modal
+    // Simulate tapping the expansion icon
     fireEvent.press(expandIcons[0]);
 
-    // If the close button exists, it proves the modal successfully opened
+    // Check if close button is visible
     const closeBtn = getByTestId('icon-close-circle');
     expect(closeBtn).toBeTruthy();
 
-    // Close it back up
+    // Simulate clicking the close button
     fireEvent.press(closeBtn);
   });
 
   it('handles the complex "Cancel Complaint" flow and hits the PATCH endpoint', async () => {
-    // This test requires TWO API mocks: one for the initial load, one for the cancellation
+    // Mock API responses for initial load and cancellation
     global.fetch
-      .mockResolvedValueOnce({ // 1. Initial Load
+      .mockResolvedValueOnce({ // Mock initial load
         ok: true,
         json: () => Promise.resolve({ success: true, data: mockComplaintData }),
       })
-      .mockResolvedValueOnce({ // 2. The Cancel Request
+      .mockResolvedValueOnce({ // Mock cancel request
         ok: true,
         json: () => Promise.resolve({ success: true }),
       });
@@ -165,27 +163,27 @@ describe('ComplaintDetailsScreen', () => {
       <ComplaintDetailsScreen onBack={mockOnBack} complaintId={mockComplaintId} />
     );
 
-    // Wait for the button to appear
+    // Wait for Cancel Complaint button
     await waitFor(() => expect(getByText('Cancel Complaint')).toBeTruthy());
 
-    // Tap it
+    // Simulate clicking the Cancel Complaint button
     const cancelBtn = getByText('Cancel Complaint');
     fireEvent.press(cancelBtn);
 
-    // Check that the confirmation popup appeared
+    // Check if confirmation alert is displayed
     expect(Alert.alert).toHaveBeenCalledWith(
       'Cancel Complaint',
       'Are you sure you want to withdraw this complaint? This cannot be undone.',
       expect.any(Array)
     );
 
-    // Dig into the Alert mock and artificially click the "destructive" (Yes, Cancel) button
+    // Simulate clicking the Yes button in the alert
     const confirmButton = Alert.alert.mock.calls[0][2].find(b => b.style === 'destructive');
     confirmButton.onPress();
 
-    // Verify the aftermath
+    // Check consequences of cancellation
     await waitFor(() => {
-      // Did it actually tell the backend to cancel?
+      // Check if API request is made with correct payload
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining(`/api/complaints/update-status/${mockComplaintId}`),
         expect.objectContaining({
@@ -194,7 +192,7 @@ describe('ComplaintDetailsScreen', () => {
         })
       );
       
-      // Did it show a success message and kick the user back to the list?
+      // Check if success message is displayed and navigation occurs
       expect(Alert.alert).toHaveBeenCalledWith('Withdrawn', 'Your complaint has been cancelled.');
       expect(mockOnBack).toHaveBeenCalled();
     });

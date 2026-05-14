@@ -4,9 +4,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import OfficerComplaintDetails from '../src/pages/OfficerComplaintDetails';
 import { BASE_URL } from '../src/config';
 
-// Intercept routing hooks. 
-// Note: This specific component grabs the ID from the query string (?id=123) using useSearchParams, 
-// rather than a URL parameter (/123) with useParams. We mock it accordingly here.
+// Mock React Router navigation and search parameters
 const mockNavigate = vi.fn();
 let mockSearchParams = new URLSearchParams({ id: '123' });
 
@@ -15,8 +13,7 @@ vi.mock('react-router-dom', () => ({
   useSearchParams: () => [mockSearchParams],
 }));
 
-// Leave out the layout wrappers and the rejection modal. 
-// We pass through the onClose prop to the dummy modal so we can test if the parent controls its visibility correctly.
+// Mock layout and modal components
 vi.mock('../src/components/Sidebar', () => ({ default: () => <div data-testid="sidebar" /> }));
 vi.mock('../src/components/Header', () => ({ default: () => <header data-testid="header" /> }));
 vi.mock('../src/components/Footer', () => ({ default: () => <footer data-testid="footer" /> }));
@@ -28,11 +25,11 @@ vi.mock('../src/components/RejectComplaintModal', () => ({
   ) : null 
 }));
 
-// Intercept network requests and native browser alerts so we don't hit real APIs or freeze the test runner
+// Mock API calls and browser alerts
 global.fetch = vi.fn();
 global.alert = vi.fn();
 
-// A robust dummy complaint to feed the UI
+// Mock API response data
 const mockComplaint = {
   complaint_id: 123,
   status: 'PENDING',
@@ -54,7 +51,7 @@ describe('OfficerComplaintDetails Component', () => {
     vi.clearAllMocks();
     mockSearchParams = new URLSearchParams({ id: '123' }); 
     
-    // Pretend a standard officer is logged in
+    // Simulate a logged-in Officer
     const officerUser = { id: 2, role: 'officer', authorityName: 'Water Board', fullName: 'John Doe' };
     vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(JSON.stringify(officerUser));
   });
@@ -65,7 +62,7 @@ describe('OfficerComplaintDetails Component', () => {
   });
 
   it('shows the loading state initially', () => {
-    // Force the fetch promise to hang forever so we can catch the loading UI in action
+    // Simulate a pending API request to test loading state
     global.fetch.mockReturnValueOnce(new Promise(() => {}));
     
     render(<OfficerComplaintDetails />);
@@ -81,17 +78,17 @@ describe('OfficerComplaintDetails Component', () => {
     render(<OfficerComplaintDetails />);
 
     await waitFor(() => {
-      // Verify core text data rendered
+      // Check if complaint details are displayed
       expect(screen.getByText('Complaint #CMP-123')).toBeTruthy();
       expect(screen.getByText('Broken Water Pipe')).toBeTruthy();
       expect(screen.getByText('Massive water leak on Main St.')).toBeTruthy();
       expect(screen.getByText('Water Supply Services')).toBeTruthy();
       
-      // Verify internal admin notes are visible to the officer
+      // Check if internal admin notes are displayed
       expect(screen.getByText('Urgent attention required.')).toBeTruthy();
       expect(screen.getByText('Main St, Colombo')).toBeTruthy();
       
-      // Verify the component correctly split the comma-separated image string into multiple image tags
+      // Check if images are rendered correctly
       const images = screen.getAllByRole('img');
       expect(images.length).toBe(2);
       expect(images[0].src).toContain('/uploads/img1.jpg');
@@ -164,20 +161,20 @@ describe('OfficerComplaintDetails Component', () => {
       expect(screen.getByText('Reject & Escalate')).toBeTruthy();
     });
 
-    // Tap the Escalate button
+    // Simulate clicking the Reject & Escalate button
     fireEvent.click(screen.getByText('Reject & Escalate'));
     expect(screen.getByTestId('reject-modal')).toBeTruthy();
 
-    // Close our dummy modal
+    // Simulate closing the modal
     fireEvent.click(screen.getByTestId('close-reject-modal'));
     expect(screen.queryByTestId('reject-modal')).toBeNull();
   });
 
   it('successfully updates the complaint status and notifies the user', async () => {
-    // 1. Initial load
+    // Load complaint details
     global.fetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ success: true, data: mockComplaint }) // Starts as PENDING
+      json: () => Promise.resolve({ success: true, data: mockComplaint })
     });
 
     render(<OfficerComplaintDetails />);
@@ -186,29 +183,29 @@ describe('OfficerComplaintDetails Component', () => {
       expect(screen.getByText('Complaint #CMP-123')).toBeTruthy();
     });
 
-    // 2. Simulate the officer changing the status dropdown
+    // Simulate changing the status dropdown
     const statusSelect = screen.getByRole('combobox');
     fireEvent.change(statusSelect, { target: { value: 'IN PROGRESS' } });
 
-    // 3. Prep the mock for the PATCH request that saves the change
+    // Mock successful API response for status update
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ success: true })
     });
 
-    // 4. Hit save
+    // Simulate clicking the Apply Transition button
     const applyButton = screen.getByText('Apply Transition');
     fireEvent.click(applyButton);
 
     await waitFor(() => {
-      // Verify the network request was formatted perfectly
+      // Check if API request contains correct payload
       expect(global.fetch).toHaveBeenCalledWith(`${BASE_URL}/api/complaints/update-status/123`, expect.objectContaining({
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'IN PROGRESS' })
       }));
       
-      // Verify the success popup fired
+      // Check if success alert is shown
       expect(global.alert).toHaveBeenCalledWith("Status updated successfully!");
     });
   });
@@ -228,12 +225,12 @@ describe('OfficerComplaintDetails Component', () => {
     const statusSelect = screen.getByRole('combobox');
     fireEvent.change(statusSelect, { target: { value: 'RESOLVED' } });
 
-    // Force the PATCH request to fail
+    // Simulate API failure on status update
     global.fetch.mockRejectedValueOnce(new Error('Network error'));
 
     fireEvent.click(screen.getByText('Apply Transition'));
 
-    // Verify the UI catches the error and informs the user
+    // Check if error alert is shown
     await waitFor(() => {
       expect(global.alert).toHaveBeenCalledWith("Failed to update status.");
     });
@@ -251,11 +248,11 @@ describe('OfficerComplaintDetails Component', () => {
       expect(screen.getByText('Complaint #CMP-123')).toBeTruthy();
     });
 
-    // Grab the back arrow button (which is the first button in the header) and click it
+    // Simulate clicking the back button
     const buttons = screen.getAllByRole('button');
     fireEvent.click(buttons[0]);
 
-    // Verify it told the router to go back one step
+    // Check if user is navigated backward in history
     expect(mockNavigate).toHaveBeenCalledWith(-1);
   });
 });

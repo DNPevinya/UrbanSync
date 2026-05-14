@@ -2,12 +2,7 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import ForgotPasswordScreen from '../../src/screens/ForgotPasswordScreen';
 
-// ---------------------------------------------------------
-// Fake Dependencies (Mocks)
-// This screen uses Firebase for phone verification. We absolutely DO NOT
-// want to trigger real SMS messages during a test, so we have to fake
-// out a bunch of Firebase's internal mechanics here.
-// ---------------------------------------------------------
+// Mock Dependencies
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: jest.fn().mockImplementation(({ children }) => children),
 }));
@@ -26,13 +21,13 @@ jest.mock('../../src/config', () => ({
   BASE_URL: 'http://mock-server.com',
 }));
 
-// Fake the invisible reCAPTCHA so the test doesn't hang waiting for browser verification
+// Mock Firebase reCAPTCHA
 jest.mock('expo-firebase-recaptcha', () => {
   const { View } = require('react-native');
   return { FirebaseRecaptchaVerifierModal: () => <View testID="mock-recaptcha" /> };
 });
 
-// Deep fake of Firebase Auth to pretend we successfully requested and received an SMS code
+// Mock Firebase Auth
 jest.mock('firebase/auth', () => {
   return {
     PhoneAuthProvider: jest.fn().mockImplementation(() => ({
@@ -42,15 +37,15 @@ jest.mock('firebase/auth', () => {
   };
 });
 
-// Firebase requires a static method call here, so we manually intercept it
+// Mock PhoneAuthProvider credential method
 require('firebase/auth').PhoneAuthProvider.credential = jest.fn().mockReturnValue('mock-credential');
 
-// Provide a dummy config so Firebase doesn't crash on boot
+// Mock Firebase config
 jest.mock('../../src/firebaseConfig', () => ({
   auth: { app: { options: {} } }
 }));
 
-// Intercept network calls and native alerts
+// Mock network requests and alerts
 global.fetch = jest.fn();
 global.alert = jest.fn();
 
@@ -59,12 +54,12 @@ describe('ForgotPasswordScreen', () => {
   const mockOnResetSuccess = jest.fn();
 
   beforeEach(() => {
-    // Wipe the slate clean before every test
+    // Clear mock data before each test
     jest.clearAllMocks();
   });
 
   it('allows the user to enter their email and successfully moves to the OTP step', async () => {
-    // Pretend the backend successfully found the email and returned a masked phone number
+    // Mock successful API response with phone number
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ phone: '+94771234567' }),
@@ -74,25 +69,25 @@ describe('ForgotPasswordScreen', () => {
       <ForgotPasswordScreen onBack={mockOnBack} onResetSuccess={mockOnResetSuccess} />
     );
 
-    // Make sure we are starting on step 1
+    // Verify initial screen content
     expect(getByText('Reset Password')).toBeTruthy();
 
-    // Type in a test email
+    // Simulate entering an email
     const emailInput = getByPlaceholderText('Enter your email');
     fireEvent.changeText(emailInput, 'user@urbansync.com');
 
-    // Smash the continue button
+    // Simulate clicking the Continue button
     fireEvent.press(getByText('Continue'));
 
-    // Wait for the simulated network request to finish and the UI to update
+    // Check for network request and UI update
     await waitFor(() => {
-      // 1. Did it actually ask the backend to start the reset process?
+      // Verify API call was made
       expect(global.fetch).toHaveBeenCalledWith('http://mock-server.com/api/auth/forgot-password-init', expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ email: 'user@urbansync.com' }),
       }));
       
-      // 2. Did the screen successfully transition to asking for the code?
+      // Verify UI transition to OTP step
       expect(queryByText('Enter OTP')).toBeTruthy();
     });
   });
@@ -102,10 +97,10 @@ describe('ForgotPasswordScreen', () => {
       <ForgotPasswordScreen onBack={mockOnBack} onResetSuccess={mockOnResetSuccess} />
     );
 
-    // Try to proceed without typing anything
+    // Attempt to continue with blank email
     fireEvent.press(getByText('Continue'));
 
-    // Verify it threw an error and blocked the API call
+    // Verify error alert and API call block
     expect(global.alert).toHaveBeenCalledWith("Please enter your email.");
     expect(global.fetch).not.toHaveBeenCalled();
   });
@@ -113,11 +108,11 @@ describe('ForgotPasswordScreen', () => {
   it('triggers the back navigation callback when the back arrow is tapped', () => {
     const { getByTestId } = render(<ForgotPasswordScreen onBack={mockOnBack} />);
 
-    // Find the back arrow and tap it
+    // Simulate tapping the back arrow
     const backIcon = getByTestId('icon-chevron-back');
     fireEvent.press(backIcon.parent);
 
-    // Prove it told the router to go back
+    // Verify navigation callback
     expect(mockOnBack).toHaveBeenCalledTimes(1);
   });
 });

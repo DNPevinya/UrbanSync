@@ -1,14 +1,10 @@
 const request = require('supertest');
 const express = require('express');
 
-// The Hoisting Trick:
-// Because our route instantiates `new OpenAI()` inside the endpoint itself, we can't easily intercept it normally.
-// By defining this mock function out here and naming it specifically starting with "mock", 
-// Jest will pull this variable to the absolute top of the file during execution, allowing both our test suite 
-// and the mocked OpenAI module below to share the exact same fake function reference!
+// Mock OpenAI calls
 const mockCreate = jest.fn();
 
-// Deep fake the OpenAI SDK so we don't rack up API charges during automated testing.
+// Mock the OpenAI SDK
 jest.mock('openai', () => {
     return {
         OpenAI: jest.fn().mockImplementation(() => {
@@ -23,10 +19,10 @@ jest.mock('openai', () => {
     };
 });
 
-// Import the actual chat router
+// Import the chat routes
 const chatRoutes = require('../src/routes/chatroutes'); 
 
-// Spin up a fake Express app in memory to test the routes without a real server
+// Set up a mock Express app
 const app = express();
 app.use(express.json());
 app.use('/api/chat', chatRoutes);
@@ -34,14 +30,14 @@ app.use('/api/chat', chatRoutes);
 describe('Chat API Routes', () => {
 
     beforeEach(() => {
-        // Reset our fake OpenAI function before every test so previous responses don't bleed over
+        // Clear mock data before each test
         jest.clearAllMocks();
     });
 
     describe('POST /api/chat/ask', () => {
         
         it('should return a successful AI response (Happy Path - 200)', async () => {
-            // Tell our shared fake OpenAI function exactly what to reply with when the route calls it
+            // Simulate a successful OpenAI response
             mockCreate.mockResolvedValueOnce({
                 choices: [
                     { message: { content: "To submit a report, go to the Home screen and tap 'Report an Issue'." } }
@@ -55,10 +51,10 @@ describe('Chat API Routes', () => {
             expect(response.status).toBe(200);
             expect(response.body.success).toBe(true);
             
-            // Verify our route successfully extracted the text from the deep OpenAI response object
+            // Verify expected text in response
             expect(response.body.reply).toBe("To submit a report, go to the Home screen and tap 'Report an Issue'.");
             
-            // Prove that we actually triggered the simulated OpenAI call
+            // Verify OpenAI call was triggered
             expect(mockCreate).toHaveBeenCalledTimes(1);
         });
 
@@ -67,24 +63,24 @@ describe('Chat API Routes', () => {
                 .post('/api/chat/ask')
                 .send({ message: '' }); 
 
-            // Verify our validation caught the empty string
+            // Verify empty message error
             expect(response.status).toBe(400);
             expect(response.body.success).toBe(false);
             expect(response.body.message).toBe('Message is required.');
             
-            // Prove we didn't waste API calls on bad requests
+            // Verify no API calls were made
             expect(mockCreate).not.toHaveBeenCalled();
         });
 
         it('should handle OpenAI API failures gracefully (Sad Path - 500)', async () => {
-            // Simulate the OpenAI servers being down or timing out
+            // Simulate an OpenAI API error
             mockCreate.mockRejectedValueOnce(new Error('OpenAI API timeout'));
 
             const response = await request(app)
                 .post('/api/chat/ask')
                 .send({ message: 'Hello?' });
 
-            // Verify our route caught the error and returned a safe fallback message to the user
+            // Verify fallback error message
             expect(response.status).toBe(500);
             expect(response.body.success).toBe(false);
             expect(response.body.message).toBe('The UrbanSync AI is currently unavailable.');

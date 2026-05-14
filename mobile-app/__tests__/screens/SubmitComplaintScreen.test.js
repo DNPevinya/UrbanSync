@@ -5,13 +5,10 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { Alert } from 'react-native';
 
-// Fake an environment variable so the component falls back to the Expo geocoder 
-// instead of trying to hit the real Google Maps API and failing.
+// Mock environment variable for Google Maps
 process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY = 'PASTE_YOUR_API_KEY_HERE';
 
-// Fake Dependencies (Mocks)
-// This screen relies heavily on native device features (Camera, GPS, Maps).
-// We must mock all of these so the tests can run on a standard computer.
+// Mock Dependencies
 
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: jest.fn().mockImplementation(({ children }) => children),
@@ -31,8 +28,7 @@ jest.mock('expo-linear-gradient', () => {
 });
 
 jest.mock('@react-navigation/native', () => {
-  const React = require('react');
-  // Immediately trigger the focus effect so the screen initializes as normal
+  // Mock useFocusEffect
   return {
     useFocusEffect: jest.fn((callback) => {
       React.useEffect(() => { callback(); }, []);
@@ -48,7 +44,7 @@ jest.mock('../../src/config', () => ({
   BASE_URL: 'http://mock-server.com',
 }));
 
-// Provide hardcoded translations so we can safely query text elements
+// Mock translations
 jest.mock('../../src/translations', () => ({
   translations: {
     en: {
@@ -64,8 +60,7 @@ jest.mock('../../src/translations', () => ({
   }
 }));
 
-// Deep fake of the Maps library. We have to include a mock 'ref' here 
-// because the component tries to call methods like `animateCamera` on the map reference.
+// Mock react-native-maps
 jest.mock('react-native-maps', () => {
   const React = require('react');
   const { View } = require('react-native');
@@ -86,7 +81,7 @@ jest.mock('react-native-maps', () => {
   };
 });
 
-// Pretend the user granted GPS permissions and is standing in Colombo
+// Mock expo-location permissions and functionality
 jest.mock('expo-location', () => ({
   requestForegroundPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
   getCurrentPositionAsync: jest.fn().mockResolvedValue({
@@ -97,14 +92,14 @@ jest.mock('expo-location', () => ({
   }]),
 }));
 
-// Pretend the user granted Camera permissions
+// Mock expo-image-picker permissions
 jest.mock('expo-image-picker', () => ({
   requestCameraPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
   launchCameraAsync: jest.fn(),
   launchImageLibraryAsync: jest.fn(),
 }));
 
-// Polyfill FormData for the Node.js test environment so we can simulate file uploads
+// Mock FormData
 global.FormData = class FormData {
   constructor() { this.data = []; }
   append(key, value) { this.data.push({ key, value }); }
@@ -115,11 +110,11 @@ describe('SubmitComplaintScreen Component', () => {
   const mockUserId = '123';
 
   beforeEach(() => {
-    // Wipe the slate clean before every test
+    // Clear mock data before each test
     jest.clearAllMocks();
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     
-    // Mock a successful API submission by default
+    // Mock API request
     global.fetch = jest.fn(() => Promise.resolve({
       ok: true,
       json: () => Promise.resolve({ success: true, message: 'Success' })
@@ -131,7 +126,7 @@ describe('SubmitComplaintScreen Component', () => {
       <SubmitComplaintScreen onBack={mockOnBack} userId={mockUserId} />
     );
 
-    // Wait for the mock GPS to return our faked "Galle Face" coordinates
+    // Wait for location to load
     await waitFor(() => {
       expect(getByText('New Report')).toBeTruthy();
       expect(getByPlaceholderText('Describe the issue or request in detail...')).toBeTruthy();
@@ -141,7 +136,7 @@ describe('SubmitComplaintScreen Component', () => {
   });
 
   it('handles gallery photo selection properly', async () => {
-    // Tell the fake picker to return a successful image path
+    // Mock successful image selection
     ImagePicker.launchImageLibraryAsync.mockResolvedValueOnce({
       canceled: false,
       assets: [{ uri: 'file://mock-gallery-image.jpg' }]
@@ -151,20 +146,20 @@ describe('SubmitComplaintScreen Component', () => {
       <SubmitComplaintScreen onBack={mockOnBack} userId={mockUserId} />
     );
 
-    // Wait for UI to settle
+    // Wait for Gallery button to render
     await waitFor(() => expect(getByText('Gallery')).toBeTruthy());
 
-    // Tap the gallery button
+    // Simulate tapping the Gallery button
     fireEvent.press(getByText('Gallery'));
 
-    // Verify it actually called the Expo API
+    // Verify image picker was called
     await waitFor(() => {
       expect(ImagePicker.launchImageLibraryAsync).toHaveBeenCalled();
     });
   });
 
   it('handles camera photo selection and reads EXIF data', async () => {
-    // Tell the fake camera to return an image WITH embedded GPS data
+    // Mock successful camera capture with GPS data
     ImagePicker.launchCameraAsync.mockResolvedValueOnce({
       canceled: false,
       assets: [{ 
@@ -179,10 +174,10 @@ describe('SubmitComplaintScreen Component', () => {
 
     await waitFor(() => expect(getByText('Camera')).toBeTruthy());
 
-    // Take a "photo"
+    // Simulate tapping the Camera button
     fireEvent.press(getByText('Camera'));
 
-    // Verify the app noticed the GPS data in the photo and asked the user if they want to move the map pin
+    // Verify camera was called and alert is displayed
     await waitFor(() => {
       expect(ImagePicker.launchCameraAsync).toHaveBeenCalled();
       expect(Alert.alert).toHaveBeenCalledWith(
@@ -200,10 +195,10 @@ describe('SubmitComplaintScreen Component', () => {
 
     await waitFor(() => expect(getByText('Submit Report')).toBeTruthy());
 
-    // Smash submit without filling anything out
+    // Simulate empty form submission
     fireEvent.press(getByText('Submit Report'));
 
-    // Verify the validation logic caught it and blocked the upload
+    // Verify validation error message
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith(
         'Required',
@@ -213,7 +208,7 @@ describe('SubmitComplaintScreen Component', () => {
   });
 
   it('successfully submits a complete complaint payload to the backend', async () => {
-    // Setup a fake image for the form
+    // Mock image selection
     ImagePicker.launchImageLibraryAsync.mockResolvedValueOnce({
       canceled: false,
       assets: [{ uri: 'file://final-test-image.jpg' }]
@@ -223,23 +218,23 @@ describe('SubmitComplaintScreen Component', () => {
       <SubmitComplaintScreen onBack={mockOnBack} userId={mockUserId} />
     );
 
-    // Wait for the map to settle
+    // Wait for map to render
     await waitFor(() => expect(getByText('Galle Face, Colombo')).toBeTruthy());
 
-    // 1. Type a description
+    // Simulate typing description
     fireEvent.changeText(
       getByPlaceholderText('Describe the issue or request in detail...'),
       'Dangerous pothole needs fixing.'
     );
 
-    // 2. Select a photo
+    // Simulate selecting a photo
     fireEvent.press(getByText('Gallery'));
     await waitFor(() => expect(ImagePicker.launchImageLibraryAsync).toHaveBeenCalled());
 
-    // 3. Smash submit
+    // Simulate form submission
     fireEvent.press(getByText('Submit Report'));
 
-    // Verify the API was hit and the success popup appeared
+    // Verify API call and success alert
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(Alert.alert).toHaveBeenCalledWith(
