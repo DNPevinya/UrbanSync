@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/re
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useNavigate } from 'react-router-dom';
 import OfficerDashboard from '../src/pages/OfficerDashboard';
+import { BASE_URL } from '../src/config';
 
 // Intercept routing so we can verify if unauthorized users are correctly redirected
 const mockNavigate = vi.fn();
@@ -96,7 +97,7 @@ describe('OfficerDashboard Component', () => {
 
     await waitFor(() => {
       // Verify it dynamically requested data for Authority ID 15
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:5000/api/complaints/authority/15');
+      expect(global.fetch).toHaveBeenCalledWith(`${BASE_URL}/api/complaints/authority/15`);
       
       // Verify the total cases count updated correctly based on the returned array
       expect(screen.getByText('2')).toBeTruthy();

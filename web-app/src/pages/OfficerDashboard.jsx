@@ -4,6 +4,7 @@ import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { apiFetch } from '../utils/apiClient';
+import { BASE_URL } from '../config';
 
 const getStatusBadgeStyle = (status) => {
   const s = status?.trim().toUpperCase();
@@ -31,7 +32,7 @@ export default function OfficerDashboard() {
 
     const fetchComplaints = async () => {
       try {
-        const response = await apiFetch(`http://localhost:5000/api/complaints/authority/${parsedUser.authority_id}`);
+        const response = await apiFetch(`${BASE_URL}/api/complaints/authority/${parsedUser.authority_id}`);
         const result = await response.json();
         if (result.success) setComplaints(result.data);
       } catch (error) {

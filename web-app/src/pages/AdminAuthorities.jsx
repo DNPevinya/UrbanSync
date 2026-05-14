@@ -6,6 +6,7 @@ import AddAuthorityModal from '../components/AddAuthorityModal';
 import EditAuthorityModal from '../components/EditAuthorityModal';
 import DeleteModal from '../components/DeleteModal';
 import { apiFetch } from '../utils/apiClient';
+import { BASE_URL } from '../config';
 
 export default function AdminAuthorities() {
   // 1. STATE & HOOKS
@@ -27,9 +28,9 @@ export default function AdminAuthorities() {
     setLoading(true);
     try {
       const [authRes, deptRes, divRes] = await Promise.all([
-        apiFetch('http://localhost:5000/api/complaints/admin/authorities-list'),
-        apiFetch('http://localhost:5000/api/complaints/admin/departments-list'),
-        apiFetch('http://localhost:5000/api/complaints/admin/divisions-list') // Updated URL
+        apiFetch(`${BASE_URL}/api/complaints/admin/authorities-list`),
+        apiFetch(`${BASE_URL}/api/complaints/admin/departments-list`),
+        apiFetch(`${BASE_URL}/api/complaints/admin/divisions-list`) // Updated URL
       ]);
       
       const authData = await authRes.json();

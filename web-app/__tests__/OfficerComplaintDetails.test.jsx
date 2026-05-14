@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import OfficerComplaintDetails from '../src/pages/OfficerComplaintDetails';
+import { BASE_URL } from '../src/config';
 
 // Intercept routing hooks. 
 // Note: This specific component grabs the ID from the query string (?id=123) using useSearchParams, 
@@ -201,7 +202,7 @@ describe('OfficerComplaintDetails Component', () => {
 
     await waitFor(() => {
       // Verify the network request was formatted perfectly
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:5000/api/complaints/update-status/123', expect.objectContaining({
+      expect(global.fetch).toHaveBeenCalledWith(`${BASE_URL}/api/complaints/update-status/123`, expect.objectContaining({
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'IN PROGRESS' })

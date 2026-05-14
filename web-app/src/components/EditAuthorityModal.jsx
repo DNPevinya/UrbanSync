@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../utils/apiClient';
+import { BASE_URL } from '../config';
 
 export default function EditAuthorityModal({ isOpen, onClose, editData, refreshData, departments, divisions }) {
   // 1. STATE & HOOKS
@@ -24,7 +25,7 @@ export default function EditAuthorityModal({ isOpen, onClose, editData, refreshD
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const response = await apiFetch(`http://localhost:5000/api/complaints/admin/update-authority/${editData.authority_id}`, {
+      const response = await apiFetch(`${BASE_URL}/api/complaints/admin/update-authority/${editData.authority_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

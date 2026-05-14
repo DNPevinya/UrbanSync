@@ -6,6 +6,7 @@ import AddOfficerModal from '../components/AddOfficerModal';
 import EditOfficerModal from '../components/EditOfficerModal';
 import DeleteOfficerModal from '../components/DeleteOfficerModal';
 import { apiFetch } from '../utils/apiClient';
+import { BASE_URL } from '../config';
 
 export default function AdminOfficerManagement() {
   // 1. STATE & HOOKS
@@ -29,8 +30,8 @@ export default function AdminOfficerManagement() {
     setLoading(true);
     try {
       const [offRes, authRes] = await Promise.all([
-        apiFetch('http://localhost:5000/api/auth/admin/officers-list'),
-        apiFetch('http://localhost:5000/api/complaints/admin/authorities-list')
+        apiFetch(`${BASE_URL}/api/auth/admin/officers-list`),
+        apiFetch(`${BASE_URL}/api/complaints/admin/authorities-list`)
       ]);
       const offData = await offRes.json();
       const authData = await authRes.json();

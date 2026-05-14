@@ -7,6 +7,7 @@ import ReassignModal from '../components/ReassignModal';
 import DetailsModal from '../components/DetailsModal';
 import DeleteComplaintModal from '../components/DeleteComplaintModal'; 
 import { apiFetch } from '../utils/apiClient';
+import { BASE_URL } from '../config';
 
 export default function AdminComplaints() {
   // 1. STATE & HOOKS
@@ -38,9 +39,9 @@ export default function AdminComplaints() {
     try {
       setLoading(true);
       const [statsRes, complaintsRes, categoryRes] = await Promise.all([
-        apiFetch('http://localhost:5000/api/complaints/admin/stats'),
-        apiFetch('http://localhost:5000/api/complaints/admin/all'),
-        apiFetch('http://localhost:5000/api/complaints/form-data') 
+        apiFetch(`${BASE_URL}/api/complaints/admin/stats`),
+        apiFetch(`${BASE_URL}/api/complaints/admin/all`),
+        apiFetch(`${BASE_URL}/api/complaints/form-data`) 
       ]);
 
       const statsData = await statsRes.json();

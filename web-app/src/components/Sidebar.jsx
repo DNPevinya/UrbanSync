@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import smartLogo from '../assets/smartlogo.png'; 
+import { BASE_URL } from '../config';
 
 export default function Sidebar({ role = 'admin' }) {
   // 1. STATE & HOOKS
@@ -25,7 +26,7 @@ export default function Sidebar({ role = 'admin' }) {
       const fetchPendingCount = async () => {
         try {
           const token = localStorage.getItem('urbanSyncToken');
-          const res = await fetch(`http://localhost:5000/api/complaints/admin/unassigned`, {
+          const res = await fetch(`${BASE_URL}/api/complaints/admin/unassigned`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const data = await res.json();

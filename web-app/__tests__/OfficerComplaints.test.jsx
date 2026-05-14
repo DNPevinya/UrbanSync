@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import OfficerComplaints from '../src/pages/OfficerComplaints';
+import { BASE_URL } from '../src/config';
 
 // Intercept routing so we can verify if unauthorized users are correctly redirected
 const mockNavigate = vi.fn();
@@ -99,7 +100,7 @@ describe('OfficerComplaints Component', () => {
 
     await waitFor(() => {
       // Verify it dynamically requested data for Authority ID 10
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:5000/api/complaints/authority/10');
+      expect(global.fetch).toHaveBeenCalledWith(`${BASE_URL}/api/complaints/authority/10`);
       
       // Verify the table mapped our dummy data to rows
       expect(screen.getByText('#CMP-101')).toBeTruthy();

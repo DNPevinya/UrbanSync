@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import RejectComplaintModal from '../components/RejectComplaintModal'; 
 import { apiFetch } from '../utils/apiClient';
+import { BASE_URL } from '../config';
 
 export default function OfficerComplaintDetails() {
   // 1. STATE & HOOKS
@@ -24,7 +25,7 @@ export default function OfficerComplaintDetails() {
   // 2. API HANDLERS
   const fetchDetails = async () => {
     try {
-      const response = await apiFetch(`http://localhost:5000/api/complaints/${complaintId}`);
+      const response = await apiFetch(`${BASE_URL}/api/complaints/${complaintId}`);
       const result = await response.json();
       if (result.success) {
         setComplaint(result.data);
@@ -46,7 +47,7 @@ export default function OfficerComplaintDetails() {
   const handleStatusChange = async () => {
     setUpdating(true);
     try {
-      const response = await apiFetch(`http://localhost:5000/api/complaints/update-status/${complaintId}`, {
+      const response = await apiFetch(`${BASE_URL}/api/complaints/update-status/${complaintId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -203,7 +204,7 @@ export default function OfficerComplaintDetails() {
                    {complaint.image_url ? (
                      complaint.image_url.split(',').map((imgUrl, index) => (
                         <div key={index} className="w-32 h-32 rounded-lg bg-slate-200 overflow-hidden border border-[#E2E8F0] flex-shrink-0">
-                          <img src={`http://localhost:5000${imgUrl}`} alt={`Evidence ${index + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform" />
+                          <img src={`${BASE_URL}${imgUrl}`} alt={`Evidence ${index + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform" />
                         </div>
                      ))
                    ) : (

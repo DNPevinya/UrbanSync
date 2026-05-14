@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../utils/apiClient';
+import { BASE_URL } from '../config';
 
 export default function DetailsModal({ isOpen, onClose, complaintId }) {
   // 1. STATE & HOOKS
@@ -12,7 +13,7 @@ export default function DetailsModal({ isOpen, onClose, complaintId }) {
       const fetchDetails = async () => {
         setLoading(true);
         try {
-          const response = await apiFetch(`http://localhost:5000/api/complaints/${complaintId}`);
+          const response = await apiFetch(`${BASE_URL}/api/complaints/${complaintId}`);
           const result = await response.json();
           if (result.success) {
             setData(result.data);
@@ -187,8 +188,8 @@ export default function DetailsModal({ isOpen, onClose, complaintId }) {
                   <div className="flex flex-col gap-3">
                     {evidenceImages.length > 0 ? (
                       evidenceImages.map((img, idx) => (
-                        <a key={idx} href={`http://localhost:5000${img}`} target="_blank" rel="noopener noreferrer" className="w-full h-32 bg-slate-100 rounded-lg overflow-hidden border border-[#E2E8F0] flex items-center justify-center hover:opacity-80 transition-opacity">
-                          <img src={`http://localhost:5000${img}`} alt={`Evidence ${idx + 1}`} className="w-full h-full object-cover" />
+                        <a key={idx} href={`${BASE_URL}${img}`} target="_blank" rel="noopener noreferrer" className="w-full h-32 bg-slate-100 rounded-lg overflow-hidden border border-[#E2E8F0] flex items-center justify-center hover:opacity-80 transition-opacity">
+                          <img src={`${BASE_URL}${img}`} alt={`Evidence ${idx + 1}`} className="w-full h-full object-cover" />
                         </a>
                       ))
                     ) : (

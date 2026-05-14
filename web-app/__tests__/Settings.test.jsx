@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import Settings from '../src/pages/Settings';
+import { BASE_URL } from '../src/config';
 
 vi.mock('../src/components/Sidebar', () => ({ default: () => <div data-testid="sidebar" /> }));
 vi.mock('../src/components/Header', () => ({ default: () => <header data-testid="header" /> }));
@@ -120,7 +121,7 @@ describe('Settings Component', () => {
 
     // Verify the exact payload sent to the backend includes the email pulled from the local session
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:5000/api/auth/update-password', expect.objectContaining({
+      expect(global.fetch).toHaveBeenCalledWith(`${BASE_URL}/api/auth/update-password`, expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({
           email: 'jane.doe@urbansync.com', 
