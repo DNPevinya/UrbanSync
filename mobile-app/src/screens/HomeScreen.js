@@ -5,7 +5,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient'; 
-
 import i18n from '../../src/translations'; 
 import { BASE_URL } from '../../src/config';
 import ChatbotModal from '../components/ChatbotModal';
