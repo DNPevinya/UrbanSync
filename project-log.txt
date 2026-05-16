@@ -1,0 +1,120 @@
+* cd90b5f - Nilasi Pevinya, 2 hours ago : test files commented
+* c6f91f4 - Nilasi Pevinya, 3 hours ago : config file updated
+* fe35ae3 - Nilasi Pevinya, 5 hours ago : Config file updates
+* 7117823 - Nilasi Pevinya, 9 hours ago : Admin pending assignments page
+*   bcd5db0 - Nilasi Pevinya, 10 hours ago : Merge branch 'main' of https://github.com/DNPevinya/UrbanSync
+|\  
+| * cb3d131 - Nilasi Pevinya, 12 hours ago : Create LICENSE
+| * 61494b6 - Nilasi Pevinya, 12 hours ago : Update README.md
+| * 6af46f5 - Nilasi Pevinya, 12 hours ago : Update README.md
+| * bca0a48 - Nilasi Pevinya, 12 hours ago : Update README.md
+| * 7e87a58 - Nilasi Pevinya, 12 hours ago : Update README.md
+* | 5cf2194 - Nilasi Pevinya, 10 hours ago : Update config.js
+|/  
+* 312e016 - Nilasi Pevinya, 4 days ago : UI updates
+* e878754 - Nilasi Pevinya, 4 days ago : Update chatroutes.js
+* c492781 - Nilasi Pevinya, 4 days ago : Update chatroutes.js
+* 4901bec - Nilasi Pevinya, 4 days ago : UI updates
+* 33c0751 - Nilasi Pevinya, 4 days ago : UI updates
+* ca0569d - Nilasi Pevinya, 4 days ago : Logo updates
+* 3ad8a47 - Nilasi Pevinya, 5 days ago : Update AddAuthorityModal.jsx
+* 0abcdbc - Nilasi Pevinya, 5 days ago : Update AdminAnalytics.jsx
+* a9ead78 - Nilasi Pevinya, 5 days ago : delete seed file
+* 5187464 - Nilasi Pevinya, 5 days ago : UI changes
+* 2584618 - Nilasi Pevinya, 5 days ago : Update complaintRoutes.js
+* b565858 - Nilasi Pevinya, 5 days ago : updates
+* e40a14c - Nilasi Pevinya, 5 days ago : Update index.tsx
+* 5945b36 - Nilasi Pevinya, 6 days ago : Updates
+* f4ae604 - Nilasi Pevinya, 6 days ago : Fix global officer ID generation and Expo splash screen
+* 146dc7f - Nilasi Pevinya, 6 days ago : Update package-lock.json
+* 198eab1 - Nilasi Pevinya, 10 days ago : Minor Updates
+* 4e72f08 - Nilasi Pevinya, 11 days ago : Update ProfileScreen.js
+* c94dab1 - Nilasi Pevinya, 11 days ago : i18n updates
+*   0a34e2d - Nilasi Pevinya, 11 days ago : Merge branch 'main' of https://github.com/DNPevinya/UrbanSync
+|\  
+| * 42c7943 - Nilasi Pevinya, 11 days ago : Update README.md
+| * 5e8d434 - Nilasi Pevinya, 11 days ago : Update README.md
+| * 4416a9c - Nilasi Pevinya, 11 days ago : Update README.md
+* | 7ab084e - Nilasi Pevinya, 11 days ago : updates
+|/  
+* 7b9ebd0 - Nilasi Pevinya, 11 days ago : Updates
+* 1a0578a - Nilasi Pevinya, 12 days ago : Updates
+* 9e0e2ca - Nilasi Pevinya, 12 days ago : Dynamic handling update
+* 0f134ff - Nilasi Pevinya, 13 days ago : Citizen directory page created for Admins
+* 4a57b83 - Nilasi Pevinya, 13 days ago : NIC addition update for the mobile app
+* 1e5ec49 - Nilasi Pevinya, 13 days ago : Bug fixes
+* 6fc8a57 - Nilasi Pevinya, 2 weeks ago : Update web -officer status badge colours
+* 607d0a0 - Nilasi Pevinya, 2 weeks ago : Update ComplaintDetailsScreen.js
+* 9e06288 - Nilasi Pevinya, 2 weeks ago : JWT authentication
+* a64c173 - Nilasi Pevinya, 2 weeks ago : Update authRoutes.js
+* a1adab8 - Nilasi Pevinya, 2 weeks ago : Update complaintRoutes.js
+* 555e1d8 - Nilasi Pevinya, 2 weeks ago : web dashboard updates
+* e8e87c9 - Nilasi Pevinya, 2 weeks ago : Web dashboard- status colours updated
+* 1dacd09 - Nilasi Pevinya, 2 weeks ago : Cancel Complaint feature
+* 872e6e1 - Nilasi Pevinya, 2 weeks ago : Duplicate Complaint issue solved
+* 0fc4df3 - Nilasi Pevinya, 3 weeks ago : Edited
+* 44c9548 - Nilasi Pevinya, 3 weeks ago : Web test cases edited
+* 6aad0aa - Nilasi Pevinya, 3 weeks ago : Mobile and backend test cases edited
+* 1985afb - Nilasi Pevinya, 3 weeks ago : Update config.js
+* 957464f - Nilasi Pevinya, 3 weeks ago : test cases-jest
+* 567a68e - Nilasi Pevinya, 3 weeks ago : Data seeded
+* 113f7f9 - Nilasi Pevinya, 3 weeks ago : Testing using Jest
+* 680d8d6 - Nilasi Pevinya, 3 weeks ago : Updates
+* 6221d6c - Nilasi Pevinya, 3 weeks ago : Code Cleanup
+* fdeb99d - Nilasi Pevinya, 3 weeks ago : Updates
+* c8a5395 - Nilasi Pevinya, 3 weeks ago : Sign up screen- translation feature added
+* 1964eb9 - Nilasi Pevinya, 3 weeks ago : Added the nationalbadge
+* 43243ae - Nilasi Pevinya, 3 weeks ago : Chatbot created
+* 9472f4f - Nilasi Pevinya, 4 weeks ago : Language translation of main pages
+* 5924396 - Nilasi Pevinya, 4 weeks ago : Forgot password screen updated
+* d3c1dfe - Nilasi Pevinya, 4 weeks ago : Firebase OTP verification enabled
+* a1b1e52 - Nilasi Pevinya, 4 weeks ago : Update Login.jsx
+* aa0bfcc - Nilasi Pevinya, 4 weeks ago : Google map API key feature updated
+* d1153ab - Nilasi Pevinya, 4 weeks ago : Google API feature added
+* 2057b59 - Nilasi Pevinya, 4 weeks ago : Reject Complaint Modal ,Terms and Privacy Policy pages created
+* 07ec5d0 - Nilasi Pevinya, 4 weeks ago : Admin Settings page updated
+* 266cd6f - Nilasi Pevinya, 4 weeks ago : Admin Analytics page created with Chart.js
+* 3b62637 - Nilasi Pevinya, 4 weeks ago : Admin Officer Management page updated
+* 6ff0bde - Nilasi Pevinya, 4 weeks ago : Admin Authority Management updated
+* aa4f129 - Nilasi Pevinya, 5 weeks ago : Reassigning Modal updated
+* 09d12d0 - Nilasi Pevinya, 5 weeks ago : Admin Complaints page updated
+* d2b5bb1 - Nilasi Pevinya, 5 weeks ago : Admin Dashboard created
+* b7dce21 - Nilasi Pevinya, 5 weeks ago : Officer Dashboard  updated
+* f826830 - Nilasi Pevinya, 5 weeks ago : Citizen Info in Officer dashboard updated
+* 8adeafc - Nilasi Pevinya, 5 weeks ago : Officer Settings page updated
+* 0c8d276 - Nilasi Pevinya, 5 weeks ago : Officer Complaints page updated
+* e487683 - Nilasi Pevinya, 5 weeks ago : Notifications Screen updated
+* 9ec84e8 - Nilasi Pevinya, 5 weeks ago : Update ComplaintDetailsScreen.js
+* 3596516 - Nilasi Pevinya, 5 weeks ago : Complaint Details Screen of the mobile app updated
+* bc8855f - Nilasi Pevinya, 5 weeks ago : Notification panel implemented
+* 16c0c3f - Nilasi Pevinya, 5 weeks ago : Officer Dashboard updated
+* 9883023 - Nilasi Pevinya, 5 weeks ago : RBAC enabled in web app
+* 2580356 - Nilasi Pevinya, 5 weeks ago : Auto routing logic created
+* 2f2eb23 - Nilasi Pevinya, 5 weeks ago : Changed the name to UrbanSync
+* 2c7c8ab - Nilasi Pevinya, 5 weeks ago : Update README.md
+* 193cb76 - Nilasi Pevinya, 6 weeks ago : Officer dashboard,complaints page and complaint details page frontend done
+* ded51e7 - Nilasi Pevinya, 6 weeks ago : Built the Adminanalytics page, Admin User management page and the settings page frontend
+* a9b6e09 - Nilasi Pevinya, 6 weeks ago : Built Admin Dashboard, Admin Complaints page and Authority Management page
+* ea0e4c0 - Nilasi Pevinya, 6 weeks ago : Changed complaints to reports in mobile app
+* 5d9b19f - Nilasi Pevinya, 8 weeks ago : Web Application Initiated
+* 4e7c144 - Nilasi Pevinya, 8 weeks ago : Smart Nagara Web App initialized
+* f47412d - Nilasi Pevinya, 8 weeks ago : Mobile app UI updates
+* cb7f970 - Nilasi Pevinya, 8 weeks ago : Updated the mobile app UI
+* 188c7cc - Nilasi Pevinya, 8 weeks ago : Updated the UI style
+* b47bb9d - Nilasi Pevinya, 8 weeks ago : updates
+* fe6f328 - Nilasi Pevinya, 8 weeks ago : Updates
+* 7e838e2 - Nilasi Pevinya, 8 weeks ago : icons updated
+* 752c13b - Nilasi Pevinya, 8 weeks ago : Updates for mobile app
+* 00be3bb - Nilasi Pevinya, 8 weeks ago : mobile app updates
+* 0fec54b - Nilasi Pevinya, 8 weeks ago : ipconfig changes
+* 43ef007 - Nilasi Pevinya, 2 months ago : Update icon.png
+* 9ef0f55 - Nilasi Pevinya, 2 months ago : Create package-lock.json
+* e681d8c - Nilasi Pevinya, 2 months ago : Changes
+* 2147629 - Nilasi Pevinya, 2 months ago : Changed the System Name to SmartNagara
+* c2253cc - Nilasi Pevinya, 3 months ago : Completed User Profile and Image Upload Logic
+* 0e72d21 - Nilasi Pevinya, 3 months ago : integrated backend auth routes with database connection
+* 186761f - Nilasi Pevinya, 3 months ago : Mobile App-Frontend Updates
+* f51e2a3 - Nilasi Pevinya, 3 months ago : Updated Mobile-app frontend
+* 0ead25c - Nilasi Pevinya, 3 months ago : Implemented the Loading,welcome,login,sign up and Home screens
+* 906012f - Nilasi Pevinya, 3 months ago : Initial commit: Set up folder structure and initialized Expo mobile app
+* 1df21d6 - Nilasi Pevinya, 3 months ago : Initial commit
