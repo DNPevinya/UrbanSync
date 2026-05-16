@@ -116,7 +116,7 @@ export default function SubmitComplaintScreen({ onBack, userId }) {
       const response = await apiFetch(url);
       const data = await response.json();
 
-      if (currentFetchId !== fetchId.current) return; // Ignore stale result
+      if (currentFetchId !== fetchId.current) return; 
 
       if (data.status === 'OK' && data.results.length > 0) {
         setLocationName(data.results[0].formatted_address);
