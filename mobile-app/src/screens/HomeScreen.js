@@ -222,7 +222,7 @@ const ActivityItem = ({ title, desc, time, icon, color }) => (
 // 6. STYLES
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
-  topNavBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 25, paddingTop: 15, paddingBottom: 10, backgroundColor: '#F8FAFC' },
+  topNavBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 25, paddingTop: 1, paddingBottom: 10, backgroundColor: '#F8FAFC' },
   greetingText: { fontSize: 13, color: '#64748B', fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
   navTitle: { fontSize: 26, fontWeight: '800', color: '#0041C7' },
   headerRightActionGroup: { flexDirection: 'row', alignItems: 'center' },
