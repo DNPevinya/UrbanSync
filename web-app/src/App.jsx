@@ -11,6 +11,8 @@ import AdminComplaints from './pages/AdminComplaints';
 import UnassignedComplaints from './pages/UnassignedComplaints'; 
 import AdminAuthorities from './pages/AdminAuthorities';
 import AdminOfficerManagement from './pages/AdminOfficerManagement';
+import CategoryManager from './pages/CategoryManager'; 
+import LocationManager from './pages/LocationManager';
 import AdminAnalytics from './pages/AdminAnalytics';
 import UserManagement from './pages/UserManagement';
 
@@ -39,6 +41,8 @@ export default function App() {
         <Route path="/admin/users" element={<UserManagement />} />
         <Route path="/authorities" element={<AdminAuthorities />} />
         <Route path="admin/officers" element={<AdminOfficerManagement />} />
+        <Route path="/admin/categories" element={<CategoryManager />} />
+        <Route path="/admin/locations" element={<LocationManager />} />
         <Route path="/analytics" element={<AdminAnalytics />} />
         <Route path="/settings" element={<Settings role="admin" />} />
 
