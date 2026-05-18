@@ -64,7 +64,7 @@ export default function AdminAnalytics() {
       {
         label: 'Received',
         data: analytics?.trends?.map(t => t.received) || [],
-        backgroundColor: '#0041C7', // Dark Blue
+        backgroundColor: '#0041C7', 
         borderRadius: 4,
       },
       {
