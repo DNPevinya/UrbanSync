@@ -61,7 +61,7 @@ export default function Login() {
           </div>
           <h1 className="text-white font-extrabold text-5xl tracking-tight mb-4">UrbanSync</h1>
           <p className="text-blue-100 text-lg font-medium max-w-sm leading-relaxed">
-            The Centralized Digital Gateway for Municipal Management and Public Services.
+            The Centralized Digital Gateway for Urban Management and Public Services.
           </p>
         </div>
       </div>
